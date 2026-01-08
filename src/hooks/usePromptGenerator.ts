@@ -8,38 +8,46 @@ import {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-// Mock API call - replace with real API when backend is ready
-async function mockGeneratePrompt(formData: FormData): Promise<GeneratePromptResponse> {
-  // Simulate API delay (2-5 seconds)
-  const delay = 2000 + Math.random() * 3000;
-  await new Promise((resolve) => setTimeout(resolve, delay));
+// Real API call to generate prompt via n8n webhook
+async function generatePrompt(formData: FormData): Promise<GeneratePromptResponse> {
+  const response = await fetch('/api/generate-prompt', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData),
+  });
 
-  // Generate a mock prompt based on form data
-  const prompt = `Create a stunning ${formData.image_type.toLowerCase()} image for ${formData.brand} with a ${formData.theme} theme. 
+  if (!response.ok) {
+    throw new Error('Failed to generate prompt');
+  }
 
-The image should capture: ${formData.description}
-
-Style guidelines:
-- Use vibrant, engaging colors that align with the ${formData.brand} brand identity
-- Ensure the composition is balanced and eye-catching
-- Optimize for ${formData.image_type === 'Email Visuals' ? 'email' : formData.image_type === 'Banners' ? 'banner' : 'web'} format
-${formData.additional_instructions ? `\nAdditional requirements: ${formData.additional_instructions}` : ''}
-
-Technical specifications for ${formData.llm_tool}:
-- High resolution, professional quality
-- Modern, clean aesthetic
-- Brand-consistent visual language`;
-
-  return {
-    prompt,
-    processing_time: delay / 1000,
-    timestamp: new Date().toISOString(),
-  };
+  return response.json();
 }
 
-async function mockSavePrompt(): Promise<{ success: boolean; message: string }> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return { success: true, message: 'Saved successfully' };
+// Real API call to save prompt via n8n webhook
+async function savePrompt(
+  formData: FormData,
+  generatedPrompt: string,
+  timestamp: string
+): Promise<{ success: boolean; message: string }> {
+  const response = await fetch('/api/save-prompt', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ...formData,
+      generated_prompt: generatedPrompt,
+      timestamp,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to save prompt');
+  }
+
+  return response.json();
 }
 
 export function usePromptGenerator() {
@@ -50,6 +58,7 @@ export function usePromptGenerator() {
   const [processingTime, setProcessingTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
+  const [generatedTimestamp, setGeneratedTimestamp] = useState('');
 
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -104,11 +113,13 @@ export function usePromptGenerator() {
     setErrorMessage('');
 
     try {
-      const response = await mockGeneratePrompt(formData);
+      const response = await generatePrompt(formData);
       setGeneratedPrompt(response.prompt);
       setProcessingTime(response.processing_time);
+      setGeneratedTimestamp(response.timestamp);
       setAppState('RESULT');
-    } catch {
+    } catch (error) {
+      console.error('Error generating prompt:', error);
       setErrorMessage('Something went wrong. Please try again.');
       setAppState('FORM');
     }
@@ -118,13 +129,14 @@ export function usePromptGenerator() {
     setAppState('SAVING');
 
     try {
-      await mockSavePrompt();
+      await savePrompt(formData, generatedPrompt, generatedTimestamp);
       setAppState('SAVED');
-    } catch {
+    } catch (error) {
+      console.error('Error saving prompt:', error);
       setErrorMessage('Failed to save prompt. Please try again.');
       setAppState('RESULT');
     }
-  }, []);
+  }, [formData, generatedPrompt, generatedTimestamp]);
 
   const handleDontSave = useCallback(() => {
     setAppState('SAVED'); // Just hide the save buttons
@@ -142,6 +154,7 @@ export function usePromptGenerator() {
     setProcessingTime(0);
     setElapsedTime(0);
     setErrorMessage('');
+    setGeneratedTimestamp('');
     setAppState('FORM');
   }, []);
 
