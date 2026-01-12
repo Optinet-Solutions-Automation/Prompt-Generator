@@ -168,6 +168,11 @@ export function usePromptGenerator() {
     setAppState('FORM');
   }, []);
 
+  const handleEditForm = useCallback(() => {
+    // Go back to form but keep data
+    setAppState('FORM');
+  }, []);
+
   return {
     appState,
     formData,
@@ -181,6 +186,7 @@ export function usePromptGenerator() {
     handleSubmit,
     handleSave,
     handleDontSave,
+    handleEditForm,
     handleGenerateAgain,
     handleClearForm,
     handleGoBack,
