@@ -88,16 +88,15 @@ export function usePromptGenerator() {
     const newErrors: FormErrors = {};
 
     if (!formData.brand) newErrors.brand = 'Please select a brand';
-    if (!formData.image_type) newErrors.image_type = 'Please select an image type';
+    if (!formData.spec_id) newErrors.spec_id = 'Please select a spec ID';
     if (!formData.theme.trim()) newErrors.theme = 'Please enter a theme';
     if (!formData.description.trim()) newErrors.description = 'Please enter a description';
-    if (!formData.llm_tool) newErrors.llm_tool = 'Please select an LLM tool';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
-  const handleFieldChange = useCallback((field: keyof FormData, value: string) => {
+  const handleFieldChange = useCallback((field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {

@@ -1,18 +1,19 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
   BRANDS,
-  IMAGE_TYPES,
-  LLM_TOOLS,
+  SPEC_IDS,
 } from '@/types/prompt';
 
 interface PromptFormProps {
   formData: FormData;
   errors: Partial<Record<keyof FormData, string>>;
-  onFieldChange: (field: keyof FormData, value: string) => void;
+  onFieldChange: (field: keyof FormData, value: string | boolean) => void;
   onSubmit: () => void;
   onClear: () => void;
 }
@@ -28,6 +29,9 @@ export function PromptForm({
     e.preventDefault();
     onSubmit();
   };
+
+  // Format spec options for the select dropdown
+  const specOptions = SPEC_IDS.map(spec => `${spec.id} - ${spec.label} (${spec.dimensions})`);
 
   return (
     <motion.form
@@ -51,13 +55,13 @@ export function PromptForm({
 
         <FormField
           type="select"
-          label="Image Type"
+          label="Spec ID"
           required
-          options={IMAGE_TYPES}
-          value={formData.image_type}
-          onChange={(value) => onFieldChange('image_type', value)}
-          placeholder="Select image type"
-          error={errors.image_type}
+          options={specOptions}
+          value={formData.spec_id}
+          onChange={(value) => onFieldChange('spec_id', value)}
+          placeholder="Select image spec"
+          error={errors.spec_id}
         />
       </div>
 
@@ -67,7 +71,7 @@ export function PromptForm({
         required
         value={formData.theme}
         onChange={(value) => onFieldChange('theme', value)}
-        placeholder="e.g., Christmas Sale, Summer Vibes"
+        placeholder="e.g., Dark Luxury Noir Valentine's"
         maxLength={100}
         error={errors.theme}
       />
@@ -84,26 +88,19 @@ export function PromptForm({
         error={errors.description}
       />
 
-      <FormField
-        type="select"
-        label="LLM Tool"
-        required
-        options={LLM_TOOLS}
-        value={formData.llm_tool}
-        onChange={(value) => onFieldChange('llm_tool', value)}
-        placeholder="Select LLM tool"
-        error={errors.llm_tool}
-      />
-
-      <FormField
-        type="textarea"
-        label="Additional Instructions"
-        value={formData.additional_instructions}
-        onChange={(value) => onFieldChange('additional_instructions', value)}
-        placeholder="Any additional requirements or constraints..."
-        maxLength={300}
-        rows={3}
-      />
+      <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 border border-border">
+        <div className="space-y-0.5">
+          <Label htmlFor="no-text" className="text-base font-medium">No Text</Label>
+          <p className="text-sm text-muted-foreground">
+            Generate image without any text overlays
+          </p>
+        </div>
+        <Switch
+          id="no-text"
+          checked={formData.no_text}
+          onCheckedChange={(checked) => onFieldChange('no_text', checked)}
+        />
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button

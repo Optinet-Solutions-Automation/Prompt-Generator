@@ -2,22 +2,20 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface FormData {
   brand: string;
-  image_type: string;
+  spec_id: string;
   theme: string;
   description: string;
-  llm_tool: string;
-  additional_instructions: string;
+  no_text: boolean;
 }
 
 // Transform frontend field names to match n8n expected format
 function transformFormData(formData: FormData) {
   return {
     Brand: formData.brand,
-    'Image Type': formData.image_type,
+    'Spec ID': formData.spec_id,
     Theme: formData.theme,
     Description: formData.description,
-    'LLM Tool': formData.llm_tool,
-    'Additional Instructions': formData.additional_instructions,
+    'No Text': formData.no_text,
   };
 }
 
