@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Loader2, RefreshCw, Trash2, Sparkles, Image, Palette, Target } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw, Trash2, Sparkles, Image, Palette, Target, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 
@@ -11,6 +11,7 @@ interface ResultDisplayProps {
   appState: AppState;
   onSave: () => void;
   onDontSave: () => void;
+  onEditForm: () => void;
   onGenerateAgain: () => void;
   onClearForm: () => void;
 }
@@ -22,6 +23,7 @@ export function ResultDisplay({
   appState,
   onSave,
   onDontSave,
+  onEditForm,
   onGenerateAgain,
   onClearForm,
 }: ResultDisplayProps) {
@@ -187,6 +189,10 @@ export function ResultDisplay({
         >
           <RefreshCw className="w-4 h-4" />
           Generate Again
+        </Button>
+        <Button variant="outline" onClick={onEditForm} className="gap-2">
+          <Pencil className="w-4 h-4" />
+          Edit Form
         </Button>
         <Button variant="outline" onClick={onClearForm} className="gap-2">
           <Trash2 className="w-4 h-4" />

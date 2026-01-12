@@ -20,6 +20,7 @@ const Index = () => {
     handleSubmit,
     handleSave,
     handleDontSave,
+    handleEditForm,
     handleGenerateAgain,
     handleClearForm,
     handleGoBack,
@@ -95,6 +96,7 @@ const Index = () => {
                   appState={appState}
                   onSave={handleSave}
                   onDontSave={handleDontSave}
+                  onEditForm={handleEditForm}
                   onGenerateAgain={handleGenerateAgain}
                   onClearForm={handleClearForm}
                 />
