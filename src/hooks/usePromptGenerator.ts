@@ -9,7 +9,7 @@ import {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-// Real API call to generate prompt via n8n webhook
+// API call to generate prompt via n8n webhook
 async function generatePrompt(formData: FormData): Promise<GeneratePromptResponse> {
   const response = await fetch('/api/generate-prompt', {
     method: 'POST',
@@ -26,7 +26,7 @@ async function generatePrompt(formData: FormData): Promise<GeneratePromptRespons
   return response.json();
 }
 
-// Real API call to save prompt via n8n webhook
+// API call to save prompt via n8n webhook
 async function savePrompt(
   formData: FormData,
   generatedPrompt: string,
