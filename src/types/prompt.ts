@@ -8,10 +8,22 @@ export interface FormData {
   no_text: boolean;
 }
 
+export interface PromptMetadata {
+  brand: string;
+  spec_id: string;
+  theme: string;
+  relevance_score: number;
+  style_confidence: string;
+  reference_count: number;
+  similar_prompts_used: number;
+  recommended_ai: string;
+}
+
 export interface GeneratePromptResponse {
+  success: boolean;
+  message: string;
   prompt: string;
-  processing_time: number;
-  timestamp: string;
+  metadata: PromptMetadata;
 }
 
 export interface SavePromptResponse {

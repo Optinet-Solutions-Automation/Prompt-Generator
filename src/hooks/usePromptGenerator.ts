@@ -4,6 +4,7 @@ import {
   FormData,
   INITIAL_FORM_DATA,
   GeneratePromptResponse,
+  PromptMetadata,
 } from '@/types/prompt';
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
@@ -55,6 +56,7 @@ export function usePromptGenerator() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<FormErrors>({});
   const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [promptMetadata, setPromptMetadata] = useState<PromptMetadata | null>(null);
   const [processingTime, setProcessingTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
@@ -112,10 +114,13 @@ export function usePromptGenerator() {
     setErrorMessage('');
 
     try {
+      const startTime = Date.now();
       const response = await generatePrompt(formData);
+      const endTime = Date.now();
       setGeneratedPrompt(response.prompt);
-      setProcessingTime(response.processing_time);
-      setGeneratedTimestamp(response.timestamp);
+      setPromptMetadata(response.metadata);
+      setProcessingTime((endTime - startTime) / 1000);
+      setGeneratedTimestamp(new Date().toISOString());
       setAppState('RESULT');
     } catch (error) {
       console.error('Error generating prompt:', error);
@@ -150,6 +155,7 @@ export function usePromptGenerator() {
     setFormData(INITIAL_FORM_DATA);
     setErrors({});
     setGeneratedPrompt('');
+    setPromptMetadata(null);
     setProcessingTime(0);
     setElapsedTime(0);
     setErrorMessage('');
@@ -167,6 +173,7 @@ export function usePromptGenerator() {
     formData,
     errors,
     generatedPrompt,
+    promptMetadata,
     processingTime,
     elapsedTime,
     errorMessage,

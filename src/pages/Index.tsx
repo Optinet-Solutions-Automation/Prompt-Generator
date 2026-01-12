@@ -12,6 +12,7 @@ const Index = () => {
     formData,
     errors,
     generatedPrompt,
+    promptMetadata,
     processingTime,
     elapsedTime,
     errorMessage,
@@ -89,6 +90,7 @@ const Index = () => {
                 <ResultDisplay
                   key="result"
                   prompt={generatedPrompt}
+                  metadata={promptMetadata}
                   processingTime={processingTime}
                   appState={appState}
                   onSave={handleSave}
