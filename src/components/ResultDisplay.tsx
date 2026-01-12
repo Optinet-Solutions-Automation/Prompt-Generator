@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw, Trash2, Sparkles, Image, Palette, Target } from 'lucide-react';
 import { useState } from 'react';
-import type { AppState } from '@/types/prompt';
+import type { AppState, PromptMetadata } from '@/types/prompt';
 
 interface ResultDisplayProps {
   prompt: string;
+  metadata: PromptMetadata | null;
   processingTime: number;
   appState: AppState;
   onSave: () => void;
@@ -16,6 +17,7 @@ interface ResultDisplayProps {
 
 export function ResultDisplay({
   prompt,
+  metadata,
   processingTime,
   appState,
   onSave,
@@ -42,6 +44,58 @@ export function ResultDisplay({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
+      {/* Metadata Card */}
+      {metadata && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        >
+          <div className="bg-card rounded-lg border border-border p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Target className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wide">Relevance</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{metadata.relevance_score}/100</p>
+          </div>
+          <div className="bg-card rounded-lg border border-border p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Palette className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wide">Style</span>
+            </div>
+            <p className="text-lg font-semibold text-foreground capitalize">{metadata.style_confidence}</p>
+          </div>
+          <div className="bg-card rounded-lg border border-border p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Image className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wide">References</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{metadata.reference_count}</p>
+          </div>
+          <div className="bg-card rounded-lg border border-border p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wide">Prompts Used</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{metadata.similar_prompts_used}</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Recommended AI */}
+      {metadata?.recommended_ai && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20 p-4"
+        >
+          <p className="text-sm text-muted-foreground mb-1">Recommended AI Tools</p>
+          <p className="text-foreground font-medium">{metadata.recommended_ai}</p>
+        </motion.div>
+      )}
+
       {/* Prompt Card */}
       <div className="relative">
         <div className="absolute inset-0 gradient-primary rounded-xl opacity-5" />
@@ -73,7 +127,7 @@ export function ResultDisplay({
             </Button>
           </div>
           <div className="p-6">
-            <p className="text-foreground leading-relaxed whitespace-pre-wrap font-mono text-sm bg-muted/50 p-4 rounded-lg">
+            <p className="text-foreground leading-relaxed whitespace-pre-wrap font-mono text-sm bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
               {prompt}
             </p>
           </div>
