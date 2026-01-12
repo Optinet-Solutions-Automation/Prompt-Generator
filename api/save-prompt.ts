@@ -2,11 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface SavePromptData {
   brand: string;
-  image_type: string;
+  spec_id: string;
   theme: string;
   description: string;
-  llm_tool: string;
-  additional_instructions: string;
+  no_text: boolean;
   generated_prompt: string;
   timestamp: string;
 }
@@ -15,11 +14,10 @@ interface SavePromptData {
 function transformSaveData(data: SavePromptData) {
   return {
     Brand: data.brand,
-    'Image Type': data.image_type,
+    'Spec ID': data.spec_id,
     Theme: data.theme,
     Description: data.description,
-    'LLM Tool': data.llm_tool,
-    'Additional Instructions': data.additional_instructions,
+    'No Text': data.no_text,
     'Generated Prompt': data.generated_prompt,
     'Date Generated': data.timestamp,
   };
