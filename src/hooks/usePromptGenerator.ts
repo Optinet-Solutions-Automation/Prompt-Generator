@@ -11,7 +11,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 
 // Real API call to generate prompt via n8n webhook
 async function generatePrompt(formData: FormData): Promise<GeneratePromptResponse> {
-  const response = await fetch('/api/generate-prompt-v2', {
+  const response = await fetch('/api/generate-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ async function savePrompt(
   generatedPrompt: string,
   timestamp: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch('/api/save-prompt-v2', {
+  const response = await fetch('/api/save-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
