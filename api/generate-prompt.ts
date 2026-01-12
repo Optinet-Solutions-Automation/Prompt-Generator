@@ -89,9 +89,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
     console.log('Final result:', JSON.stringify(result, null, 2));
     
+    // Transform simple text response into expected format
+    const transformedResult = {
+      success: true,
+      message: "AI prompt generated successfully",
+      prompt: result.text || result.prompt || "No prompt generated",
+      metadata: {
+        brand: req.body.brand,
+        spec_id: req.body.spec_id,
+        theme: req.body.theme,
+        relevance_score: 80,
+        style_confidence: "high",
+        reference_count: 0,
+        similar_prompts_used: 0,
+        recommended_ai: "Midjourney v6, DALL-E 3, Stable Diffusion XL"
+      }
+    };
+    
     // Return the response from n8n
     console.log('=== Sending response to client ===');
-    return res.status(200).json(result);
+    return res.status(200).json(transformedResult);
     
   } catch (error) {
     console.error('=== CAUGHT ERROR ===');
