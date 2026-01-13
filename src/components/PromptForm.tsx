@@ -33,6 +33,21 @@ export function PromptForm({
   // Format spec options for the select dropdown
   const specOptions = SPEC_IDS.map(spec => `${spec.id} - ${spec.label} (${spec.dimensions})`);
 
+  // Handler to extract just the ID from the selected spec option
+  const handleSpecChange = (value: string) => {
+    // Extract just the ID part (everything before the first " - ")
+    const specId = value.split(' - ')[0];
+    onFieldChange('spec_id', specId);
+  };
+
+  // Get the full display value for the select
+  const getSpecDisplayValue = () => {
+    if (!formData.spec_id) return '';
+    const spec = SPEC_IDS.find(s => s.id === formData.spec_id);
+    if (!spec) return formData.spec_id;
+    return `${spec.id} - ${spec.label} (${spec.dimensions})`;
+  };
+
   return (
     <motion.form
       initial={{ opacity: 0 }}
@@ -58,8 +73,8 @@ export function PromptForm({
           label="Spec ID"
           required
           options={specOptions}
-          value={formData.spec_id}
-          onChange={(value) => onFieldChange('spec_id', value)}
+          value={getSpecDisplayValue()}
+          onChange={handleSpecChange}
           placeholder="Select image spec"
           error={errors.spec_id}
         />
