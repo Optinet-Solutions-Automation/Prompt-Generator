@@ -30,9 +30,9 @@ export function ResultDisplay({
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<'chatgpt' | 'gemini' | null>(null);
-  const [generatedImages, setGeneratedImages] = useState<{ chatgpt?: string; gemini?: string }>({});
+  const [generatedImages, setGeneratedImages] = useState<{ chatgpt?: { displayUrl: string; editUrl: string }; gemini?: { displayUrl: string; editUrl: string } }>({});
   const [imageError, setImageError] = useState<string | null>(null);
-  const [modalImage, setModalImage] = useState<{ url: string; provider: 'chatgpt' | 'gemini' } | null>(null);
+  const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(prompt);
@@ -62,16 +62,20 @@ export function ResultDisplay({
       }
 
       const data = await response.json();
+      const responseData = Array.isArray(data) ? data[0] : data;
       
-      // Handle different response formats (direct imageUrl or Google Drive response)
-      const imageUrl = data.imageUrl || 
-                       data.thumbnailLink || 
-                       data.webContentLink || 
-                       (Array.isArray(data) && data[0]?.thumbnailLink) ||
-                       (Array.isArray(data) && data[0]?.webContentLink);
+      // Get display URL (thumbnailLink for faster loading) and edit URL (webViewLink/webContentLink for API)
+      const displayUrl = responseData.imageUrl || 
+                         responseData.thumbnailLink || 
+                         responseData.webContentLink;
       
-      if (imageUrl) {
-        setGeneratedImages(prev => ({ ...prev, [provider]: imageUrl }));
+      const editUrl = responseData.webViewLink || 
+                      responseData.webContentLink || 
+                      responseData.imageUrl ||
+                      (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
+      
+      if (displayUrl && editUrl) {
+        setGeneratedImages(prev => ({ ...prev, [provider]: { displayUrl, editUrl } }));
       } else {
         throw new Error('No image URL returned');
       }
@@ -289,13 +293,13 @@ export function ResultDisplay({
             {generatedImages.chatgpt && (
               <div
                 className="relative group cursor-pointer"
-                onClick={() => setModalImage({ url: generatedImages.chatgpt!, provider: 'chatgpt' })}
+                onClick={() => setModalImage({ displayUrl: generatedImages.chatgpt!.displayUrl, editUrl: generatedImages.chatgpt!.editUrl, provider: 'chatgpt' })}
               >
                 <div className="absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="text-primary font-medium text-sm">Click to enlarge</span>
                 </div>
                 <img
-                  src={generatedImages.chatgpt}
+                  src={generatedImages.chatgpt.displayUrl}
                   alt="Generated with ChatGPT"
                   className="w-full h-48 object-cover rounded-lg border border-border shadow-sm"
                 />
@@ -305,13 +309,13 @@ export function ResultDisplay({
             {generatedImages.gemini && (
               <div
                 className="relative group cursor-pointer"
-                onClick={() => setModalImage({ url: generatedImages.gemini!, provider: 'gemini' })}
+                onClick={() => setModalImage({ displayUrl: generatedImages.gemini!.displayUrl, editUrl: generatedImages.gemini!.editUrl, provider: 'gemini' })}
               >
                 <div className="absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="text-primary font-medium text-sm">Click to enlarge</span>
                 </div>
                 <img
-                  src={generatedImages.gemini}
+                  src={generatedImages.gemini.displayUrl}
                   alt="Generated with Gemini"
                   className="w-full h-48 object-cover rounded-lg border border-border shadow-sm"
                 />
@@ -327,10 +331,12 @@ export function ResultDisplay({
         <ImageModal
           isOpen={!!modalImage}
           onClose={() => setModalImage(null)}
-          imageUrl={modalImage.url}
+          displayUrl={modalImage.displayUrl}
+          editUrl={modalImage.editUrl}
           provider={modalImage.provider}
-          onImageUpdated={(newUrl) => {
-            setGeneratedImages(prev => ({ ...prev, [modalImage.provider]: newUrl }));
+          onImageUpdated={(newDisplayUrl, newEditUrl) => {
+            setGeneratedImages(prev => ({ ...prev, [modalImage.provider]: { displayUrl: newDisplayUrl, editUrl: newEditUrl } }));
+            setModalImage(prev => prev ? { ...prev, displayUrl: newDisplayUrl, editUrl: newEditUrl } : null);
           }}
         />
       )}

@@ -13,21 +13,23 @@ import { HtmlConversionModal } from './HtmlConversionModal';
 interface ImageModalProps {
   isOpen: boolean;
   onClose: () => void;
-  imageUrl: string;
+  displayUrl: string;
+  editUrl: string;
   provider: 'chatgpt' | 'gemini';
-  onImageUpdated?: (newImageUrl: string) => void;
+  onImageUpdated?: (newDisplayUrl: string, newEditUrl: string) => void;
 }
 
-export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated }: ImageModalProps) {
+export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onImageUpdated }: ImageModalProps) {
   const [editInstructions, setEditInstructions] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
-  const [currentImageUrl, setCurrentImageUrl] = useState(imageUrl);
+  const [currentDisplayUrl, setCurrentDisplayUrl] = useState(displayUrl);
+  const [currentEditUrl, setCurrentEditUrl] = useState(editUrl);
   const [showHtmlModal, setShowHtmlModal] = useState(false);
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(currentImageUrl);
+      const response = await fetch(currentDisplayUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -40,7 +42,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated
     } catch (error) {
       console.error('Download failed:', error);
       // Fallback: open in new tab
-      window.open(currentImageUrl, '_blank');
+      window.open(currentDisplayUrl, '_blank');
     }
   };
 
@@ -57,7 +59,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imageUrl: currentImageUrl,
+          imageUrl: currentEditUrl,
           editInstructions: editInstructions.trim(),
           provider,
         }),
@@ -69,18 +71,23 @@ export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated
       }
 
       const data = await response.json();
+      const responseData = Array.isArray(data) ? data[0] : data;
       
-      // Handle different response formats (direct imageUrl or Google Drive response)
-      const newImageUrl = data.imageUrl || 
-                          data.thumbnailLink || 
-                          data.webContentLink || 
-                          (Array.isArray(data) && data[0]?.thumbnailLink) ||
-                          (Array.isArray(data) && data[0]?.webContentLink);
+      // Get display URL (thumbnailLink) and edit URL (webViewLink) from response
+      const newDisplayUrl = responseData.imageUrl || 
+                            responseData.thumbnailLink || 
+                            responseData.webContentLink;
       
-      if (newImageUrl) {
-        setCurrentImageUrl(newImageUrl);
+      const newEditUrl = responseData.webViewLink || 
+                         responseData.webContentLink || 
+                         responseData.imageUrl ||
+                         (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
+      
+      if (newDisplayUrl && newEditUrl) {
+        setCurrentDisplayUrl(newDisplayUrl);
+        setCurrentEditUrl(newEditUrl);
         setEditInstructions('');
-        onImageUpdated?.(newImageUrl);
+        onImageUpdated?.(newDisplayUrl, newEditUrl);
       } else {
         throw new Error('No image URL returned');
       }
@@ -95,7 +102,8 @@ export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated
   const handleClose = () => {
     setEditInstructions('');
     setEditError(null);
-    setCurrentImageUrl(imageUrl);
+    setCurrentDisplayUrl(displayUrl);
+    setCurrentEditUrl(editUrl);
     onClose();
   };
 
@@ -111,7 +119,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated
           <div className="flex flex-col gap-4">
             <div className="relative w-full overflow-auto max-h-[50vh] rounded-lg bg-muted/50">
               <img
-                src={currentImageUrl}
+                src={currentDisplayUrl}
                 alt="Generated image"
                 className="w-full h-auto object-contain rounded-lg"
               />
@@ -171,7 +179,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, provider, onImageUpdated
       <HtmlConversionModal
         isOpen={showHtmlModal}
         onClose={() => setShowHtmlModal(false)}
-        imageUrl={currentImageUrl}
+        imageUrl={currentEditUrl}
       />
     </>
   );
