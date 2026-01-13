@@ -45,21 +45,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('n8n webhook error:', response.status, errorText);
-      return res.status(response.status).json({ 
+      return res.status(response.status).json({
         error: 'Failed to edit image',
-        details: errorText 
+        details: errorText,
       });
     }
 
     const data = await response.json();
     console.log('n8n image edit response:', data);
 
-    return res.status(200).json(data);
+    // 🔹 Normalize webViewLink
+    const webViewLink =
+      data.webViewLink ||
+      data.viewUrl ||
+      (data.fileId ? `https://drive.google.com/file/d/${data.fileId}/view?usp=drivesdk` : null);
+
+    if (!webViewLink) {
+      console.warn('No webViewLink or fileId found in n8n response');
+    }
+
+    return res.status(200).json({
+      ...data,
+      webViewLink,
+    });
   } catch (error) {
     console.error('Image edit error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
