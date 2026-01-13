@@ -63,8 +63,15 @@ export function ResultDisplay({
 
       const data = await response.json();
       
-      if (data.imageUrl) {
-        setGeneratedImages(prev => ({ ...prev, [provider]: data.imageUrl }));
+      // Handle different response formats (direct imageUrl or Google Drive response)
+      const imageUrl = data.imageUrl || 
+                       data.thumbnailLink || 
+                       data.webContentLink || 
+                       (Array.isArray(data) && data[0]?.thumbnailLink) ||
+                       (Array.isArray(data) && data[0]?.webContentLink);
+      
+      if (imageUrl) {
+        setGeneratedImages(prev => ({ ...prev, [provider]: imageUrl }));
       } else {
         throw new Error('No image URL returned');
       }
