@@ -89,20 +89,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
     console.log('Final result:', JSON.stringify(result, null, 2));
     
-    // Transform simple text response into expected format
+    // Extract prompt from n8n response data structure
+    const prompt = result.data?.prompt_detailed || result.text || result.prompt || "No prompt generated";
+    
+    // Transform response into expected format
     const transformedResult = {
-      success: true,
-      message: "AI prompt generated successfully",
-      prompt: result.text || result.prompt || "No prompt generated",
+      success: result.success || true,
+      message: result.message || "AI prompt generated successfully",
+      prompt: prompt,
       metadata: {
-        brand: req.body.brand,
-        spec_id: req.body.spec_id,
-        theme: req.body.theme,
-        relevance_score: 80,
-        style_confidence: "high",
-        reference_count: 0,
-        similar_prompts_used: 0,
-        recommended_ai: "Midjourney v6, DALL-E 3, Stable Diffusion XL"
+        brand: result.data?.brand || req.body.brand,
+        spec_id: result.data?.spec_id || req.body.spec_id,
+        theme: result.data?.theme || req.body.theme,
+        relevance_score: result.data?.relevance_score || 80,
+        style_confidence: result.data?.style_confidence || "high",
+        reference_count: result.data?.reference_count || 0,
+        similar_prompts_used: result.data?.similar_prompts_used || 0,
+        recommended_ai: result.data?.recommended_ai || "Midjourney v6, DALL-E 3, Stable Diffusion XL"
       }
     };
     
