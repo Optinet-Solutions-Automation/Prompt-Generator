@@ -40,6 +40,7 @@ export const BRANDS = [
 ] as const;
 
 export const SPEC_IDS = [
+  { id: 'EMAIL_BANNER_1024x512', label: 'Email Banner', dimensions: '1024x512' },
   { id: 'H1_RBC', label: 'Hero Desktop', dimensions: '1656x500' },
   { id: 'H2_RBC', label: 'Hero Mobile', dimensions: '960x640' },
   { id: 'W2_RBC', label: 'Hero Tablet', dimensions: '912x360' },
