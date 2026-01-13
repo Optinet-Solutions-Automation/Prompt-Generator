@@ -329,6 +329,9 @@ export function ResultDisplay({
           onClose={() => setModalImage(null)}
           imageUrl={modalImage.url}
           provider={modalImage.provider}
+          onImageUpdated={(newUrl) => {
+            setGeneratedImages(prev => ({ ...prev, [modalImage.provider]: newUrl }));
+          }}
         />
       )}
 
