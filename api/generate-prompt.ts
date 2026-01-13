@@ -11,11 +11,11 @@ interface FormData {
 // Transform frontend field names to match n8n expected format
 function transformFormData(formData: FormData) {
   return {
-    Brand: formData.brand,
-    'Spec ID': formData.spec_id,
-    Theme: formData.theme,
-    Description: formData.description,
-    'No Text': formData.no_text,
+    brand: formData.brand,
+    'spec_id': formData.spec_id,
+    theme: formData.theme,
+    description: formData.description,
+    'no_text': formData.no_text,
   };
 }
 
