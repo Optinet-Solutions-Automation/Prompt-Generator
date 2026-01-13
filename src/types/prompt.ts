@@ -36,7 +36,7 @@ export const BRANDS = [
   'SpinJo',
   'SpinsUp',
   'FortunePlay',
-  'Roosterbet',
+  'Roosterbet ',
 ] as const;
 
 export const SPEC_IDS = [
