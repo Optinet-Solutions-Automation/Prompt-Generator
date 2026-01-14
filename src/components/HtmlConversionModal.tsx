@@ -37,7 +37,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
   });
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [generatedHtml, setGeneratedHtml] = useState<{ url: string; previewUrl: string } | null>(null);
+  const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
 
   const handleInputChange = (field: keyof BonusFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -60,25 +60,18 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to convert to HTML');
+        const errorText = await response.text();
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.error || 'Failed to convert to HTML');
+        } catch {
+          throw new Error('Failed to convert to HTML');
+        }
       }
 
-      const data = await response.json();
-      
-      // Handle Google Drive response format
-      const htmlUrl = data.webContentLink || 
-                      data.downloadUrl || 
-                      (Array.isArray(data) && data[0]?.webContentLink);
-      const previewUrl = data.webViewLink || 
-                         data.previewUrl || 
-                         (Array.isArray(data) && data[0]?.webViewLink);
-
-      if (htmlUrl) {
-        setGeneratedHtml({ url: htmlUrl, previewUrl: previewUrl || htmlUrl });
-      } else {
-        throw new Error('No HTML URL returned');
-      }
+      // Response is raw HTML
+      const htmlContent = await response.text();
+      setGeneratedHtml(htmlContent);
     } catch (err) {
       console.error('HTML conversion error:', err);
       setError(err instanceof Error ? err.message : 'Failed to convert to HTML');
@@ -88,14 +81,24 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
   };
 
   const handleDownload = () => {
-    if (generatedHtml?.url) {
-      window.open(generatedHtml.url, '_blank');
+    if (generatedHtml) {
+      const blob = new Blob([generatedHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'email-template.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   };
 
   const handlePreview = () => {
-    if (generatedHtml?.previewUrl) {
-      window.open(generatedHtml.previewUrl, '_blank');
+    if (generatedHtml) {
+      const blob = new Blob([generatedHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
     }
   };
 
