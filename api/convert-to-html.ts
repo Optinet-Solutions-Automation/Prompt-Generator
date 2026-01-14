@@ -43,11 +43,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).json({ error: 'n8n error', details: err });
     }
 
+<<<<<<< HEAD
     const html = await response.text();
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(html);
 
+=======
+    // Response is an array with html property: [{ "html": "..." }]
+    const data = await response.json();
+    console.log('n8n HTML conversion response:', data);
+
+    // Extract HTML from the array response
+    const htmlContent = Array.isArray(data) && data.length > 0 ? data[0].html : null;
+    
+    if (!htmlContent) {
+      console.error('Invalid response format - no html found:', data);
+      return res.status(500).json({ error: 'Invalid response format from webhook' });
+    }
+
+    return res.status(200).json({ html: htmlContent });
+>>>>>>> 5a09252cd537e2f451a458b3e9717b45dc5d5c87
   } catch (error) {
     console.error('HTML conversion error:', error);
     return res.status(500).json({ error: 'Internal server error' });
