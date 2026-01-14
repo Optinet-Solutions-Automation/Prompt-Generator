@@ -71,10 +71,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Response is an array with html property: [{ "html": "..." }]
     const data = await response.json();
     console.log('n8n HTML conversion response:', data);
 
-    return res.status(200).json(data);
+    // Extract HTML from the array response
+    const htmlContent = Array.isArray(data) && data.length > 0 ? data[0].html : null;
+    
+    if (!htmlContent) {
+      console.error('Invalid response format - no html found:', data);
+      return res.status(500).json({ error: 'Invalid response format from webhook' });
+    }
+
+    return res.status(200).json({ html: htmlContent });
   } catch (error) {
     console.error('HTML conversion error:', error);
     return res.status(500).json({ 
