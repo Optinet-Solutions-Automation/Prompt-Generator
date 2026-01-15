@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
+import { ReferenceSelect } from './ReferenceSelect';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
@@ -31,26 +32,6 @@ export function PromptForm({
   // Get references for selected brand
   const availableReferences = formData.brand ? BRAND_REFERENCES[formData.brand] || [] : [];
 
-  // Format reference options for display with category prefix
-  const referenceOptions = availableReferences.map(ref => `${ref.label} — ${ref.description}`);
-
-  // Handler to extract the reference ID from the selected option
-  const handleReferenceChange = (value: string) => {
-    const label = value.split(' — ')[0];
-    const ref = availableReferences.find(r => r.label === label);
-    if (ref) {
-      onFieldChange('reference', ref.id);
-    }
-  };
-
-  // Get the full display value for the reference select
-  const getReferenceDisplayValue = () => {
-    if (!formData.reference) return '';
-    const ref = availableReferences.find(r => r.id === formData.reference);
-    if (!ref) return '';
-    return `${ref.label} — ${ref.description}`;
-  };
-
   // Reset reference when brand changes
   const handleBrandChange = (value: string) => {
     onFieldChange('brand', value);
@@ -79,16 +60,15 @@ export function PromptForm({
           error={errors.brand}
         />
 
-        <FormField
-          type="select"
+        <ReferenceSelect
           label="Reference"
           required
-          options={referenceOptions}
-          value={getReferenceDisplayValue()}
-          onChange={handleReferenceChange}
+          value={formData.reference}
+          onChange={(value) => onFieldChange('reference', value)}
           placeholder={formData.brand ? "Select a reference" : "Select a brand first"}
           error={errors.reference}
           disabled={!formData.brand || availableReferences.length === 0}
+          references={availableReferences}
         />
       </div>
 
