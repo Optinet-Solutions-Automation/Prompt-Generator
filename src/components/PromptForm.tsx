@@ -7,7 +7,7 @@ import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
   BRANDS,
-  SPEC_IDS,
+  BRAND_REFERENCES,
 } from '@/types/prompt';
 
 interface PromptFormProps {
@@ -30,22 +30,44 @@ export function PromptForm({
     onSubmit();
   };
 
-  // Format spec options for the select dropdown
-  const specOptions = SPEC_IDS.map(spec => `${spec.id} - ${spec.label} (${spec.dimensions})`);
+  // Get references for selected brand
+  const availableReferences = formData.brand ? BRAND_REFERENCES[formData.brand] || [] : [];
+  
+  // Group references by category
+  const groupedReferences = availableReferences.reduce((acc, ref) => {
+    if (!acc[ref.category]) {
+      acc[ref.category] = [];
+    }
+    acc[ref.category].push(ref);
+    return acc;
+  }, {} as Record<string, typeof availableReferences>);
 
-  // Handler to extract just the ID from the selected spec option
-  const handleSpecChange = (value: string) => {
-    // Extract just the ID part (everything before the first " - ")
-    const specId = value.split(' - ')[0];
-    onFieldChange('spec_id', specId);
+  // Format reference options for display with category prefix
+  const referenceOptions = availableReferences.map(ref => `${ref.label} — ${ref.description}`);
+
+  // Handler to extract the reference ID from the selected option
+  const handleReferenceChange = (value: string) => {
+    const label = value.split(' — ')[0];
+    const ref = availableReferences.find(r => r.label === label);
+    if (ref) {
+      onFieldChange('reference', ref.id);
+    }
   };
 
-  // Get the full display value for the select
-  const getSpecDisplayValue = () => {
-    if (!formData.spec_id) return '';
-    const spec = SPEC_IDS.find(s => s.id === formData.spec_id);
-    if (!spec) return formData.spec_id;
-    return `${spec.id} - ${spec.label} (${spec.dimensions})`;
+  // Get the full display value for the reference select
+  const getReferenceDisplayValue = () => {
+    if (!formData.reference) return '';
+    const ref = availableReferences.find(r => r.id === formData.reference);
+    if (!ref) return '';
+    return `${ref.label} — ${ref.description}`;
+  };
+
+  // Reset reference when brand changes
+  const handleBrandChange = (value: string) => {
+    onFieldChange('brand', value);
+    if (formData.reference) {
+      onFieldChange('reference', '');
+    }
   };
 
   return (
@@ -61,22 +83,23 @@ export function PromptForm({
           type="select"
           label="Brand"
           required
-          options={BRANDS}
+          options={[...BRANDS]}
           value={formData.brand}
-          onChange={(value) => onFieldChange('brand', value)}
+          onChange={handleBrandChange}
           placeholder="Select a brand"
           error={errors.brand}
         />
 
         <FormField
           type="select"
-          label="Spec ID"
+          label="Reference"
           required
-          options={specOptions}
-          value={getSpecDisplayValue()}
-          onChange={handleSpecChange}
-          placeholder="Select image spec"
-          error={errors.spec_id}
+          options={referenceOptions}
+          value={getReferenceDisplayValue()}
+          onChange={handleReferenceChange}
+          placeholder={formData.brand ? "Select a reference" : "Select a brand first"}
+          error={errors.reference}
+          disabled={!formData.brand || availableReferences.length === 0}
         />
       </div>
 
