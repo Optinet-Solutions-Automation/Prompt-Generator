@@ -10,6 +10,7 @@ import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
+import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +23,8 @@ interface ResultDisplayProps {
   metadata: PromptMetadata | null;
   processingTime: number;
   appState: AppState;
+  generatedImages: GeneratedImages;
+  isRegeneratingPrompt: boolean;
   onSave: () => void;
   onDontSave: () => void;
   onEditForm: () => void;
@@ -29,6 +32,7 @@ interface ResultDisplayProps {
   onClearForm: () => void;
   onPromptChange?: (newPrompt: string) => void;
   onMetadataChange?: (field: keyof PromptMetadata, value: string) => void;
+  onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string }) => void;
 }
 
 export function ResultDisplay({
@@ -36,6 +40,8 @@ export function ResultDisplay({
   metadata,
   processingTime,
   appState,
+  generatedImages,
+  isRegeneratingPrompt,
   onSave,
   onDontSave,
   onEditForm,
@@ -43,10 +49,10 @@ export function ResultDisplay({
   onClearForm,
   onPromptChange,
   onMetadataChange,
+  onAddGeneratedImage,
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<'chatgpt' | 'gemini' | null>(null);
-  const [generatedImages, setGeneratedImages] = useState<{ chatgpt: { displayUrl: string; editUrl: string }[]; gemini: { displayUrl: string; editUrl: string }[] }>({ chatgpt: [], gemini: [] });
   const [imageError, setImageError] = useState<string | null>(null);
   const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -103,10 +109,7 @@ export function ResultDisplay({
                       (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
       
       if (displayUrl && editUrl) {
-        setGeneratedImages(prev => ({
-          ...prev,
-          [provider]: [...prev[provider], { displayUrl, editUrl }]
-        }));
+        onAddGeneratedImage?.(provider, { displayUrl, editUrl });
       } else {
         throw new Error('No image URL returned');
       }
@@ -194,10 +197,20 @@ export function ResultDisplay({
           <div className="mt-4 flex justify-end">
             <Button
               onClick={onGenerateAgain}
+              disabled={isRegeneratingPrompt}
               className="gap-2 gradient-primary"
             >
-              <Sparkles className="w-4 h-4" />
-              Regenerate Prompt
+              {isRegeneratingPrompt ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Regenerating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Regenerate Prompt
+                </>
+              )}
             </Button>
           </div>
         </motion.div>
@@ -446,7 +459,6 @@ export function ResultDisplay({
           editUrl={modalImage.editUrl}
           provider={modalImage.provider}
           onImageUpdated={(newDisplayUrl, newEditUrl) => {
-            setGeneratedImages(prev => ({ ...prev, [modalImage.provider]: { displayUrl: newDisplayUrl, editUrl: newEditUrl } }));
             setModalImage(prev => prev ? { ...prev, displayUrl: newDisplayUrl, editUrl: newEditUrl } : null);
           }}
         />

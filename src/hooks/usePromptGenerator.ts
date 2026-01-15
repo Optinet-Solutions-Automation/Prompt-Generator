@@ -65,6 +65,11 @@ async function savePrompt(
   return response.json();
 }
 
+export type GeneratedImages = { 
+  chatgpt: { displayUrl: string; editUrl: string }[]; 
+  gemini: { displayUrl: string; editUrl: string }[] 
+};
+
 export function usePromptGenerator() {
   const [appState, setAppState] = useState<AppState>('FORM');
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
@@ -75,6 +80,8 @@ export function usePromptGenerator() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const [generatedTimestamp, setGeneratedTimestamp] = useState('');
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImages>({ chatgpt: [], gemini: [] });
+  const [isRegeneratingPrompt, setIsRegeneratingPrompt] = useState(false);
 
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -163,8 +170,7 @@ export function usePromptGenerator() {
   const handleGenerateAgain = useCallback(async () => {
     // Use metadata values if available (for regenerating from result page)
     if (promptMetadata) {
-      setAppState('PROCESSING');
-      setElapsedTime(0);
+      setIsRegeneratingPrompt(true);
       setErrorMessage('');
 
       try {
@@ -188,16 +194,23 @@ export function usePromptGenerator() {
         setPromptMetadata(data.metadata);
         setProcessingTime((endTime - startTime) / 1000);
         setGeneratedTimestamp(new Date().toISOString());
-        setAppState('RESULT');
       } catch (error) {
         console.error('Error generating prompt:', error);
         setErrorMessage('Something went wrong. Please try again.');
-        setAppState('RESULT');
+      } finally {
+        setIsRegeneratingPrompt(false);
       }
     } else {
       handleSubmit();
     }
   }, [promptMetadata, handleSubmit]);
+
+  const handleAddGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string }) => {
+    setGeneratedImages(prev => ({
+      ...prev,
+      [provider]: [...prev[provider], image]
+    }));
+  }, []);
 
   const handlePromptChange = useCallback((newPrompt: string) => {
     setGeneratedPrompt(newPrompt);
@@ -216,6 +229,7 @@ export function usePromptGenerator() {
     setElapsedTime(0);
     setErrorMessage('');
     setGeneratedTimestamp('');
+    setGeneratedImages({ chatgpt: [], gemini: [] });
     setAppState('FORM');
   }, []);
 
@@ -238,6 +252,8 @@ export function usePromptGenerator() {
     processingTime,
     elapsedTime,
     errorMessage,
+    generatedImages,
+    isRegeneratingPrompt,
     handleFieldChange,
     handleSubmit,
     handleSave,
@@ -248,5 +264,6 @@ export function usePromptGenerator() {
     handleGoBack,
     handlePromptChange,
     handleMetadataChange,
+    handleAddGeneratedImage,
   };
 }
