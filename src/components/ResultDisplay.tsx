@@ -177,8 +177,7 @@ export function ResultDisplay({
             <FormField
               type="text"
               label="Theme"
-              required
-              value={metadata.theme}
+              value={metadata.theme || ''}
               onChange={(value) => onMetadataChange?.('theme', value)}
               placeholder="e.g., Dark Luxury Noir Valentine's"
             />
@@ -186,8 +185,7 @@ export function ResultDisplay({
             <FormField
               type="textarea"
               label="Description"
-              required
-              value={metadata.description}
+              value={metadata.description || ''}
               onChange={(value) => onMetadataChange?.('description', value)}
               placeholder="Describe your image..."
               rows={2}
