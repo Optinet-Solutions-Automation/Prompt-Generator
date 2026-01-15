@@ -5,18 +5,32 @@ import {
   INITIAL_FORM_DATA,
   GeneratePromptResponse,
   PromptMetadata,
+  BRAND_REFERENCES,
 } from '@/types/prompt';
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
+// Helper to get reference description from ID
+function getReferenceDescription(brand: string, referenceId: string): string {
+  const references = BRAND_REFERENCES[brand] || [];
+  const ref = references.find(r => r.id === referenceId);
+  return ref?.description || referenceId;
+}
+
 // API call to generate prompt via n8n webhook
 async function generatePrompt(formData: FormData): Promise<GeneratePromptResponse> {
+  // Transform reference ID to description for API
+  const apiData = {
+    ...formData,
+    reference: getReferenceDescription(formData.brand, formData.reference),
+  };
+
   const response = await fetch('/api/generate-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(formData),
+    body: JSON.stringify(apiData),
   });
 
   if (!response.ok) {
