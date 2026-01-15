@@ -1,9 +1,16 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Loader2, RefreshCw, Trash2, Sparkles, Image, Palette, Target, Pencil, Wand2 } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw, Sparkles, Image, Palette, Target, Pencil, RotateCcw, Bot, Gem } from 'lucide-react';
 import { useState } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
+import { SavePromptModal } from './SavePromptModal';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ResultDisplayProps {
   prompt: string;
@@ -30,9 +37,10 @@ export function ResultDisplay({
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<'chatgpt' | 'gemini' | null>(null);
-  const [generatedImages, setGeneratedImages] = useState<{ chatgpt?: { displayUrl: string; editUrl: string }; gemini?: { displayUrl: string; editUrl: string } }>({});
+  const [generatedImages, setGeneratedImages] = useState<{ chatgpt: { displayUrl: string; editUrl: string }[]; gemini: { displayUrl: string; editUrl: string }[] }>({ chatgpt: [], gemini: [] });
   const [imageError, setImageError] = useState<string | null>(null);
   const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(prompt);
@@ -75,7 +83,10 @@ export function ResultDisplay({
                       (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
       
       if (displayUrl && editUrl) {
-        setGeneratedImages(prev => ({ ...prev, [provider]: { displayUrl, editUrl } }));
+        setGeneratedImages(prev => ({
+          ...prev,
+          [provider]: [...prev[provider], { displayUrl, editUrl }]
+        }));
       } else {
         throw new Error('No image URL returned');
       }
@@ -188,26 +199,19 @@ export function ResultDisplay({
         </div>
       </div>
 
-      {/* Save Section */}
-      {showSaveButtons && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-xl border border-border p-6 shadow-md"
-        >
-          <p className="text-center text-foreground font-medium mb-4">
-            Would you like to save this prompt?
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Button onClick={onSave} className="gradient-primary min-w-24">
-              Yes
-            </Button>
-            <Button variant="outline" onClick={onDontSave} className="min-w-24">
-              No
-            </Button>
-          </div>
-        </motion.div>
-      )}
+      {/* Save Prompt Modal */}
+      <SavePromptModal
+        isOpen={showSaveModal || showSaveButtons}
+        onClose={() => setShowSaveModal(false)}
+        onSave={() => {
+          setShowSaveModal(false);
+          onSave();
+        }}
+        onDontSave={() => {
+          setShowSaveModal(false);
+          onDontSave();
+        }}
+      />
 
       {/* Saving State */}
       {isSaving && (
@@ -240,45 +244,35 @@ export function ResultDisplay({
         transition={{ delay: 0.3 }}
         className="bg-card rounded-xl border border-border p-6 shadow-md"
       >
-        <p className="text-center text-foreground font-medium mb-4">
-          Generate an image using this prompt
+        <p className="text-center text-muted-foreground text-sm mb-4">
+          Generate images using this prompt
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           <Button
             onClick={() => handleGenerateImage('chatgpt')}
             disabled={generatingImage !== null}
             variant="outline"
-            className="gap-2 min-w-40"
+            className="gap-2"
           >
             {generatingImage === 'chatgpt' ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Generating...
-              </>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <Wand2 className="w-4 h-4" />
-                Generate with ChatGPT
-              </>
+              <Bot className="w-4 h-4" />
             )}
+            ChatGPT
           </Button>
           <Button
             onClick={() => handleGenerateImage('gemini')}
             disabled={generatingImage !== null}
             variant="outline"
-            className="gap-2 min-w-40"
+            className="gap-2"
           >
             {generatingImage === 'gemini' ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Generating...
-              </>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <Wand2 className="w-4 h-4" />
-                Generate with Gemini
-              </>
+              <Gem className="w-4 h-4" />
             )}
+            Gemini
           </Button>
         </div>
 
@@ -287,39 +281,62 @@ export function ResultDisplay({
           <p className="text-destructive text-sm text-center mt-3">{imageError}</p>
         )}
 
-        {/* Generated Images Thumbnails */}
-        {(generatedImages.chatgpt || generatedImages.gemini) && (
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {generatedImages.chatgpt && (
-              <div
-                className="relative group cursor-pointer"
-                onClick={() => setModalImage({ displayUrl: generatedImages.chatgpt!.displayUrl, editUrl: generatedImages.chatgpt!.editUrl, provider: 'chatgpt' })}
-              >
-                <div className="absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-primary font-medium text-sm">Click to enlarge</span>
+        {/* Generated Images Gallery */}
+        {(generatedImages.chatgpt.length > 0 || generatedImages.gemini.length > 0) && (
+          <div className="mt-6 space-y-4">
+            {/* ChatGPT Images */}
+            {generatedImages.chatgpt.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Bot className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">ChatGPT ({generatedImages.chatgpt.length})</span>
                 </div>
-                <img
-                  src={generatedImages.chatgpt.displayUrl}
-                  alt="Generated with ChatGPT"
-                  className="w-full h-48 object-cover rounded-lg border border-border shadow-sm"
-                />
-                <p className="text-xs text-muted-foreground text-center mt-2">ChatGPT</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {generatedImages.chatgpt.map((img, index) => (
+                    <div
+                      key={`chatgpt-${index}`}
+                      className="relative group cursor-pointer aspect-square"
+                      onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: 'chatgpt' })}
+                    >
+                      <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                        <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
+                      </div>
+                      <img
+                        src={img.displayUrl}
+                        alt={`ChatGPT image ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            {generatedImages.gemini && (
-              <div
-                className="relative group cursor-pointer"
-                onClick={() => setModalImage({ displayUrl: generatedImages.gemini!.displayUrl, editUrl: generatedImages.gemini!.editUrl, provider: 'gemini' })}
-              >
-                <div className="absolute inset-0 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-primary font-medium text-sm">Click to enlarge</span>
+
+            {/* Gemini Images */}
+            {generatedImages.gemini.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Gem className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Gemini ({generatedImages.gemini.length})</span>
                 </div>
-                <img
-                  src={generatedImages.gemini.displayUrl}
-                  alt="Generated with Gemini"
-                  className="w-full h-48 object-cover rounded-lg border border-border shadow-sm"
-                />
-                <p className="text-xs text-muted-foreground text-center mt-2">Gemini</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {generatedImages.gemini.map((img, index) => (
+                    <div
+                      key={`gemini-${index}`}
+                      className="relative group cursor-pointer aspect-square"
+                      onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: 'gemini' })}
+                    >
+                      <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                        <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
+                      </div>
+                      <img
+                        src={img.displayUrl}
+                        alt={`Gemini image ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -342,23 +359,46 @@ export function ResultDisplay({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Button
-          onClick={onGenerateAgain}
-          className="gradient-primary gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Generate Again
-        </Button>
-        <Button variant="outline" onClick={onEditForm} className="gap-2">
-          <Pencil className="w-4 h-4" />
-          Edit Form
-        </Button>
-        <Button variant="outline" onClick={onClearForm} className="gap-2">
-          <Trash2 className="w-4 h-4" />
-          Clear Form
-        </Button>
-      </div>
+      <TooltipProvider>
+        <div className="flex gap-2 justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onGenerateAgain}
+                size="icon"
+                className="gradient-primary"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Generate Again</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={onEditForm}>
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit Form</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={onClearForm}>
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Start Over</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </motion.div>
   );
 }
