@@ -5,7 +5,6 @@ export interface FormData {
   reference: string;
   theme: string;
   description: string;
-  no_text: boolean;
 }
 
 export interface ReferenceOption {
@@ -167,5 +166,4 @@ export const INITIAL_FORM_DATA: FormData = {
   reference: '',
   theme: '',
   description: '',
-  no_text: false,
 };

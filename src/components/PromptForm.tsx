@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
@@ -13,7 +11,7 @@ import {
 interface PromptFormProps {
   formData: FormData;
   errors: Partial<Record<keyof FormData, string>>;
-  onFieldChange: (field: keyof FormData, value: string | boolean) => void;
+  onFieldChange: (field: keyof FormData, value: string) => void;
   onSubmit: () => void;
   onClear: () => void;
 }
@@ -32,15 +30,6 @@ export function PromptForm({
 
   // Get references for selected brand
   const availableReferences = formData.brand ? BRAND_REFERENCES[formData.brand] || [] : [];
-  
-  // Group references by category
-  const groupedReferences = availableReferences.reduce((acc, ref) => {
-    if (!acc[ref.category]) {
-      acc[ref.category] = [];
-    }
-    acc[ref.category].push(ref);
-    return acc;
-  }, {} as Record<string, typeof availableReferences>);
 
   // Format reference options for display with category prefix
   const referenceOptions = availableReferences.map(ref => `${ref.label} — ${ref.description}`);
@@ -125,20 +114,6 @@ export function PromptForm({
         rows={4}
         error={errors.description}
       />
-
-      <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 border border-border">
-        <div className="space-y-0.5">
-          <Label htmlFor="no-text" className="text-base font-medium">No Text</Label>
-          <p className="text-sm text-muted-foreground">
-            Generate image without any text overlays
-          </p>
-        </div>
-        <Switch
-          id="no-text"
-          checked={formData.no_text}
-          onCheckedChange={(checked) => onFieldChange('no_text', checked)}
-        />
-      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button

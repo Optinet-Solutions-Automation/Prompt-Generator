@@ -98,7 +98,7 @@ export function usePromptGenerator() {
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
-  const handleFieldChange = useCallback((field: keyof FormData, value: string | boolean) => {
+  const handleFieldChange = useCallback((field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
