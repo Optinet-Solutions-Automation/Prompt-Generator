@@ -2,15 +2,33 @@ export type AppState = 'FORM' | 'PROCESSING' | 'RESULT' | 'SAVING' | 'SAVED';
 
 export interface FormData {
   brand: string;
-  spec_id: string;
+  reference: string;
   theme: string;
   description: string;
   no_text: boolean;
 }
 
+export interface ReferenceOption {
+  id: string;
+  label: string;
+  description: string;
+  category: string;
+}
+
+export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
+  'FortunePlay': [
+    { id: 'nightlife_lion', label: 'Nightlife Lion', description: 'A right-side, half-body lion in a sharp suit wearing sunglasses', category: 'Promotions' },
+    { id: 'explorer_lion', label: 'Explorer Lion', description: 'A center-position, half-body lion in adventure gear holding a treasure map', category: 'Promotions' },
+    { id: 'smoking_lion', label: 'Smoking Lion', description: 'A right-side, half-body lion in ornate attire holding a cigar', category: 'Promotions' },
+    { id: 'driver_lion', label: 'Driver Lion', description: 'A right-side, half-body lion in red clothes driving a car', category: 'Promotions' },
+    { id: 'boss_lion', label: 'Boss Lion', description: 'A right-side, half-body lion in a suit holding cash', category: 'Promotions' },
+    { id: 'neon_lion', label: 'Neon Lion', description: 'A right-side, half-body lion wearing vibrant sunglasses', category: 'Promotions' },
+  ],
+};
+
 export interface PromptMetadata {
   brand: string;
-  spec_id: string;
+  reference: string;
   theme: string;
   relevance_score: number;
   style_confidence: string;
@@ -146,7 +164,7 @@ export const SPEC_IDS = [
 
 export const INITIAL_FORM_DATA: FormData = {
   brand: '',
-  spec_id: '',
+  reference: '',
   theme: '',
   description: '',
   no_text: false,

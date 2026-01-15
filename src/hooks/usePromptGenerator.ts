@@ -90,7 +90,7 @@ export function usePromptGenerator() {
     const newErrors: FormErrors = {};
 
     if (!formData.brand) newErrors.brand = 'Please select a brand';
-    if (!formData.spec_id) newErrors.spec_id = 'Please select a spec ID';
+    if (!formData.reference) newErrors.reference = 'Please select a reference';
     if (!formData.theme.trim()) newErrors.theme = 'Please enter a theme';
     if (!formData.description.trim()) newErrors.description = 'Please enter a description';
 

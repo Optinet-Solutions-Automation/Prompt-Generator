@@ -18,10 +18,11 @@ interface BaseFieldProps {
 
 interface SelectFieldProps extends BaseFieldProps {
   type: 'select';
-  options: readonly string[];
+  options: readonly string[] | string[];
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  disabled?: boolean;
 }
 
 interface TextInputProps extends BaseFieldProps {
@@ -58,11 +59,11 @@ export function FormField(props: FormFieldProps) {
       </Label>
 
       {props.type === 'select' && (
-        <Select value={props.value} onValueChange={props.onChange}>
+        <Select value={props.value} onValueChange={props.onChange} disabled={props.disabled}>
           <SelectTrigger
             className={`w-full bg-card border-input focus:ring-2 focus:ring-primary/20 transition-all ${
               error ? 'border-destructive' : ''
-            }`}
+            } ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <SelectValue placeholder={props.placeholder} />
           </SelectTrigger>
