@@ -160,10 +160,52 @@ export function usePromptGenerator() {
     setAppState('SAVED'); // Just hide the save buttons
   }, []);
 
-  const handleGenerateAgain = useCallback(() => {
-    // Keep form data, just regenerate
-    handleSubmit();
-  }, [handleSubmit]);
+  const handleGenerateAgain = useCallback(async () => {
+    // Use metadata values if available (for regenerating from result page)
+    if (promptMetadata) {
+      setAppState('PROCESSING');
+      setElapsedTime(0);
+      setErrorMessage('');
+
+      try {
+        const startTime = Date.now();
+        // Send metadata directly to API (already has formatted reference)
+        const response = await fetch('/api/generate-prompt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(promptMetadata),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate prompt');
+        }
+
+        const data = await response.json();
+        const endTime = Date.now();
+        setGeneratedPrompt(data.prompt);
+        setPromptMetadata(data.metadata);
+        setProcessingTime((endTime - startTime) / 1000);
+        setGeneratedTimestamp(new Date().toISOString());
+        setAppState('RESULT');
+      } catch (error) {
+        console.error('Error generating prompt:', error);
+        setErrorMessage('Something went wrong. Please try again.');
+        setAppState('RESULT');
+      }
+    } else {
+      handleSubmit();
+    }
+  }, [promptMetadata, handleSubmit]);
+
+  const handlePromptChange = useCallback((newPrompt: string) => {
+    setGeneratedPrompt(newPrompt);
+  }, []);
+
+  const handleMetadataChange = useCallback((field: keyof PromptMetadata, value: string) => {
+    setPromptMetadata((prev) => prev ? { ...prev, [field]: value } : null);
+  }, []);
 
   const handleClearForm = useCallback(() => {
     setFormData(INITIAL_FORM_DATA);
@@ -204,5 +246,7 @@ export function usePromptGenerator() {
     handleGenerateAgain,
     handleClearForm,
     handleGoBack,
+    handlePromptChange,
+    handleMetadataChange,
   };
 }

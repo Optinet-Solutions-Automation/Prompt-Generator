@@ -24,6 +24,8 @@ const Index = () => {
     handleGenerateAgain,
     handleClearForm,
     handleGoBack,
+    handlePromptChange,
+    handleMetadataChange,
   } = usePromptGenerator();
 
   const showForm = appState === 'FORM';
@@ -99,6 +101,8 @@ const Index = () => {
                   onEditForm={handleEditForm}
                   onGenerateAgain={handleGenerateAgain}
                   onClearForm={handleClearForm}
+                  onPromptChange={handlePromptChange}
+                  onMetadataChange={handleMetadataChange}
                 />
               )}
             </AnimatePresence>
