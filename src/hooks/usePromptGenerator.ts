@@ -112,8 +112,6 @@ export function usePromptGenerator() {
 
     if (!formData.brand) newErrors.brand = 'Please select a brand';
     if (!formData.reference) newErrors.reference = 'Please select a reference';
-    if (!formData.theme.trim()) newErrors.theme = 'Please enter a theme';
-    if (!formData.description.trim()) newErrors.description = 'Please enter a description';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
