@@ -75,6 +75,9 @@ export function ResultDisplay({
   };
 
   const handleGenerateImage = async (provider: 'chatgpt' | 'gemini') => {
+    // Prevent multiple simultaneous requests
+    if (generatingImage !== null) return;
+    
     setGeneratingImage(provider);
     setImageError(null);
 
