@@ -148,44 +148,36 @@ export function ResultDisplay({
         </motion.div>
       )}
 
-      {/* Recommended AI */}
-      {metadata?.recommended_ai && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20 p-4"
-        >
-          <p className="text-sm text-muted-foreground mb-1">Recommended AI Tools</p>
-          <p className="text-foreground font-medium">{metadata.recommended_ai}</p>
-        </motion.div>
-      )}
-
-      {/* Prompt Card */}
-      <div className="relative">
-        <div className="absolute inset-0 gradient-primary rounded-xl opacity-5" />
-        <div className="relative bg-card rounded-xl border border-border shadow-lg overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+      {/* Prompt Card - HERO HIGHLIGHT */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="relative"
+      >
+        <div className="absolute -inset-1 gradient-primary rounded-2xl opacity-20 blur-sm" />
+        <div className="relative bg-card rounded-xl border-2 border-primary/30 shadow-lg shadow-primary/10 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
             <div>
-              <h3 className="font-semibold text-foreground">Your Generated Prompt</h3>
+              <h3 className="font-bold text-lg text-foreground tracking-tight">Your Generated Prompt</h3>
               <p className="text-sm text-muted-foreground">
-                Generated in {processingTime.toFixed(1)} seconds
+                Generated in {processingTime.toFixed(1)}s
               </p>
             </div>
             
             {/* Toolbar */}
             <TooltipProvider>
-              <div className="flex items-center gap-1 bg-background/50 rounded-lg p-1 border border-border">
+              <div className="flex items-center gap-0.5 bg-background rounded-lg p-1 border border-border shadow-sm">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleCopy}
-                      className="h-8 w-8"
+                      className="h-8 w-8 hover:bg-primary/10"
                     >
                       {copied ? (
-                        <Check className="w-4 h-4 text-green-500" />
+                        <Check className="w-4 h-4 text-success" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
@@ -196,7 +188,7 @@ export function ResultDisplay({
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="w-px h-5 bg-border" />
+                <div className="w-px h-4 bg-border" />
 
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -204,7 +196,7 @@ export function ResultDisplay({
                       variant="ghost"
                       size="icon"
                       onClick={onGenerateAgain}
-                      className="h-8 w-8"
+                      className="h-8 w-8 hover:bg-primary/10"
                     >
                       <RefreshCw className="w-4 h-4" />
                     </Button>
@@ -220,7 +212,7 @@ export function ResultDisplay({
                       variant="ghost"
                       size="icon"
                       onClick={onEditForm}
-                      className="h-8 w-8"
+                      className="h-8 w-8 hover:bg-primary/10"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -236,7 +228,7 @@ export function ResultDisplay({
                       variant="ghost"
                       size="icon"
                       onClick={onClearForm}
-                      className="h-8 w-8"
+                      className="h-8 w-8 hover:bg-primary/10"
                     >
                       <RotateCcw className="w-4 h-4" />
                     </Button>
@@ -246,7 +238,7 @@ export function ResultDisplay({
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="w-px h-5 bg-border" />
+                <div className="w-px h-4 bg-border" />
 
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -254,7 +246,7 @@ export function ResultDisplay({
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowSaveModal(true)}
-                      className="h-8 w-8 text-primary hover:text-primary"
+                      className="h-8 w-8 text-primary hover:bg-primary/10"
                     >
                       <Save className="w-4 h-4" />
                     </Button>
@@ -267,16 +259,32 @@ export function ResultDisplay({
             </TooltipProvider>
           </div>
           <div className="p-6">
-            <p className="text-foreground leading-relaxed whitespace-pre-wrap font-mono text-sm bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
+            <p className="text-foreground leading-relaxed whitespace-pre-wrap text-[15px] font-medium bg-muted/30 p-5 rounded-lg max-h-96 overflow-y-auto border border-border/50">
               {prompt}
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Save Prompt Modal */}
+      {/* Recommended AI - Subtle */}
+      {metadata?.recommended_ai && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="bg-muted/50 rounded-lg border border-border p-3 flex items-center gap-3"
+        >
+          <Sparkles className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recommended:</span>
+            <span className="text-sm text-foreground">{metadata.recommended_ai}</span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Save Prompt Modal - Only opens on icon click */}
       <SavePromptModal
-        isOpen={showSaveModal || showSaveButtons}
+        isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         onSave={() => {
           setShowSaveModal(false);
