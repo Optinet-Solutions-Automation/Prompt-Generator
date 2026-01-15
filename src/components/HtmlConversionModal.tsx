@@ -130,10 +130,10 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
           <>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="welcomeBonus">Welcome Bonus</Label>
+                <Label htmlFor="welcomeBonus">Welcome Bonus Spins</Label>
                 <Input
                   id="welcomeBonus"
-                  placeholder="e.g., 100% Match Bonus"
+                  placeholder="No. of free spins e.g 20"
                   value={formData.welcomeBonus}
                   onChange={(e) => handleInputChange('welcomeBonus', e.target.value)}
                 />
