@@ -75,7 +75,6 @@ export function PromptForm({
       <FormField
         type="text"
         label="Theme"
-        required
         value={formData.theme}
         onChange={(value) => onFieldChange('theme', value)}
         placeholder="e.g., Dark Luxury Noir Valentine's"
@@ -86,7 +85,6 @@ export function PromptForm({
       <FormField
         type="textarea"
         label="Description"
-        required
         value={formData.description}
         onChange={(value) => onFieldChange('description', value)}
         placeholder="Describe your image in detail..."
