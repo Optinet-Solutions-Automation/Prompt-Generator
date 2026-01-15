@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Loader2, RefreshCw, Sparkles, Image, Palette, Target, Pencil, RotateCcw, Bot, Gem } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw, Sparkles, Image, Palette, Target, Pencil, RotateCcw, Bot, Gem, Save } from 'lucide-react';
 import { useState } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
@@ -172,24 +172,99 @@ export function ResultDisplay({
                 Generated in {processingTime.toFixed(1)} seconds
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-              className="gap-2"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-success" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy
-                </>
-              )}
-            </Button>
+            
+            {/* Toolbar */}
+            <TooltipProvider>
+              <div className="flex items-center gap-1 bg-background/50 rounded-lg p-1 border border-border">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCopy}
+                      className="h-8 w-8"
+                    >
+                      {copied ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{copied ? 'Copied!' : 'Copy'}</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <div className="w-px h-5 bg-border" />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onGenerateAgain}
+                      className="h-8 w-8"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Generate Again</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onEditForm}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit Form</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onClearForm}
+                      className="h-8 w-8"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Reset</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <div className="w-px h-5 bg-border" />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowSaveModal(true)}
+                      className="h-8 w-8 text-primary hover:text-primary"
+                    >
+                      <Save className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Save Prompt</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           </div>
           <div className="p-6">
             <p className="text-foreground leading-relaxed whitespace-pre-wrap font-mono text-sm bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
@@ -358,47 +433,6 @@ export function ResultDisplay({
         />
       )}
 
-      {/* Action Buttons */}
-      <TooltipProvider>
-        <div className="flex gap-2 justify-center">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={onGenerateAgain}
-                size="icon"
-                className="gradient-primary"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Generate Again</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onEditForm}>
-                <Pencil className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Edit Form</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onClearForm}>
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Start Over</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
     </motion.div>
   );
 }
