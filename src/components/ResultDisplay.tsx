@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Loader2, RefreshCw, Sparkles, Image, Palette, Target, Pencil, RotateCcw, Bot, Gem, Save } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw, Sparkles, Pencil, RotateCcw, Bot, Gem, Save } from 'lucide-react';
 import { useState } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
@@ -109,41 +109,32 @@ export function ResultDisplay({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      {/* Metadata Card */}
+      {/* Request Data Card */}
       {metadata && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+          className="bg-card rounded-xl border border-border p-5 shadow-sm"
         >
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary mb-1">
-              <Target className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">Relevance</span>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Request Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Brand</span>
+              <p className="text-foreground font-medium mt-1">{metadata.brand}</p>
             </div>
-            <p className="text-2xl font-bold text-foreground">{metadata.relevance_score}/100</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary mb-1">
-              <Palette className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">Style</span>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reference</span>
+              <p className="text-foreground font-medium mt-1">{metadata.reference}</p>
             </div>
-            <p className="text-lg font-semibold text-foreground capitalize">{metadata.style_confidence}</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary mb-1">
-              <Image className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">References</span>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Theme</span>
+              <p className="text-foreground font-medium mt-1">{metadata.theme}</p>
             </div>
-            <p className="text-2xl font-bold text-foreground">{metadata.reference_count}</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary mb-1">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">Prompts Used</span>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</span>
+              <p className="text-foreground font-medium mt-1">{metadata.description || '—'}</p>
             </div>
-            <p className="text-2xl font-bold text-foreground">{metadata.similar_prompts_used}</p>
           </div>
         </motion.div>
       )}
@@ -266,21 +257,6 @@ export function ResultDisplay({
         </div>
       </motion.div>
 
-      {/* Recommended AI - Subtle */}
-      {metadata?.recommended_ai && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="bg-muted/50 rounded-lg border border-border p-3 flex items-center gap-3"
-        >
-          <Sparkles className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recommended:</span>
-            <span className="text-sm text-foreground">{metadata.recommended_ai}</span>
-          </div>
-        </motion.div>
-      )}
 
       {/* Save Prompt Modal - Only opens on icon click */}
       <SavePromptModal
