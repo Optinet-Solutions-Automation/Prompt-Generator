@@ -29,11 +29,7 @@ export interface PromptMetadata {
   brand: string;
   reference: string;
   theme: string;
-  relevance_score: number;
-  style_confidence: string;
-  reference_count: number;
-  similar_prompts_used: number;
-  recommended_ai: string;
+  description: string;
 }
 
 export interface GeneratePromptResponse {

@@ -2,20 +2,18 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface FormData {
   brand: string;
-  spec_id: string;
+  reference: string;
   theme: string;
   description: string;
-  no_text: boolean;
 }
 
 // Transform frontend field names to match n8n expected format
 function transformFormData(formData: FormData) {
   return {
     brand: formData.brand,
-    'spec_id': formData.spec_id,
+    reference: formData.reference,
     theme: formData.theme,
     description: formData.description,
-    'no_text': formData.no_text,
   };
 }
 
@@ -90,22 +88,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('Final result:', JSON.stringify(result, null, 2));
     
     // Extract prompt from n8n response data structure
-    const prompt = result.data?.prompt_detailed || result.text || result.prompt || "No prompt generated";
+    const prompt = result.prompt || result.data?.prompt_detailed || result.text || "No prompt generated";
     
-    // Transform response into expected format
+    // Transform response into expected format with form data from API response
     const transformedResult = {
       success: result.success || true,
       message: result.message || "AI prompt generated successfully",
       prompt: prompt,
       metadata: {
         brand: result.data?.brand || req.body.brand,
-        spec_id: result.data?.spec_id || req.body.spec_id,
+        reference: result.data?.reference || req.body.reference,
         theme: result.data?.theme || req.body.theme,
-        relevance_score: result.data?.relevance_score || 80,
-        style_confidence: result.data?.style_confidence || "high",
-        reference_count: result.data?.reference_count || 0,
-        similar_prompts_used: result.data?.similar_prompts_used || 0,
-        recommended_ai: result.data?.recommended_ai || "Midjourney v6, DALL-E 3, Stable Diffusion XL"
+        description: result.data?.description || req.body.description,
       }
     };
     
