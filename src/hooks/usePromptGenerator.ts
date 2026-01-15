@@ -10,11 +10,11 @@ import {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-// Helper to get reference description from ID
-function getReferenceDescription(brand: string, referenceId: string): string {
+// Helper to get reference prompt_name from ID (format: "Label — Description")
+function getReferencePromptName(brand: string, referenceId: string): string {
   const references = BRAND_REFERENCES[brand] || [];
   const ref = references.find(r => r.id === referenceId);
-  return ref?.description || referenceId;
+  return ref ? `${ref.label} — ${ref.description}` : referenceId;
 }
 
 // API call to generate prompt via n8n webhook
@@ -22,7 +22,7 @@ async function generatePrompt(formData: FormData): Promise<GeneratePromptRespons
   // Transform reference ID to description for API
   const apiData = {
     ...formData,
-    reference: getReferenceDescription(formData.brand, formData.reference),
+    reference: getReferencePromptName(formData.brand, formData.reference),
   };
 
   const response = await fetch('/api/generate-prompt', {
