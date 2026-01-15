@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Check, Copy, Loader2, RefreshCw, Sparkles, RotateCcw, Bot, Gem, Save } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
@@ -50,10 +50,10 @@ export function ResultDisplay({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
 
-  // Sync editablePrompt with prompt prop when it changes
-  useState(() => {
+  // Sync editablePrompt with prompt prop when it changes (e.g., after regenerating)
+  useEffect(() => {
     setEditablePrompt(prompt);
-  });
+  }, [prompt]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(editablePrompt);
