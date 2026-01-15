@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Loader2, RefreshCw, Sparkles, Pencil, RotateCcw, Bot, Gem, Save } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Check, Copy, Loader2, RefreshCw, Sparkles, RotateCcw, Bot, Gem, Save } from 'lucide-react';
 import { useState } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
@@ -22,6 +25,8 @@ interface ResultDisplayProps {
   onEditForm: () => void;
   onGenerateAgain: () => void;
   onClearForm: () => void;
+  onPromptChange?: (newPrompt: string) => void;
+  onMetadataChange?: (field: keyof PromptMetadata, value: string) => void;
 }
 
 export function ResultDisplay({
@@ -34,6 +39,8 @@ export function ResultDisplay({
   onEditForm,
   onGenerateAgain,
   onClearForm,
+  onPromptChange,
+  onMetadataChange,
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<'chatgpt' | 'gemini' | null>(null);
@@ -41,11 +48,22 @@ export function ResultDisplay({
   const [imageError, setImageError] = useState<string | null>(null);
   const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [editablePrompt, setEditablePrompt] = useState(prompt);
+
+  // Sync editablePrompt with prompt prop when it changes
+  useState(() => {
+    setEditablePrompt(prompt);
+  });
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(prompt);
+    await navigator.clipboard.writeText(editablePrompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePromptEdit = (value: string) => {
+    setEditablePrompt(value);
+    onPromptChange?.(value);
   };
 
   const handleGenerateImage = async (provider: 'chatgpt' | 'gemini') => {
@@ -59,7 +77,7 @@ export function ResultDisplay({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt,
+          prompt: editablePrompt, // Use the editable prompt
           provider,
         }),
       });
@@ -98,7 +116,6 @@ export function ResultDisplay({
     }
   };
 
-  const showSaveButtons = appState === 'RESULT';
   const isSaving = appState === 'SAVING';
   const isSaved = appState === 'SAVED';
 
@@ -109,7 +126,7 @@ export function ResultDisplay({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      {/* Request Data Card */}
+      {/* Editable Request Data Form */}
       {metadata && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -119,27 +136,52 @@ export function ResultDisplay({
         >
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Request Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Brand</span>
-              <p className="text-foreground font-medium mt-1">{metadata.brand}</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Brand</Label>
+              <Input
+                value={metadata.brand}
+                onChange={(e) => onMetadataChange?.('brand', e.target.value)}
+                className="bg-background"
+              />
             </div>
-            <div>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reference</span>
-              <p className="text-foreground font-medium mt-1">{metadata.reference}</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reference</Label>
+              <Input
+                value={metadata.reference}
+                onChange={(e) => onMetadataChange?.('reference', e.target.value)}
+                className="bg-background"
+              />
             </div>
-            <div>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Theme</span>
-              <p className="text-foreground font-medium mt-1">{metadata.theme}</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Theme</Label>
+              <Input
+                value={metadata.theme}
+                onChange={(e) => onMetadataChange?.('theme', e.target.value)}
+                className="bg-background"
+              />
             </div>
-            <div>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</span>
-              <p className="text-foreground font-medium mt-1">{metadata.description || '—'}</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</Label>
+              <Input
+                value={metadata.description}
+                onChange={(e) => onMetadataChange?.('description', e.target.value)}
+                className="bg-background"
+              />
             </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={onGenerateAgain}
+              className="gap-2 gradient-primary"
+            >
+              <Sparkles className="w-4 h-4" />
+              Regenerate Prompt
+            </Button>
           </div>
         </motion.div>
       )}
 
-      {/* Prompt Card - HERO HIGHLIGHT */}
+      {/* Editable Prompt Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -152,7 +194,7 @@ export function ResultDisplay({
             <div>
               <h3 className="font-bold text-lg text-foreground tracking-tight">Your Generated Prompt</h3>
               <p className="text-sm text-muted-foreground">
-                Generated in {processingTime.toFixed(1)}s
+                Generated in {processingTime.toFixed(1)}s • Edit before generating image
               </p>
             </div>
             
@@ -180,38 +222,6 @@ export function ResultDisplay({
                 </Tooltip>
 
                 <div className="w-px h-4 bg-border" />
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onGenerateAgain}
-                      className="h-8 w-8 hover:bg-primary/10"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Generate Again</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onEditForm}
-                      className="h-8 w-8 hover:bg-primary/10"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit Form</p>
-                  </TooltipContent>
-                </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -250,9 +260,12 @@ export function ResultDisplay({
             </TooltipProvider>
           </div>
           <div className="p-6">
-            <p className="text-foreground leading-relaxed whitespace-pre-wrap text-[15px] font-medium bg-muted/30 p-5 rounded-lg max-h-96 overflow-y-auto border border-border/50">
-              {prompt}
-            </p>
+            <Textarea
+              value={editablePrompt}
+              onChange={(e) => handlePromptEdit(e.target.value)}
+              className="text-foreground leading-relaxed text-[15px] font-medium bg-muted/30 p-5 rounded-lg min-h-[200px] max-h-96 border border-border/50 resize-y"
+              placeholder="Your generated prompt will appear here..."
+            />
           </div>
         </div>
       </motion.div>

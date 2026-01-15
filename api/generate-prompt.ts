@@ -87,8 +87,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
     console.log('Final result:', JSON.stringify(result, null, 2));
     
-    // Extract prompt from n8n response data structure
-    const prompt = result.prompt || result.data?.prompt_detailed || result.text || "No prompt generated";
+    // Extract prompt from n8n response - new format has prompt inside data object
+    const prompt = result.data?.prompt || result.prompt || result.text || "No prompt generated";
     
     // Transform response into expected format with form data from API response
     const transformedResult = {
