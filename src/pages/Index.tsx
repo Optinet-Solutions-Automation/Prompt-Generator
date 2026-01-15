@@ -16,6 +16,8 @@ const Index = () => {
     processingTime,
     elapsedTime,
     errorMessage,
+    generatedImages,
+    isRegeneratingPrompt,
     handleFieldChange,
     handleSubmit,
     handleSave,
@@ -26,6 +28,7 @@ const Index = () => {
     handleGoBack,
     handlePromptChange,
     handleMetadataChange,
+    handleAddGeneratedImage,
   } = usePromptGenerator();
 
   const showForm = appState === 'FORM';
@@ -96,6 +99,8 @@ const Index = () => {
                   metadata={promptMetadata}
                   processingTime={processingTime}
                   appState={appState}
+                  generatedImages={generatedImages}
+                  isRegeneratingPrompt={isRegeneratingPrompt}
                   onSave={handleSave}
                   onDontSave={handleDontSave}
                   onEditForm={handleEditForm}
@@ -103,6 +108,7 @@ const Index = () => {
                   onClearForm={handleClearForm}
                   onPromptChange={handlePromptChange}
                   onMetadataChange={handleMetadataChange}
+                  onAddGeneratedImage={handleAddGeneratedImage}
                 />
               )}
             </AnimatePresence>
