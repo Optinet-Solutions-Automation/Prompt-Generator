@@ -1,13 +1,15 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Check, Copy, Loader2, RefreshCw, Sparkles, RotateCcw, Bot, Gem, Save } from 'lucide-react';
+import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
+import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
+import { FormField } from './FormField';
+import { ReferenceSelect } from './ReferenceSelect';
 import {
   Tooltip,
   TooltipContent,
@@ -136,38 +138,60 @@ export function ResultDisplay({
         >
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Request Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Brand</Label>
-              <Input
-                value={metadata.brand}
-                onChange={(e) => onMetadataChange?.('brand', e.target.value)}
-                className="bg-background"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reference</Label>
-              <Input
-                value={metadata.reference}
-                onChange={(e) => onMetadataChange?.('reference', e.target.value)}
-                className="bg-background"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Theme</Label>
-              <Input
-                value={metadata.theme}
-                onChange={(e) => onMetadataChange?.('theme', e.target.value)}
-                className="bg-background"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</Label>
-              <Input
-                value={metadata.description}
-                onChange={(e) => onMetadataChange?.('description', e.target.value)}
-                className="bg-background"
-              />
-            </div>
+            <FormField
+              type="select"
+              label="Brand"
+              required
+              options={[...BRANDS]}
+              value={metadata.brand}
+              onChange={(value) => {
+                onMetadataChange?.('brand', value);
+                // Reset reference when brand changes
+                onMetadataChange?.('reference', '');
+              }}
+              placeholder="Select a brand"
+            />
+
+            <ReferenceSelect
+              label="Reference"
+              required
+              value={(() => {
+                // Find reference ID from the formatted string "Label — Description"
+                const refs = BRAND_REFERENCES[metadata.brand] || [];
+                const found = refs.find(r => `${r.label} — ${r.description}` === metadata.reference);
+                return found?.id || '';
+              })()}
+              onChange={(refId) => {
+                // Convert ID back to formatted string for API
+                const refs = BRAND_REFERENCES[metadata.brand] || [];
+                const ref = refs.find(r => r.id === refId);
+                if (ref) {
+                  onMetadataChange?.('reference', `${ref.label} — ${ref.description}`);
+                }
+              }}
+              placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
+              disabled={!metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0}
+              references={BRAND_REFERENCES[metadata.brand] || []}
+            />
+
+            <FormField
+              type="text"
+              label="Theme"
+              required
+              value={metadata.theme}
+              onChange={(value) => onMetadataChange?.('theme', value)}
+              placeholder="e.g., Dark Luxury Noir Valentine's"
+            />
+
+            <FormField
+              type="textarea"
+              label="Description"
+              required
+              value={metadata.description}
+              onChange={(value) => onMetadataChange?.('description', value)}
+              placeholder="Describe your image..."
+              rows={2}
+            />
           </div>
           <div className="mt-4 flex justify-end">
             <Button
