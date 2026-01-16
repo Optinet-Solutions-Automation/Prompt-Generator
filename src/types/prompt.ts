@@ -143,6 +143,7 @@ export const BRANDS = [
   'SpinsUp',
   'FortunePlay',
   'Roosterbet',
+  'LuckyVibe',
 ] as const;
 
 
