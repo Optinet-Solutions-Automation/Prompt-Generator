@@ -43,24 +43,129 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const buildEditPrompt = () => {
+    return `Do not change the main image or subject.
+
+Same lighting, same environment, same framing.
+
+Only add clean, modern promotional UI text and a call-to-action overlay in the empty dark space on the left side of the image.
+
+Before choosing any colors, analyze the background area where the text and button will be placed and determine the dominant background color and brightness.
+
+Then:
+
+• Choose a CTA button color that complements the dominant background color (harmonious, not clashing, not same tone).
+
+• Choose the text color as the visual counterpart of the button color so that contrast and readability are maximized.
+
+• Ensure WCAG-style high contrast: text must be clearly readable from a distance.
+
+TEXT AND UI TO ADD (exact wording):
+
+Large headline below it:
+
+"${formData.welcomeBonus} FREE SPINS"
+
+Smaller subtext below headline:
+
+"NO DEPOSIT NEEDED"
+
+Bonus line:
+
+"+${formData.bonusPercentage}% Bonus"
+
+Call-to-action button below the text:
+
+Rounded rectangular button with subtle glow and soft shadow, text:
+
+"PLAY NOW"
+
+Below the button in smaller text:
+
+"Bonus Code: ${formData.bonusCode}"
+
+LAYOUT:
+
+• All text aligned vertically on the left third of the image.
+
+• Respect safe margins from edges.
+
+• Headline is dominant and bold.
+
+• Button is clearly clickable and visually separated.
+
+STYLE:
+
+• Modern clean sans-serif typography.
+
+• Minimal, premium, not flashy.
+
+• No neon unless the background is dark enough to support it.
+
+• Subtle glow only if needed for legibility.
+
+CONSTRAINTS:
+
+• Do not cover the subject.
+
+• Do not modify the background scene.
+
+• Do not add any elements besides the text and button.
+
+• Do not crop or zoom.
+
+The final result should look like a professionally designed casino promotional banner with adaptive color harmony and perfect readability.`;
+  };
+
   const handleConvert = async () => {
     setIsConverting(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/convert-to-html', {
+      // Step 1: Edit the image with promotional overlay
+      const editResponse = await fetch('/api/edit-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           imageUrl,
+          editInstructions: buildEditPrompt(),
+          provider: 'gemini',
+        }),
+      });
+
+      if (!editResponse.ok) {
+        const errorText = await editResponse.text();
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.error || 'Failed to edit image');
+        } catch {
+          throw new Error('Failed to edit image');
+        }
+      }
+
+      const editData = await editResponse.json();
+      const editedImageUrl = editData.webViewLink || editData.imageUrl || editData.url;
+
+      if (!editedImageUrl) {
+        throw new Error('No edited image URL received');
+      }
+
+      // Step 2: Convert the edited image to HTML
+      const htmlResponse = await fetch('/api/convert-to-html', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: editedImageUrl,
           ...formData,
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!htmlResponse.ok) {
+        const errorText = await htmlResponse.text();
         try {
           const errorData = JSON.parse(errorText);
           throw new Error(errorData.error || 'Failed to convert to HTML');
@@ -70,7 +175,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
       }
 
       // Response is raw HTML
-      const htmlContent = await response.text();
+      const htmlContent = await htmlResponse.text();
       setGeneratedHtml(htmlContent);
     } catch (err) {
       console.error('HTML conversion error:', err);
