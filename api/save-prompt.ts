@@ -2,10 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface SavePromptData {
   brand: string;
-  spec_id: string;
   theme: string;
   description: string;
-  no_text: boolean;
   generated_prompt: string;
   timestamp: string;
 }
@@ -14,10 +12,8 @@ interface SavePromptData {
 function transformSaveData(data: SavePromptData) {
   return {
     Brand: data.brand,
-    'Spec ID': data.spec_id,
     Theme: data.theme,
     Description: data.description,
-    'No Text': data.no_text,
     'Generated Prompt': data.generated_prompt,
     'Date Generated': data.timestamp,
   };

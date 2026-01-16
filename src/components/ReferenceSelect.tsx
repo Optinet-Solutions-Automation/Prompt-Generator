@@ -42,7 +42,7 @@ export function ReferenceSelect({
   }, {} as Record<string, ReferenceOption[]>);
 
   // Define category order (Email Templates first as placeholder, then Promotions)
-  const categoryOrder = ['Email Templates', 'Promotions'];
+  const categoryOrder = ['Email Templates', 'Casino - Promotions', 'Sports - Promotions'];
   
   // Get all categories, sorted by order preference
   const categories = Object.keys(groupedReferences).sort((a, b) => {
