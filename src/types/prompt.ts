@@ -60,6 +60,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
   ],
 
   'Roosterbet': [
+    // --- Casino - Promotions ---
     { id: 'victory_trophy', label: 'Victory Trophy', description: 'A glowing golden cup trophy on the right, framed by sparks and flames with dramatic backlight rays', category: 'Casino - Promotions' },
     { id: 'golden_egg', label: 'Golden Egg', description: 'A glossy golden egg with a rooster emblem surrounded by coins, bars, and a red gemstone in dramatic warm lighting', category: 'Casino - Promotions' },
     { id: 'golden_rooster', label: 'Golden Rooster', description: 'A right-side close-up rooster in oversized glasses and a yellow suit posed against a warm, luxurious interior', category: 'Casino - Promotions' },
@@ -68,6 +69,16 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'rockstar_rooster', label: 'Rockstar Rooster', description: 'A right-side close-up rooster in sunglasses holding a vintage microphone on a warm-lit concert stage', category: 'Casino - Promotions' },
     { id: 'neon_roosters', label: 'Neon Roosters', description: 'A wide neon-noir promo scene with a close-up rooster in purple sunglasses and a suited rooster beside a red muscle car', category: 'Casino - Promotions' },
     { id: 'casino_rooster', label: 'Casino Rooster', description: 'A stylish rooster in sunglasses and a suit presenting a glowing prize wheel that reads FREE PLAY', category: 'Casino - Promotions' },
+
+    // --- Sports - Promotions ---
+    { id: 'inferno_athletes', label: 'Inferno Athletes', description: 'A right-side sports collage of four action players bursting through fiery smoke with a large dark negative-space panel on the left', category: 'Sports - Promotions' },
+    { id: 'victory_trophy_roosterbet', label: 'Victory Trophy', description: 'A golden championship cup on the right with sports balls and fiery embers under a dramatic light burst', category: 'Sports - Promotions' },
+    { id: 'stadium_striker', label: 'Stadium Striker', description: 'A right-aligned footballer in a red kit striking a ball in a glowing stadium with dramatic sparks and haze', category: 'Sports - Promotions' },
+    { id: 'inferno_skater', label: 'Inferno Skater', description: 'A right-aligned ice hockey player in red gear lunging forward with a stick amid flames and smoky darkness', category: 'Sports - Promotions' },
+    { id: 'crimson_tennis', label: 'Crimson Tennis', description: 'A right-aligned tennis player in red mid-swing with a racket, surrounded by fiery smoke on a dark wide banner', category: 'Sports - Promotions' },
+    { id: 'fire_striker', label: 'Fire Striker', description: 'A right-side action footballer in a red kit holding a matching ball, exploding through flames with dark negative space', category: 'Sports - Promotions' },
+    { id: 'final_trophy', label: 'Final Trophy', description: 'A right-side footballer in a red kit clutching a golden cup amid red smoke, sparks, and a glowing 0-0 scoreboard', category: 'Sports - Promotions' },
+
   ],
 
   'SpinsUp': [
@@ -82,6 +93,28 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'arcane_cardsharp', label: 'Arcane Cardsharp', description: 'A right-framed, half-body magician in ornate formalwear conjuring flying playing cards amid sparks and smoky glow', category: 'Casino - Promotions' },
     { id: 'mystic_casino', label: 'Mystic Casino', description: 'A neon-lit top hat on poker chips with a hovering bird and two aces, framed as a wide banner', category: 'Casino - Promotions' },
   ],
+
+  'LuckyVibe': [
+    // --- Casino - Promotions ---
+    { id: 'sunset_dj', label: 'Sunset DJ', description: 'A smiling beach DJ in a floral shirt mixing on decks at golden hour with warm backlight and soft crowd bokeh', category: 'Casino - Promotions' },
+    { id: 'sunset_sippers', label: 'Sunset Sippers', description: 'Three colorful iced cocktails on a wooden beach table with umbrellas softly blurred behind in golden-hour light', category: 'Casino - Promotions' },
+    { id: 'sunset_dj_headphones', label: 'Sunset DJ Headphones', description: 'Close-up over-ear headphones resting on a mixing console with a beach crowd blurred in warm golden-hour light', category: 'Casino - Promotions' },
+    { id: 'golden_festival', label: 'Golden Festival', description: 'A laughing woman in mirrored sunglasses framed on the right with dark negative space and a sunlit crowd behind', category: 'Casino - Promotions' },
+    { id: 'golden_smile', label: 'Golden Smile', description: 'A right-aligned close-up portrait of a joyful woman at sunset with windswept hair and large dark negative space on the left', category: 'Casino - Promotions' },
+    { id: 'sunset_dj_deck', label: 'Sunset DJ Deck', description: 'A close-up DJ controller in the foreground with glowing pads, facing a calm ocean sunset and palm silhouettes', category: 'Casino - Promotions' },
+    { id: 'sunset_cheers', label: 'Sunset Cheers', description: 'Two iced cocktails clink in close-up against a glowing tropical beach sunset with palm silhouettes and soft party bokeh', category: 'Casino - Promotions' },
+    { id: 'sunset_dj_blonde', label: 'Sunset DJ', description: 'A smiling blonde woman in headphones mixes music at a beach party with warm golden-hour backlight and heavy left-side negative space', category: 'Casino - Promotions' },
+    { id: 'jackpot_burst', label: 'Jackpot Burst', description: 'A glossy slot machine on the right erupting with flying gold coins against dark negative space', category: 'Casino - Promotions' },
+
+    // --- Sports - Promotions ---
+    { id: 'desert_final', label: 'Desert Final', description: 'Two footballers on a sandy pitch flank a glowing golden trophy beneath a 0 - 0 scoreboard in warm cinematic haze', category: 'Sports - Promotions' },
+    { id: 'sunset_kick', label: 'Sunset Kick', description: 'A barefoot player about to kick a soccer ball on a tropical beach at sunset with an oversized casino-style chip in the foreground', category: 'Sports - Promotions' },
+    { id: 'sunset_showdown', label: 'Sunset Showdown', description: 'Two barefoot footballers contesting a ball on sandy beach at golden hour with dark left-side negative space', category: 'Sports - Promotions' },
+    { id: 'victory_trophy_sports', label: 'Victory Trophy', description: 'Two athletes on the right side lift a giant cup in a stadium at sunset with dramatic backlight', category: 'Sports - Promotions' },
+    { id: 'beach_champions_esports', label: 'Beach Champions', description: 'A jubilant esports-style team in headsets celebrating with a trophy on a sunset shoreline with large left-side negative space', category: 'Sports - Promotions' },
+    { id: 'beach_champions_athletes', label: 'Beach Champions', description: 'Five athletes pose on a sandy court at sunset in matching uniforms with sports gear and dramatic negative space', category: 'Sports - Promotions' },
+  ],
+
 };
 
 
