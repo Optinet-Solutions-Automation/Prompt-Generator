@@ -115,6 +115,53 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'beach_champions_athletes', label: 'Beach Champions', description: 'Five athletes pose on a sandy court at sunset in matching uniforms with sports gear and dramatic negative space', category: 'Sports - Promotions' },
   ],
 
+    'Lucky7even': [
+    { id: 'purple_jackpot', label: 'Purple Jackpot', description: 'A right-weighted casino promo scene with a glowing slot machine, roulette wheel, and scattered gold coins on a purple gradient background', category: 'Casino - Promotions' },
+    { id: 'royal_casino', label: 'Royal Casino', description: 'A right-aligned cluster of glossy roulette, poker cards, chips, and dice on a deep purple gradient banner', category: 'Casino - Promotions' },
+    { id: 'lucky_wheel', label: 'Lucky Wheel', description: 'A right-edge, cropped prize spin wheel glowing in neon colors over a dark blue casino-style background', category: 'Casino - Promotions' },
+    { id: 'lucky_spin', label: 'Lucky Spin', description: 'A right-weighted casino prize wheel surrounded by coins, chips, dice, and cards on a purple gradient banner', category: 'Casino - Promotions' },
+    { id: 'royal_chips', label: 'Royal Chips', description: 'A glossy stack of blue-and-gold poker chips on the right with warm golden negative space on the left', category: 'Casino - Promotions' },
+    { id: 'royal_spade', label: 'Royal Spade', description: 'A glossy purple casino chip with a spade emblem floating on the right against a magenta gradient haze', category: 'Casino - Promotions' },
+    { id: 'lucky_seven', label: 'Lucky Seven', description: 'A glossy blue slot reel with a gold number 7 and floating dice in a wide smoky banner composition', category: 'Casino - Promotions' },
+    { id: 'royal_aces', label: 'Royal Aces', description: 'A purple casino banner with stacked ace playing cards and floating dice on the right against smoky negative space', category: 'Casino - Promotions' },
+  ],
+
+  'NovaDreams': [
+    { id: 'cosmic_prizewheel', label: 'Cosmic Prizewheel', description: 'A right-side astronaut reaches toward a large numbered prize wheel in glossy cinematic sci-fi lighting', category: 'Casino - Promotions' },
+    { id: 'space_spin', label: 'Space Spin', description: 'A futuristic astronaut beside a colorful prize wheel with a bold LUCKY SPIN badge on a dark cosmic backdrop', category: 'Casino - Promotions' },
+    { id: 'lone_astronaut', label: 'Lone Astronaut', description: 'A back-facing astronaut walks across a barren alien landscape beneath a massive planet with a fiery atmospheric glow', category: 'Casino - Promotions' },
+    { id: 'starlit_visor', label: 'Starlit Visor', description: 'A centered, extreme close-up of a blue-eyed young woman framed by a helmet-like circular visor with floating dust and bokeh', category: 'Casino - Promotions' },
+    { id: 'orbital_sentinel', label: 'Orbital Sentinel', description: 'A futuristic satellite with broad solar panels drifting through a glowing nebula with dramatic rim light', category: 'Casino - Promotions' },
+    { id: 'starlit_astronaut', label: 'Starlit Astronaut', description: 'An intense close-up portrait of a helmeted astronaut with glowing embers drifting across a dark, cinematic frame', category: 'Casino - Promotions' },
+    { id: 'crimson_astronaut', label: 'Crimson Astronaut', description: 'A right-aligned astronaut in a white EVA suit emerging from smoky orange light with wide negative space on the left', category: 'Casino - Promotions' },
+    { id: 'orbital_sunrise', label: 'Orbital Sunrise', description: 'A cinematic sunrise peeking over Earth’s curved horizon with glowing city lights and deep space negative space', category: 'Casino - Promotions' },
+  ],
+
+  'Rollero': [
+    { id: 'crimson_helm', label: 'Crimson Helm', description: 'A right-aligned, half-body armored warrior with a red plume helmet emerging from dark negative space in cinematic haze', category: 'Casino - Promotions' },
+    { id: 'battle_relic', label: 'Battle Relic', description: 'A right-aligned close-up of a warrior’s ornate round shield and diagonal sword in dramatic cinematic shadow', category: 'Casino - Promotions' },
+    { id: 'fallen_helm', label: 'Fallen Helm', description: 'A battle-worn Spartan helmet with a red crest resting on cobblestones at sunset with dark ruins in the distance', category: 'Casino - Promotions' },
+    { id: 'battle_knight', label: 'Battle Knight', description: 'A close-up armored knight on the right raising a sword and shield, framed against dark negative space with drifting sparks', category: 'Casino - Promotions' },
+    { id: 'iron_sentinel', label: 'Iron Sentinel', description: 'A gritty close-up of a battle-worn armored warrior staring forward with intense eyes against deep black negative space', category: 'Casino - Promotions' },
+    { id: 'sunset_excalibur', label: 'Sunset Excalibur', description: 'A lone medieval sword embedded in a rocky ledge, framed on the right against a glowing sunset with dark negative space', category: 'Casino - Promotions' },
+    { id: 'gladiator_relic', label: 'Gladiator Relic', description: 'A right-aligned close-up of an ornate Roman helmet with red crest beside a sword, set against the Colosseum at sunset', category: 'Casino - Promotions' },
+    { id: 'arena_gladiator', label: 'Arena Gladiator', description: 'A muscular armored warrior on the right holding a round shield in a smoky colosseum with dramatic warm rim light', category: 'Casino - Promotions' },
+  ],
+
+  'RocketSpin': [
+    { id: 'cosmic_presenter', label: 'Cosmic Presenter', description: 'A futuristic hero in a white-gold suit gesturing toward a glowing circular wheel of icons against a clean sky backdrop', category: 'Casino - Promotions' },
+    { id: 'lucky_hero', label: 'Lucky Hero', description: 'A futuristic male host in a white-and-gold suit presenting a colorful prize wheel labeled LUCKY SPIN', category: 'Casino - Promotions' },
+    { id: 'skybound_pilot', label: 'Skybound Pilot', description: 'A right-side, close-up futuristic woman in white-and-gold armor flying through bright clouds with large blue negative space', category: 'Casino - Promotions' },
+    { id: 'skyward_rocket', label: 'Skyward Rocket', description: 'A sleek silver spacecraft climbing through thick clouds with blazing twin engines and wide blue negative space', category: 'Casino - Promotions' },
+    { id: 'rocket_guardian', label: 'Rocket Guardian', description: 'A futuristic blonde woman in a white-and-gold spacesuit stands on the right with rockets launching behind her', category: 'Casino - Promotions' },
+    { id: 'skybound_hero', label: 'Skybound Hero', description: 'A futuristic male superhero flying toward camera on the right, with a glowing chest core and blue sky negative space', category: 'Casino - Promotions' },
+    { id: 'sky_guardians', label: 'Sky Guardians', description: 'Two futuristic heroes in white suits and amber goggles posed on the right against a clean blue gradient banner', category: 'Casino - Promotions' },
+    { id: 'stratosphere_cruiser', label: 'Stratosphere Cruiser', description: 'A sleek white-and-gold sci-fi rocket ship flying above bright clouds with expansive blue negative space on the left', category: 'Casino - Promotions' },
+    { id: 'cloudrunner_launch', label: 'Cloudrunner Launch', description: 'A sleek white futuristic spacecraft climbs through dramatic clouds with bright engine flames, framed right with wide blue negative space', category: 'Casino - Promotions' },
+    { id: 'skystrike_pilot', label: 'Skystrike Pilot', description: 'A tight right-side close-up of a goggle-wearing pilot with rockets streaking behind him in a clear blue sky', category: 'Casino - Promotions' },
+  ],
+
+
 };
 
 
@@ -144,6 +191,10 @@ export const BRANDS = [
   'FortunePlay',
   'Roosterbet',
   'LuckyVibe',
+  'Lucky7even',
+  'NovaDreams',
+  'Rollero',
+  'RocketSpin',
 ] as const;
 
 
