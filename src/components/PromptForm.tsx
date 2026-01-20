@@ -76,7 +76,7 @@ export function PromptForm({
       <FormField
         type="select"
         label="Subject Position"
-        options={['', ...SUBJECT_POSITIONS]}
+        options={[...SUBJECT_POSITIONS]}
         value={formData.subjectPosition}
         onChange={(value) => onFieldChange('subjectPosition', value)}
         placeholder="Default"
