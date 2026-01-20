@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
-import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
+import { BRANDS, BRAND_REFERENCES, SUBJECT_POSITIONS } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
@@ -204,6 +204,16 @@ export function ResultDisplay({
               placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
               disabled={!metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0 || isRegeneratingPrompt}
               references={BRAND_REFERENCES[metadata.brand] || []}
+            />
+
+            <FormField
+              type="select"
+              label="Subject Position"
+              options={['', ...SUBJECT_POSITIONS]}
+              value={metadata.subjectPosition || ''}
+              onChange={(value) => onMetadataChange?.('subjectPosition', value)}
+              placeholder="Default"
+              disabled={isRegeneratingPrompt}
             />
 
             <FormField

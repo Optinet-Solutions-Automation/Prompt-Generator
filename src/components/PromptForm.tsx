@@ -7,6 +7,7 @@ import {
   FormData,
   BRANDS,
   BRAND_REFERENCES,
+  SUBJECT_POSITIONS,
 } from '@/types/prompt';
 
 interface PromptFormProps {
@@ -71,6 +72,15 @@ export function PromptForm({
           references={availableReferences}
         />
       </div>
+
+      <FormField
+        type="select"
+        label="Subject Position"
+        options={['', ...SUBJECT_POSITIONS]}
+        value={formData.subjectPosition}
+        onChange={(value) => onFieldChange('subjectPosition', value)}
+        placeholder="Default"
+      />
 
       <FormField
         type="text"
