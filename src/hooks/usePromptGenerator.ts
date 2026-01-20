@@ -21,8 +21,12 @@ function getReferencePromptName(brand: string, referenceId: string): string {
 async function generatePrompt(formData: FormData): Promise<GeneratePromptResponse> {
   // Transform reference ID to description for API
   const apiData = {
-    ...formData,
+    brand: formData.brand,
     reference: getReferencePromptName(formData.brand, formData.reference),
+    subjectPosition: formData.subjectPosition,
+    imageSize: formData.imageSize,
+    theme: formData.theme,
+    description: formData.description,
   };
 
   const response = await fetch('/api/generate-prompt', {
