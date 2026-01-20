@@ -26,6 +26,7 @@ export const IMAGE_SIZES = [
 export type ImageSizeOption = typeof IMAGE_SIZES[number];
 
 export const SUBJECT_POSITIONS = [
+  'Default',
   'centered',
   'left-aligned',
   'right-aligned',

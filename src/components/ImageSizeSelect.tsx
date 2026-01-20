@@ -40,6 +40,7 @@ export function ImageSizeSelect({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="default">Default</SelectItem>
           <SelectGroup>
             <SelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">
               Gemini
