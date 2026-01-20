@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save } from 'lucide-react';
+import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
@@ -11,6 +11,7 @@ import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
+import { useElapsedTime } from '@/hooks/useElapsedTime';
 import {
   Tooltip,
   TooltipContent,
@@ -57,6 +58,10 @@ export function ResultDisplay({
   const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
+  
+  // Elapsed time trackers for different operations
+  const chatgptTimer = useElapsedTime();
+  const geminiTimer = useElapsedTime();
 
   // Sync editablePrompt with prompt prop when it changes (e.g., after regenerating)
   useEffect(() => {
@@ -86,7 +91,10 @@ export function ResultDisplay({
     // Prevent multiple simultaneous requests for the same provider
     if (generatingImage[provider]) return;
     
+    const timer = provider === 'chatgpt' ? chatgptTimer : geminiTimer;
+    
     setGeneratingImage(prev => ({ ...prev, [provider]: true }));
+    timer.start();
     setImageError(null);
 
     try {
@@ -129,6 +137,7 @@ export function ResultDisplay({
       setImageError(error instanceof Error ? error.message : 'Failed to generate image');
     } finally {
       setGeneratingImage(prev => ({ ...prev, [provider]: false }));
+      timer.stop();
     }
   };
 
@@ -170,6 +179,7 @@ export function ResultDisplay({
                 onMetadataChange?.('reference', '');
               }}
               placeholder="Select a brand"
+              disabled={isRegeneratingPrompt}
             />
 
             <ReferenceSelect
@@ -190,7 +200,7 @@ export function ResultDisplay({
                 }
               }}
               placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
-              disabled={!metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0}
+              disabled={!metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0 || isRegeneratingPrompt}
               references={BRAND_REFERENCES[metadata.brand] || []}
             />
 
@@ -200,6 +210,7 @@ export function ResultDisplay({
               value={metadata.theme || ''}
               onChange={(value) => onMetadataChange?.('theme', value)}
               placeholder="e.g., Dark Luxury Noir Valentine's"
+              disabled={isRegeneratingPrompt}
             />
 
             <FormField
@@ -209,6 +220,7 @@ export function ResultDisplay({
               onChange={(value) => onMetadataChange?.('description', value)}
               placeholder="Describe your image..."
               rows={2}
+              disabled={isRegeneratingPrompt}
             />
           </div>
           <div className="mt-4 flex justify-end">
@@ -376,40 +388,55 @@ export function ResultDisplay({
             onClick={() => handleGenerateImage('chatgpt')}
             disabled={generatingImage.chatgpt}
             variant="outline"
-            className="gap-2"
+            className="gap-2 min-w-[120px]"
           >
             {generatingImage.chatgpt ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="tabular-nums">{chatgptTimer.elapsedTime}s</span>
+              </>
             ) : (
-              <Bot className="w-4 h-4" />
+              <>
+                <Bot className="w-4 h-4" />
+                ChatGPT
+              </>
             )}
-            ChatGPT
           </Button>
           <Button
             onClick={() => handleGenerateImage('gemini')}
             disabled={generatingImage.gemini}
             variant="outline"
-            className="gap-2"
+            className="gap-2 min-w-[120px]"
           >
             {generatingImage.gemini ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="tabular-nums">{geminiTimer.elapsedTime}s</span>
+              </>
             ) : (
-              <Gem className="w-4 h-4" />
+              <>
+                <Gem className="w-4 h-4" />
+                Gemini
+              </>
             )}
-            Gemini
           </Button>
           <Button
             onClick={handleGenerateBoth}
             disabled={generatingImage.chatgpt || generatingImage.gemini}
             variant="default"
-            className="gap-2 gradient-primary"
+            className="gap-2 gradient-primary min-w-[140px]"
           >
             {(generatingImage.chatgpt && generatingImage.gemini) ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <>
+                <Sparkles className="w-4 h-4" />
+                Generate Both
+              </>
             )}
-            Generate Both
           </Button>
         </div>
 

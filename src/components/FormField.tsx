@@ -31,6 +31,7 @@ interface TextInputProps extends BaseFieldProps {
   onChange: (value: string) => void;
   placeholder: string;
   maxLength?: number;
+  disabled?: boolean;
 }
 
 interface TextareaFieldProps extends BaseFieldProps {
@@ -40,6 +41,7 @@ interface TextareaFieldProps extends BaseFieldProps {
   placeholder: string;
   maxLength?: number;
   rows?: number;
+  disabled?: boolean;
 }
 
 type FormFieldProps = SelectFieldProps | TextInputProps | TextareaFieldProps;
@@ -83,9 +85,10 @@ export function FormField(props: FormFieldProps) {
           onChange={(e) => props.onChange(e.target.value)}
           placeholder={props.placeholder}
           maxLength={props.maxLength}
+          disabled={props.disabled}
           className={`bg-card border-input focus:ring-2 focus:ring-primary/20 transition-all ${
             error ? 'border-destructive' : ''
-          }`}
+          } ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         />
       )}
 
@@ -97,9 +100,10 @@ export function FormField(props: FormFieldProps) {
             placeholder={props.placeholder}
             maxLength={props.maxLength}
             rows={props.rows || 4}
+            disabled={props.disabled}
             className={`bg-card border-input focus:ring-2 focus:ring-primary/20 transition-all resize-none ${
               error ? 'border-destructive' : ''
-            }`}
+            } ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {props.maxLength && (
             <span className="absolute bottom-2 right-3 text-xs text-muted-foreground">

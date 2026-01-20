@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,29 @@ export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onI
   const [currentDisplayUrl, setCurrentDisplayUrl] = useState(displayUrl);
   const [currentEditUrl, setCurrentEditUrl] = useState(editUrl);
   const [showHtmlModal, setShowHtmlModal] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Elapsed time counter
+  useEffect(() => {
+    if (isEditing) {
+      setElapsedTime(0);
+      intervalRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isEditing]);
 
   const handleDownload = async () => {
     try {
@@ -125,13 +148,13 @@ export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onI
               />
             </div>
 
-            {/* Edit Instructions */}
             <div className="space-y-2">
               <Textarea
                 placeholder="Enter editing instructions (e.g., 'Make the character face forward', 'Zoom in on the subject', 'Change to 1920x1080')"
                 value={editInstructions}
                 onChange={(e) => setEditInstructions(e.target.value)}
                 className="min-h-[80px] resize-none"
+                disabled={isEditing}
               />
               {editError && (
                 <p className="text-destructive text-sm">{editError}</p>
@@ -140,12 +163,12 @@ export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onI
                 onClick={handleEditImage} 
                 disabled={isEditing || !editInstructions.trim()}
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-2 min-w-[180px]"
               >
                 {isEditing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Regenerating...
+                    <span className="tabular-nums">{elapsedTime}s</span>
                   </>
                 ) : (
                   <>
@@ -162,11 +185,12 @@ export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onI
                 onClick={() => setShowHtmlModal(true)} 
                 variant="outline"
                 className="gap-2"
+                disabled={isEditing}
               >
                 <FileCode className="w-4 h-4" />
                 Convert to HTML
               </Button>
-              <Button onClick={handleDownload} className="gap-2 gradient-primary">
+              <Button onClick={handleDownload} className="gap-2 gradient-primary" disabled={isEditing}>
                 <Download className="w-4 h-4" />
                 Download Image
               </Button>
