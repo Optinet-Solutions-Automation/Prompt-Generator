@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Download, Eye, FileCode } from 'lucide-react';
+import { Loader2, Download, Eye, FileCode, Clock } from 'lucide-react';
 
 interface HtmlConversionModalProps {
   isOpen: boolean;
@@ -38,6 +38,29 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl }: HtmlConversio
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Elapsed time counter
+  useEffect(() => {
+    if (isConverting) {
+      setElapsedTime(0);
+      intervalRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isConverting]);
 
   const handleInputChange = (field: keyof BonusFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -241,6 +264,7 @@ The final result should look like a professionally designed casino promotional b
                   placeholder="No. of free spins e.g 20"
                   value={formData.welcomeBonus}
                   onChange={(e) => handleInputChange('welcomeBonus', e.target.value)}
+                  disabled={isConverting}
                 />
               </div>
               
@@ -251,6 +275,7 @@ The final result should look like a professionally designed casino promotional b
                   placeholder="e.g., $100"
                   value={formData.amountToUnlock}
                   onChange={(e) => handleInputChange('amountToUnlock', e.target.value)}
+                  disabled={isConverting}
                 />
               </div>
               
@@ -261,6 +286,7 @@ The final result should look like a professionally designed casino promotional b
                   placeholder="e.g., WELCOME100"
                   value={formData.bonusCode}
                   onChange={(e) => handleInputChange('bonusCode', e.target.value)}
+                  disabled={isConverting}
                 />
               </div>
               
@@ -271,6 +297,7 @@ The final result should look like a professionally designed casino promotional b
                   placeholder="e.g., 50"
                   value={formData.extraSpins}
                   onChange={(e) => handleInputChange('extraSpins', e.target.value)}
+                  disabled={isConverting}
                 />
               </div>
               
@@ -281,6 +308,7 @@ The final result should look like a professionally designed casino promotional b
                   placeholder="e.g., 100%"
                   value={formData.bonusPercentage}
                   onChange={(e) => handleInputChange('bonusPercentage', e.target.value)}
+                  disabled={isConverting}
                 />
               </div>
               
@@ -291,6 +319,7 @@ The final result should look like a professionally designed casino promotional b
                   placeholder="e.g., $500"
                   value={formData.maximumBonus}
                   onChange={(e) => handleInputChange('maximumBonus', e.target.value)}
+                  disabled={isConverting}
                 />
               </div>
             </div>
@@ -300,18 +329,18 @@ The final result should look like a professionally designed casino promotional b
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>
+              <Button variant="outline" onClick={handleClose} disabled={isConverting}>
                 Cancel
               </Button>
               <Button 
                 onClick={handleConvert} 
                 disabled={isConverting}
-                className="gradient-primary gap-2"
+                className="gradient-primary gap-2 min-w-[140px]"
               >
                 {isConverting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Converting...
+                    <span className="tabular-nums">{elapsedTime}s</span>
                   </>
                 ) : (
                   <>
@@ -329,7 +358,9 @@ The final result should look like a professionally designed casino promotional b
                 <FileCode className="w-8 h-8 text-primary" />
               </div>
               <p className="text-foreground font-medium mb-2">HTML Generated Successfully!</p>
-              <p className="text-sm text-muted-foreground">Your HTML file is ready to download or preview.</p>
+              <p className="text-sm text-muted-foreground">
+                Completed in {elapsedTime}s • Your HTML file is ready to download or preview.
+              </p>
             </div>
 
             <DialogFooter className="flex gap-2 sm:gap-2">
