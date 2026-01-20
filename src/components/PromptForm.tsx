@@ -2,14 +2,13 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
+import { ImageSizeSelect } from './ImageSizeSelect';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
   BRANDS,
   BRAND_REFERENCES,
   SUBJECT_POSITIONS,
-  GEMINI_IMAGE_SIZES,
-  GPT_IMAGE_SIZES,
 } from '@/types/prompt';
 
 interface PromptFormProps {
@@ -84,25 +83,12 @@ export function PromptForm({
         placeholder="Default"
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <FormField
-          type="select"
-          label="Gemini Image Size"
-          options={[...GEMINI_IMAGE_SIZES]}
-          value={formData.imageSizeGemini}
-          onChange={(value) => onFieldChange('imageSizeGemini', value)}
-          placeholder="Default"
-        />
-
-        <FormField
-          type="select"
-          label="GPT Image Size"
-          options={[...GPT_IMAGE_SIZES]}
-          value={formData.imageSizeGPT}
-          onChange={(value) => onFieldChange('imageSizeGPT', value)}
-          placeholder="Default"
-        />
-      </div>
+      <ImageSizeSelect
+        label="Image Size"
+        value={formData.imageSize}
+        onChange={(value) => onFieldChange('imageSize', value)}
+        placeholder="Default"
+      />
 
       <FormField
         type="text"

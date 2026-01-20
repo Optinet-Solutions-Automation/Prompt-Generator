@@ -5,11 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
-import { BRANDS, BRAND_REFERENCES, SUBJECT_POSITIONS, GEMINI_IMAGE_SIZES, GPT_IMAGE_SIZES } from '@/types/prompt';
+import { BRANDS, BRAND_REFERENCES, SUBJECT_POSITIONS } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
+import { ImageSizeSelect } from './ImageSizeSelect';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import {
@@ -216,27 +217,13 @@ export function ResultDisplay({
               disabled={isRegeneratingPrompt}
             />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                type="select"
-                label="Gemini Image Size"
-                options={[...GEMINI_IMAGE_SIZES]}
-                value={metadata.imageSizeGemini || ''}
-                onChange={(value) => onMetadataChange?.('imageSizeGemini', value)}
-                placeholder="Default"
-                disabled={isRegeneratingPrompt}
-              />
-
-              <FormField
-                type="select"
-                label="GPT Image Size"
-                options={[...GPT_IMAGE_SIZES]}
-                value={metadata.imageSizeGPT || ''}
-                onChange={(value) => onMetadataChange?.('imageSizeGPT', value)}
-                placeholder="Default"
-                disabled={isRegeneratingPrompt}
-              />
-            </div>
+            <ImageSizeSelect
+              label="Image Size"
+              value={metadata.imageSize || ''}
+              onChange={(value) => onMetadataChange?.('imageSize', value)}
+              placeholder="Default"
+              disabled={isRegeneratingPrompt}
+            />
 
             <FormField
               type="text"
