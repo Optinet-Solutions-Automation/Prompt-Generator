@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { useEffect } from 'react';
 import { PromptForm } from '@/components/PromptForm';
 import { ProcessingState } from '@/components/ProcessingState';
 import { ResultDisplay } from '@/components/ResultDisplay';
@@ -40,11 +41,34 @@ const Index = () => {
     clearReferencePromptData,
   } = useReferencePromptData();
 
+  // Sync reference prompt data to formData when loaded
+  useEffect(() => {
+    if (referencePromptData) {
+      handleFieldChange('format_layout', referencePromptData.format_layout || '');
+      handleFieldChange('primary_object', referencePromptData.primary_object || '');
+      handleFieldChange('subject', referencePromptData.subject || '');
+      handleFieldChange('lighting', referencePromptData.lighting || '');
+      handleFieldChange('mood', referencePromptData.mood || '');
+      handleFieldChange('background', referencePromptData.background || '');
+      handleFieldChange('positive_prompt', referencePromptData.positive_prompt || '');
+      handleFieldChange('negative_prompt', referencePromptData.negative_prompt || '');
+    }
+  }, [referencePromptData, handleFieldChange]);
+
   const handleReferenceChange = (brand: string, referenceId: string) => {
     if (referenceId) {
       fetchReferencePromptData(brand, referenceId);
     } else {
       clearReferencePromptData();
+      // Clear the fields when reference is cleared
+      handleFieldChange('format_layout', '');
+      handleFieldChange('primary_object', '');
+      handleFieldChange('subject', '');
+      handleFieldChange('lighting', '');
+      handleFieldChange('mood', '');
+      handleFieldChange('background', '');
+      handleFieldChange('positive_prompt', '');
+      handleFieldChange('negative_prompt', '');
     }
   };
 
