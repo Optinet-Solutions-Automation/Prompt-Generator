@@ -209,7 +209,7 @@ export function ResultDisplay({
             <FormField
               type="select"
               label="Subject Position"
-              options={['', ...SUBJECT_POSITIONS]}
+              options={[...SUBJECT_POSITIONS]}
               value={metadata.subjectPosition || ''}
               onChange={(value) => onMetadataChange?.('subjectPosition', value)}
               placeholder="Default"

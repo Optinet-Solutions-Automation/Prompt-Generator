@@ -70,7 +70,7 @@ export function FormField(props: FormFieldProps) {
             <SelectValue placeholder={props.placeholder} />
           </SelectTrigger>
           <SelectContent>
-            {props.options.map((option) => (
+            {props.options.filter(option => option !== '').map((option) => (
               <SelectItem key={option} value={option}>
                 {option}
               </SelectItem>
