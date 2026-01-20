@@ -26,16 +26,13 @@ export const IMAGE_SIZES = [
 export type ImageSizeOption = typeof IMAGE_SIZES[number];
 
 export const SUBJECT_POSITIONS = [
-  'Default',
-  'centered',
-  'left-aligned',
-  'right-aligned',
-  'upper left',
-  'upper right',
-  'lower left',
-  'lower right',
-  'foreground',
-  'background',
+  'Lower Left',
+  'Upper Left',
+  'Left Aligned',
+  'Centered',
+  'Right Aligned',
+  'Upper Right',
+  'Lower Right',
 ] as const;
 
 export interface ReferenceOption {
@@ -234,7 +231,7 @@ export const BRANDS = [
 export const INITIAL_FORM_DATA: FormData = {
   brand: '',
   reference: '',
-  subjectPosition: 'Default',
+  subjectPosition: 'Centered',
   aspectRatio: '16:9',
   theme: '',
   description: '',

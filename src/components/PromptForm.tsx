@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
 import { AspectRatioSelector } from './AspectRatioSelector';
+import { SubjectPositionSelector } from './SubjectPositionSelector';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
   BRANDS,
   BRAND_REFERENCES,
-  SUBJECT_POSITIONS,
 } from '@/types/prompt';
 
 interface PromptFormProps {
@@ -74,13 +74,11 @@ export function PromptForm({
         />
       </div>
 
-      <FormField
-        type="select"
+      <SubjectPositionSelector
         label="Subject Position"
-        options={[...SUBJECT_POSITIONS]}
         value={formData.subjectPosition}
         onChange={(value) => onFieldChange('subjectPosition', value)}
-        placeholder="Default"
+        aspectRatio={formData.aspectRatio}
       />
 
       <AspectRatioSelector
