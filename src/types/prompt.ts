@@ -4,28 +4,26 @@ export interface FormData {
   brand: string;
   reference: string;
   subjectPosition: string;
-  imageSizeGemini: string;
-  imageSizeGPT: string;
+  imageSize: string;
   theme: string;
   description: string;
 }
 
-export const GEMINI_IMAGE_SIZES = [
-  'Square Small – 512x512',
-  'Square Medium – 768x768',
-  'Square Large – 1024x1024',
-  'HD Landscape – 1280x720',
-  'Full HD Landscape – 1920x1080',
-  'Full HD Portrait – 1080x1920',
-  'Ultra-Wide – 2048x1024',
-  'Ultra-Tall – 1024x2048',
+export const IMAGE_SIZES = [
+  { label: 'Square Small – 512x512', value: 'gemini-512x512', provider: 'Gemini' },
+  { label: 'Square Medium – 768x768', value: 'gemini-768x768', provider: 'Gemini' },
+  { label: 'Square Large – 1024x1024', value: 'gemini-1024x1024', provider: 'Gemini' },
+  { label: 'HD Landscape – 1280x720', value: 'gemini-1280x720', provider: 'Gemini' },
+  { label: 'Full HD Landscape – 1920x1080', value: 'gemini-1920x1080', provider: 'Gemini' },
+  { label: 'Full HD Portrait – 1080x1920', value: 'gemini-1080x1920', provider: 'Gemini' },
+  { label: 'Ultra-Wide – 2048x1024', value: 'gemini-2048x1024', provider: 'Gemini' },
+  { label: 'Ultra-Tall – 1024x2048', value: 'gemini-1024x2048', provider: 'Gemini' },
+  { label: 'Square – 1024x1024', value: 'gpt-1024x1024', provider: 'GPT' },
+  { label: 'Landscape – 1792x1024', value: 'gpt-1792x1024', provider: 'GPT' },
+  { label: 'Portrait – 1024x1792', value: 'gpt-1024x1792', provider: 'GPT' },
 ] as const;
 
-export const GPT_IMAGE_SIZES = [
-  'Square – 1024x1024',
-  'Landscape – 1792x1024',
-  'Portrait – 1024x1792',
-] as const;
+export type ImageSizeOption = typeof IMAGE_SIZES[number];
 
 export const SUBJECT_POSITIONS = [
   'centered',
@@ -201,8 +199,7 @@ export interface PromptMetadata {
   brand: string;
   reference: string;
   subjectPosition?: string;
-  imageSizeGemini?: string;
-  imageSizeGPT?: string;
+  imageSize?: string;
   theme: string;
   description: string;
 }
@@ -237,8 +234,7 @@ export const INITIAL_FORM_DATA: FormData = {
   brand: '',
   reference: '',
   subjectPosition: '',
-  imageSizeGemini: '',
-  imageSizeGPT: '',
+  imageSize: '',
   theme: '',
   description: '',
 };
