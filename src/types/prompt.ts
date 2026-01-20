@@ -4,7 +4,7 @@ export interface FormData {
   brand: string;
   reference: string;
   subjectPosition: string;
-  imageSize: string;
+  aspectRatio: string;
   theme: string;
   description: string;
 }
@@ -200,7 +200,7 @@ export interface PromptMetadata {
   brand: string;
   reference: string;
   subjectPosition?: string;
-  imageSize?: string;
+  aspectRatio?: string;
   theme: string;
   description: string;
 }
@@ -235,7 +235,7 @@ export const INITIAL_FORM_DATA: FormData = {
   brand: '',
   reference: '',
   subjectPosition: 'Default',
-  imageSize: 'default',
+  aspectRatio: '16:9',
   theme: '',
   description: '',
 };

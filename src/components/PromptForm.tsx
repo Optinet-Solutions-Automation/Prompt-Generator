@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
-import { ImageSizeSelect } from './ImageSizeSelect';
+import { AspectRatioSelector } from './AspectRatioSelector';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
@@ -83,11 +83,10 @@ export function PromptForm({
         placeholder="Default"
       />
 
-      <ImageSizeSelect
-        label="Image Size"
-        value={formData.imageSize}
-        onChange={(value) => onFieldChange('imageSize', value)}
-        placeholder="Default"
+      <AspectRatioSelector
+        label="Aspect Ratio"
+        value={formData.aspectRatio}
+        onChange={(value) => onFieldChange('aspectRatio', value)}
       />
 
       <FormField
