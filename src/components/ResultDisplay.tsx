@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, Clock } from 'lucide-react';
+import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
 import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
@@ -34,6 +34,7 @@ interface ResultDisplayProps {
   onPromptChange?: (newPrompt: string) => void;
   onMetadataChange?: (field: keyof PromptMetadata, value: string) => void;
   onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string }) => void;
+  onRemoveGeneratedImage?: (provider: 'chatgpt' | 'gemini', index: number) => void;
 }
 
 export function ResultDisplay({
@@ -51,6 +52,7 @@ export function ResultDisplay({
   onPromptChange,
   onMetadataChange,
   onAddGeneratedImage,
+  onRemoveGeneratedImage,
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({ chatgpt: false, gemini: false });
@@ -450,7 +452,10 @@ export function ResultDisplay({
           <div className="mt-6 space-y-4">
             {/* All images combined, grouped by reference label */}
             {(() => {
-              const allImages = [...generatedImages.chatgpt, ...generatedImages.gemini];
+              // Create images with original index for removal
+              const chatgptWithIndex = generatedImages.chatgpt.map((img, idx) => ({ ...img, originalIndex: idx }));
+              const geminiWithIndex = generatedImages.gemini.map((img, idx) => ({ ...img, originalIndex: idx }));
+              const allImages = [...chatgptWithIndex, ...geminiWithIndex];
               const groupedByRef = allImages.reduce((acc, img) => {
                 const label = img.referenceLabel || 'Unknown';
                 if (!acc[label]) acc[label] = [];
@@ -474,6 +479,17 @@ export function ResultDisplay({
                         <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                           <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
                         </div>
+                        {/* Remove button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveGeneratedImage?.(img.provider, img.originalIndex);
+                          }}
+                          className="absolute top-1 left-1 z-20 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                         {/* Provider badge */}
                         <div className="absolute top-1 right-1 z-10">
                           {img.provider === 'chatgpt' ? (

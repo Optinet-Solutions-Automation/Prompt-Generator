@@ -29,6 +29,7 @@ const Index = () => {
     handlePromptChange,
     handleMetadataChange,
     handleAddGeneratedImage,
+    handleRemoveGeneratedImage,
   } = usePromptGenerator();
 
   const showForm = appState === 'FORM';
@@ -109,6 +110,7 @@ const Index = () => {
                   onPromptChange={handlePromptChange}
                   onMetadataChange={handleMetadataChange}
                   onAddGeneratedImage={handleAddGeneratedImage}
+                  onRemoveGeneratedImage={handleRemoveGeneratedImage}
                 />
               )}
             </AnimatePresence>

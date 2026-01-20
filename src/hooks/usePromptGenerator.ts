@@ -217,6 +217,13 @@ export function usePromptGenerator() {
     }));
   }, []);
 
+  const handleRemoveGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', index: number) => {
+    setGeneratedImages(prev => ({
+      ...prev,
+      [provider]: prev[provider].filter((_, i) => i !== index)
+    }));
+  }, []);
+
   const handlePromptChange = useCallback((newPrompt: string) => {
     setGeneratedPrompt(newPrompt);
   }, []);
@@ -270,5 +277,6 @@ export function usePromptGenerator() {
     handlePromptChange,
     handleMetadataChange,
     handleAddGeneratedImage,
+    handleRemoveGeneratedImage,
   };
 }
