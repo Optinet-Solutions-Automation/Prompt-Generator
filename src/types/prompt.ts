@@ -234,8 +234,8 @@ export const BRANDS = [
 export const INITIAL_FORM_DATA: FormData = {
   brand: '',
   reference: '',
-  subjectPosition: '',
-  imageSize: '',
+  subjectPosition: 'Default',
+  imageSize: 'default',
   theme: '',
   description: '',
 };
