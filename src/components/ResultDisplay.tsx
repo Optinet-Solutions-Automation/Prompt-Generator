@@ -9,8 +9,7 @@ import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
-import { AspectRatioSelector } from './AspectRatioSelector';
-import { SubjectPositionSelector } from './SubjectPositionSelector';
+import { PositionAndRatioSelector } from './PositionAndRatioSelector';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import {
@@ -207,20 +206,15 @@ export function ResultDisplay({
               references={BRAND_REFERENCES[metadata.brand] || []}
             />
 
-            <SubjectPositionSelector
-              label="Subject Position"
-              value={metadata.subjectPosition || 'Centered'}
-              onChange={(value) => onMetadataChange?.('subjectPosition', value)}
-              disabled={isRegeneratingPrompt}
-              aspectRatio={metadata.aspectRatio || '16:9'}
-            />
-
-            <AspectRatioSelector
-              label="Aspect Ratio"
-              value={metadata.aspectRatio || '16:9'}
-              onChange={(value) => onMetadataChange?.('aspectRatio', value)}
-              disabled={isRegeneratingPrompt}
-            />
+            <div className="md:col-span-2">
+              <PositionAndRatioSelector
+                subjectPosition={metadata.subjectPosition || 'Centered'}
+                aspectRatio={metadata.aspectRatio || '16:9'}
+                onSubjectPositionChange={(value) => onMetadataChange?.('subjectPosition', value)}
+                onAspectRatioChange={(value) => onMetadataChange?.('aspectRatio', value)}
+                disabled={isRegeneratingPrompt}
+              />
+            </div>
 
             <FormField
               type="text"

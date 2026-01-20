@@ -2,8 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
-import { AspectRatioSelector } from './AspectRatioSelector';
-import { SubjectPositionSelector } from './SubjectPositionSelector';
+import { PositionAndRatioSelector } from './PositionAndRatioSelector';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
@@ -74,17 +73,11 @@ export function PromptForm({
         />
       </div>
 
-      <SubjectPositionSelector
-        label="Subject Position"
-        value={formData.subjectPosition}
-        onChange={(value) => onFieldChange('subjectPosition', value)}
+      <PositionAndRatioSelector
+        subjectPosition={formData.subjectPosition}
         aspectRatio={formData.aspectRatio}
-      />
-
-      <AspectRatioSelector
-        label="Aspect Ratio"
-        value={formData.aspectRatio}
-        onChange={(value) => onFieldChange('aspectRatio', value)}
+        onSubjectPositionChange={(value) => onFieldChange('subjectPosition', value)}
+        onAspectRatioChange={(value) => onFieldChange('aspectRatio', value)}
       />
 
       <FormField
