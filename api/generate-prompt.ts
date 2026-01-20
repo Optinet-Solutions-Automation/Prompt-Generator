@@ -3,6 +3,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 interface FormData {
   brand: string;
   reference: string;
+  subjectPosition: string;
+  imageSize: string;
   theme: string;
   description: string;
 }
@@ -12,6 +14,8 @@ function transformFormData(formData: FormData) {
   return {
     brand: formData.brand,
     reference: formData.reference,
+    subjectPosition: formData.subjectPosition,
+    imageSize: formData.imageSize,
     theme: formData.theme,
     description: formData.description,
   };
@@ -98,6 +102,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       metadata: {
         brand: result.data?.brand || req.body.brand,
         reference: result.data?.reference || req.body.reference,
+        subjectPosition: result.data?.subjectPosition || req.body.subjectPosition,
+        imageSize: result.data?.imageSize || req.body.imageSize,
         theme: result.data?.theme || req.body.theme,
         description: result.data?.description || req.body.description,
       }
