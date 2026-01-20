@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import type { AppState, PromptMetadata } from '@/types/prompt';
+import type { AppState, PromptMetadata, ReferencePromptData } from '@/types/prompt';
 import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
 import { PositionAndRatioSelector } from './PositionAndRatioSelector';
+import { ReferencePromptDataDisplay } from './ReferencePromptDataDisplay';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import {
@@ -26,6 +27,9 @@ interface ResultDisplayProps {
   appState: AppState;
   generatedImages: GeneratedImages;
   isRegeneratingPrompt: boolean;
+  referencePromptData: ReferencePromptData | null;
+  isLoadingReferenceData: boolean;
+  onReferenceChange: (brand: string, referenceId: string) => void;
   onSave: () => void;
   onDontSave: () => void;
   onEditForm: () => void;
@@ -44,6 +48,9 @@ export function ResultDisplay({
   appState,
   generatedImages,
   isRegeneratingPrompt,
+  referencePromptData,
+  isLoadingReferenceData,
+  onReferenceChange,
   onSave,
   onDontSave,
   onEditForm,

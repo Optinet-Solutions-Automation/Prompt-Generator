@@ -9,6 +9,17 @@ export interface FormData {
   description: string;
 }
 
+export interface ReferencePromptData {
+  format_layout: string;
+  primary_object: string;
+  subject: string;
+  lighting: string;
+  mood: string;
+  background: string;
+  positive_prompt: string;
+  negative_prompt: string;
+}
+
 export const IMAGE_SIZES = [
   { label: 'Square Small – 512x512', value: 'gemini-512x512', provider: 'Gemini' },
   { label: 'Square Medium – 768x768', value: 'gemini-768x768', provider: 'Gemini' },
@@ -111,7 +122,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'SpinsUp': [
     { id: 'mystic_croupier', label: 'Mystic Croupier', description: 'A stylish showman in a purple coat spins a glowing casino prize wheel surrounded by swirling neon energy', category: 'Casino - Promotions' },
-    { id: 'lucky_wheel', label: 'Lucky Wheel', description: 'A glamorous female casino host poses beside a glowing prize wheel labeled “LUCKY SPIN” in a neon purple night scene', category: 'Casino - Promotions' },
+    { id: 'lucky_wheel', label: 'Lucky Wheel', description: 'A glamorous female casino host poses beside a glowing prize wheel labeled "LUCKY SPIN" in a neon purple night scene', category: 'Casino - Promotions' },
     { id: 'arcane_magician', label: 'Arcane Magician', description: 'A right-side, half-body stage magician presenting a glowing neon vortex in his hands under circus tent lights', category: 'Casino - Promotions' },
     { id: 'fire_ringmaster', label: 'Fire Ringmaster', description: 'A muscular showman in an ornate red jacket stands beside a lion with a burning circus tent behind', category: 'Casino - Promotions' },
     { id: 'astral_monk', label: 'Astral Monk', description: 'A levitating monk in red robes meditates on a circular stage as golden energy spirals behind him in a night circus', category: 'Casino - Promotions' },
@@ -156,42 +167,15 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'NovaDreams': [
     { id: 'cosmic_prizewheel', label: 'Cosmic Prizewheel', description: 'A right-side astronaut reaches toward a large numbered prize wheel in glossy cinematic sci-fi lighting', category: 'Casino - Promotions' },
-    { id: 'space_spin', label: 'Space Spin', description: 'A futuristic astronaut beside a colorful prize wheel with a bold LUCKY SPIN badge on a dark cosmic backdrop', category: 'Casino - Promotions' },
-    { id: 'lone_astronaut', label: 'Lone Astronaut', description: 'A back-facing astronaut walks across a barren alien landscape beneath a massive planet with a fiery atmospheric glow', category: 'Casino - Promotions' },
-    { id: 'starlit_visor', label: 'Starlit Visor', description: 'A centered, extreme close-up of a blue-eyed young woman framed by a helmet-like circular visor with floating dust and bokeh', category: 'Casino - Promotions' },
-    { id: 'orbital_sentinel', label: 'Orbital Sentinel', description: 'A futuristic satellite with broad solar panels drifting through a glowing nebula with dramatic rim light', category: 'Casino - Promotions' },
-    { id: 'starlit_astronaut', label: 'Starlit Astronaut', description: 'An intense close-up portrait of a helmeted astronaut with glowing embers drifting across a dark, cinematic frame', category: 'Casino - Promotions' },
-    { id: 'crimson_astronaut', label: 'Crimson Astronaut', description: 'A right-aligned astronaut in a white EVA suit emerging from smoky orange light with wide negative space on the left', category: 'Casino - Promotions' },
-    { id: 'orbital_sunrise', label: 'Orbital Sunrise', description: 'A cinematic sunrise peeking over Earth’s curved horizon with glowing city lights and deep space negative space', category: 'Casino - Promotions' },
+    { id: 'nebula_explorer', label: 'Nebula Explorer', description: 'A right-side astronaut gazes at a vivid purple-and-gold nebula swirl in the darkness of space', category: 'Casino - Promotions' },
+    { id: 'space_jackpot', label: 'Space Jackpot', description: 'A glossy, futuristic slot machine erupts with golden coins against a star-filled space backdrop', category: 'Casino - Promotions' },
+    { id: 'aurora_astronaut', label: 'Aurora Astronaut', description: 'A solo astronaut floats on the right beneath shimmering cosmic auroras with deep negative space on the left', category: 'Casino - Promotions' },
+    { id: 'cosmic_spin', label: 'Cosmic Spin', description: 'A holographic casino wheel spins at the center of a futuristic space station interior with neon accents', category: 'Casino - Promotions' },
+    { id: 'stellar_phoenix', label: 'Stellar Phoenix', description: 'A glowing space phoenix rises on the right in vivid gold and purple flames against the starry void', category: 'Casino - Promotions' },
+    { id: 'nebula_riches', label: 'Nebula Riches', description: 'A swirling purple-gold nebula on the right with floating gold coins and star clusters fading into darkness', category: 'Casino - Promotions' },
+    { id: 'starfall_portal', label: 'Starfall Portal', description: 'A right-weighted portal of swirling cosmic energy and falling stars leading into deep violet space', category: 'Casino - Promotions' },
   ],
-
-  'Rollero': [
-    { id: 'crimson_helm', label: 'Crimson Helm', description: 'A right-aligned, half-body armored warrior with a red plume helmet emerging from dark negative space in cinematic haze', category: 'Casino - Promotions' },
-    { id: 'battle_relic', label: 'Battle Relic', description: 'A right-aligned close-up of a warrior’s ornate round shield and diagonal sword in dramatic cinematic shadow', category: 'Casino - Promotions' },
-    { id: 'fallen_helm', label: 'Fallen Helm', description: 'A battle-worn Spartan helmet with a red crest resting on cobblestones at sunset with dark ruins in the distance', category: 'Casino - Promotions' },
-    { id: 'battle_knight', label: 'Battle Knight', description: 'A close-up armored knight on the right raising a sword and shield, framed against dark negative space with drifting sparks', category: 'Casino - Promotions' },
-    { id: 'iron_sentinel', label: 'Iron Sentinel', description: 'A gritty close-up of a battle-worn armored warrior staring forward with intense eyes against deep black negative space', category: 'Casino - Promotions' },
-    { id: 'sunset_excalibur', label: 'Sunset Excalibur', description: 'A lone medieval sword embedded in a rocky ledge, framed on the right against a glowing sunset with dark negative space', category: 'Casino - Promotions' },
-    { id: 'gladiator_relic', label: 'Gladiator Relic', description: 'A right-aligned close-up of an ornate Roman helmet with red crest beside a sword, set against the Colosseum at sunset', category: 'Casino - Promotions' },
-    { id: 'arena_gladiator', label: 'Arena Gladiator', description: 'A muscular armored warrior on the right holding a round shield in a smoky colosseum with dramatic warm rim light', category: 'Casino - Promotions' },
-  ],
-
-  'RocketSpin': [
-    { id: 'cosmic_presenter', label: 'Cosmic Presenter', description: 'A futuristic hero in a white-gold suit gesturing toward a glowing circular wheel of icons against a clean sky backdrop', category: 'Casino - Promotions' },
-    { id: 'lucky_hero', label: 'Lucky Hero', description: 'A futuristic male host in a white-and-gold suit presenting a colorful prize wheel labeled LUCKY SPIN', category: 'Casino - Promotions' },
-    { id: 'skybound_pilot', label: 'Skybound Pilot', description: 'A right-side, close-up futuristic woman in white-and-gold armor flying through bright clouds with large blue negative space', category: 'Casino - Promotions' },
-    { id: 'skyward_rocket', label: 'Skyward Rocket', description: 'A sleek silver spacecraft climbing through thick clouds with blazing twin engines and wide blue negative space', category: 'Casino - Promotions' },
-    { id: 'rocket_guardian', label: 'Rocket Guardian', description: 'A futuristic blonde woman in a white-and-gold spacesuit stands on the right with rockets launching behind her', category: 'Casino - Promotions' },
-    { id: 'skybound_hero', label: 'Skybound Hero', description: 'A futuristic male superhero flying toward camera on the right, with a glowing chest core and blue sky negative space', category: 'Casino - Promotions' },
-    { id: 'sky_guardians', label: 'Sky Guardians', description: 'Two futuristic heroes in white suits and amber goggles posed on the right against a clean blue gradient banner', category: 'Casino - Promotions' },
-    { id: 'stratosphere_cruiser', label: 'Stratosphere Cruiser', description: 'A sleek white-and-gold sci-fi rocket ship flying above bright clouds with expansive blue negative space on the left', category: 'Casino - Promotions' },
-    { id: 'cloudrunner_launch', label: 'Cloudrunner Launch', description: 'A sleek white futuristic spacecraft climbs through dramatic clouds with bright engine flames, framed right with wide blue negative space', category: 'Casino - Promotions' },
-    { id: 'skystrike_pilot', label: 'Skystrike Pilot', description: 'A tight right-side close-up of a goggle-wearing pilot with rockets streaking behind him in a clear blue sky', category: 'Casino - Promotions' },
-  ],
-
-
 };
-
 
 export interface PromptMetadata {
   brand: string;
@@ -215,18 +199,15 @@ export interface SavePromptResponse {
 }
 
 export const BRANDS = [
+  'FortunePlay',
   'PlayMojo',
   'SpinJo',
-  'SpinsUp',
-  'FortunePlay',
   'Roosterbet',
+  'SpinsUp',
   'LuckyVibe',
   'Lucky7even',
   'NovaDreams',
-  'Rollero',
-  'RocketSpin',
 ] as const;
-
 
 export const INITIAL_FORM_DATA: FormData = {
   brand: '',
