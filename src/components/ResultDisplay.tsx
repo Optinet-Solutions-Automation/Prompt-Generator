@@ -1,16 +1,16 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { AppState, PromptMetadata } from '@/types/prompt';
-import { BRANDS, BRAND_REFERENCES, SUBJECT_POSITIONS } from '@/types/prompt';
+import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
 import { AspectRatioSelector } from './AspectRatioSelector';
+import { SubjectPositionSelector } from './SubjectPositionSelector';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import {
@@ -207,14 +207,12 @@ export function ResultDisplay({
               references={BRAND_REFERENCES[metadata.brand] || []}
             />
 
-            <FormField
-              type="select"
+            <SubjectPositionSelector
               label="Subject Position"
-              options={[...SUBJECT_POSITIONS]}
-              value={metadata.subjectPosition || ''}
+              value={metadata.subjectPosition || 'Centered'}
               onChange={(value) => onMetadataChange?.('subjectPosition', value)}
-              placeholder="Default"
               disabled={isRegeneratingPrompt}
+              aspectRatio={metadata.aspectRatio || '16:9'}
             />
 
             <AspectRatioSelector
