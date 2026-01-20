@@ -8,6 +8,8 @@ import {
   BRANDS,
   BRAND_REFERENCES,
   SUBJECT_POSITIONS,
+  GEMINI_IMAGE_SIZES,
+  GPT_IMAGE_SIZES,
 } from '@/types/prompt';
 
 interface PromptFormProps {
@@ -81,6 +83,26 @@ export function PromptForm({
         onChange={(value) => onFieldChange('subjectPosition', value)}
         placeholder="Default"
       />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <FormField
+          type="select"
+          label="Gemini Image Size"
+          options={[...GEMINI_IMAGE_SIZES]}
+          value={formData.imageSizeGemini}
+          onChange={(value) => onFieldChange('imageSizeGemini', value)}
+          placeholder="Default"
+        />
+
+        <FormField
+          type="select"
+          label="GPT Image Size"
+          options={[...GPT_IMAGE_SIZES]}
+          value={formData.imageSizeGPT}
+          onChange={(value) => onFieldChange('imageSizeGPT', value)}
+          placeholder="Default"
+        />
+      </div>
 
       <FormField
         type="text"
