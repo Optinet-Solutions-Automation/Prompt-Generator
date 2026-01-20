@@ -65,9 +65,16 @@ async function savePrompt(
   return response.json();
 }
 
+export type GeneratedImage = {
+  displayUrl: string;
+  editUrl: string;
+  referenceLabel: string;
+  provider: 'chatgpt' | 'gemini';
+};
+
 export type GeneratedImages = { 
-  chatgpt: { displayUrl: string; editUrl: string }[]; 
-  gemini: { displayUrl: string; editUrl: string }[] 
+  chatgpt: GeneratedImage[]; 
+  gemini: GeneratedImage[] 
 };
 
 export function usePromptGenerator() {
@@ -203,10 +210,10 @@ export function usePromptGenerator() {
     }
   }, [promptMetadata, handleSubmit]);
 
-  const handleAddGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string }) => {
+  const handleAddGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string }) => {
     setGeneratedImages(prev => ({
       ...prev,
-      [provider]: [...prev[provider], image]
+      [provider]: [...prev[provider], { ...image, provider }]
     }));
   }, []);
 

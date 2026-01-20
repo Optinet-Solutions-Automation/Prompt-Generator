@@ -32,7 +32,7 @@ interface ResultDisplayProps {
   onClearForm: () => void;
   onPromptChange?: (newPrompt: string) => void;
   onMetadataChange?: (field: keyof PromptMetadata, value: string) => void;
-  onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string }) => void;
+  onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string }) => void;
 }
 
 export function ResultDisplay({
@@ -52,7 +52,7 @@ export function ResultDisplay({
   onAddGeneratedImage,
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
-  const [generatingImage, setGeneratingImage] = useState<'chatgpt' | 'gemini' | null>(null);
+  const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({ chatgpt: false, gemini: false });
   const [imageError, setImageError] = useState<string | null>(null);
   const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -74,11 +74,19 @@ export function ResultDisplay({
     onPromptChange?.(value);
   };
 
+  // Get reference label from metadata
+  const getReferenceLabel = (): string => {
+    if (!metadata?.brand || !metadata?.reference) return 'Unknown';
+    const refs = BRAND_REFERENCES[metadata.brand] || [];
+    const found = refs.find(r => `${r.label} — ${r.description}` === metadata.reference);
+    return found?.label || metadata.reference.split(' — ')[0] || 'Unknown';
+  };
+
   const handleGenerateImage = async (provider: 'chatgpt' | 'gemini') => {
-    // Prevent multiple simultaneous requests
-    if (generatingImage !== null) return;
+    // Prevent multiple simultaneous requests for the same provider
+    if (generatingImage[provider]) return;
     
-    setGeneratingImage(provider);
+    setGeneratingImage(prev => ({ ...prev, [provider]: true }));
     setImageError(null);
 
     try {
@@ -112,7 +120,7 @@ export function ResultDisplay({
                       (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
       
       if (displayUrl && editUrl) {
-        onAddGeneratedImage?.(provider, { displayUrl, editUrl });
+        onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel() });
       } else {
         throw new Error('No image URL returned');
       }
@@ -120,8 +128,14 @@ export function ResultDisplay({
       console.error('Image generation error:', error);
       setImageError(error instanceof Error ? error.message : 'Failed to generate image');
     } finally {
-      setGeneratingImage(null);
+      setGeneratingImage(prev => ({ ...prev, [provider]: false }));
     }
+  };
+
+  const handleGenerateBoth = async () => {
+    // Start both generations simultaneously
+    handleGenerateImage('chatgpt');
+    handleGenerateImage('gemini');
   };
 
   const isSaving = appState === 'SAVING';
@@ -360,11 +374,11 @@ export function ResultDisplay({
         <div className="flex gap-3 justify-center flex-wrap">
           <Button
             onClick={() => handleGenerateImage('chatgpt')}
-            disabled={generatingImage !== null}
+            disabled={generatingImage.chatgpt}
             variant="outline"
             className="gap-2"
           >
-            {generatingImage === 'chatgpt' ? (
+            {generatingImage.chatgpt ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Bot className="w-4 h-4" />
@@ -373,16 +387,29 @@ export function ResultDisplay({
           </Button>
           <Button
             onClick={() => handleGenerateImage('gemini')}
-            disabled={generatingImage !== null}
+            disabled={generatingImage.gemini}
             variant="outline"
             className="gap-2"
           >
-            {generatingImage === 'gemini' ? (
+            {generatingImage.gemini ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Gem className="w-4 h-4" />
             )}
             Gemini
+          </Button>
+          <Button
+            onClick={handleGenerateBoth}
+            disabled={generatingImage.chatgpt || generatingImage.gemini}
+            variant="default"
+            className="gap-2 gradient-primary"
+          >
+            {(generatingImage.chatgpt && generatingImage.gemini) ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            Generate Both
           </Button>
         </div>
 
@@ -391,64 +418,58 @@ export function ResultDisplay({
           <p className="text-destructive text-sm text-center mt-3">{imageError}</p>
         )}
 
-        {/* Generated Images Gallery */}
+        {/* Generated Images Gallery - Combined by reference label */}
         {(generatedImages.chatgpt.length > 0 || generatedImages.gemini.length > 0) && (
           <div className="mt-6 space-y-4">
-            {/* ChatGPT Images */}
-            {generatedImages.chatgpt.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Bot className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">ChatGPT ({generatedImages.chatgpt.length})</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {generatedImages.chatgpt.map((img, index) => (
-                    <div
-                      key={`chatgpt-${index}`}
-                      className="relative group cursor-pointer aspect-square"
-                      onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: 'chatgpt' })}
-                    >
-                      <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
-                        <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
-                      </div>
-                      <img
-                        src={img.displayUrl}
-                        alt={`ChatGPT image ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* All images combined, grouped by reference label */}
+            {(() => {
+              const allImages = [...generatedImages.chatgpt, ...generatedImages.gemini];
+              const groupedByRef = allImages.reduce((acc, img) => {
+                const label = img.referenceLabel || 'Unknown';
+                if (!acc[label]) acc[label] = [];
+                acc[label].push(img);
+                return acc;
+              }, {} as Record<string, typeof allImages>);
 
-            {/* Gemini Images */}
-            {generatedImages.gemini.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Gem className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Gemini ({generatedImages.gemini.length})</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {generatedImages.gemini.map((img, index) => (
-                    <div
-                      key={`gemini-${index}`}
-                      className="relative group cursor-pointer aspect-square"
-                      onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: 'gemini' })}
-                    >
-                      <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
-                        <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
+              return Object.entries(groupedByRef).map(([label, images]) => (
+                <div key={label}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">{label} ({images.length})</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {images.map((img, index) => (
+                      <div
+                        key={`${label}-${img.provider}-${index}`}
+                        className="relative group cursor-pointer aspect-square"
+                        onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: img.provider })}
+                      >
+                        <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                          <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
+                        </div>
+                        {/* Provider badge */}
+                        <div className="absolute top-1 right-1 z-10">
+                          {img.provider === 'chatgpt' ? (
+                            <div className="bg-background/80 backdrop-blur-sm rounded p-1">
+                              <Bot className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <div className="bg-background/80 backdrop-blur-sm rounded p-1">
+                              <Gem className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <img
+                          src={img.displayUrl}
+                          alt={`${label} - ${img.provider}`}
+                          className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
+                        />
                       </div>
-                      <img
-                        src={img.displayUrl}
-                        alt={`Gemini image ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
-                      />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ));
+            })()}
           </div>
         )}
       </motion.div>
