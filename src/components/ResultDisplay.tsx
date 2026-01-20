@@ -10,7 +10,7 @@ import { ImageModal } from './ImageModal';
 import { SavePromptModal } from './SavePromptModal';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
-import { ImageSizeSelect } from './ImageSizeSelect';
+import { AspectRatioSelector } from './AspectRatioSelector';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import {
@@ -217,11 +217,10 @@ export function ResultDisplay({
               disabled={isRegeneratingPrompt}
             />
 
-            <ImageSizeSelect
-              label="Image Size"
-              value={metadata.imageSize || ''}
-              onChange={(value) => onMetadataChange?.('imageSize', value)}
-              placeholder="Default"
+            <AspectRatioSelector
+              label="Aspect Ratio"
+              value={metadata.aspectRatio || '16:9'}
+              onChange={(value) => onMetadataChange?.('aspectRatio', value)}
               disabled={isRegeneratingPrompt}
             />
 

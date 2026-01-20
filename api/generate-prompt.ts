@@ -4,7 +4,7 @@ interface FormData {
   brand: string;
   reference: string;
   subjectPosition: string;
-  imageSize: string;
+  aspectRatio: string;
   theme: string;
   description: string;
 }
@@ -15,7 +15,7 @@ function transformFormData(formData: FormData) {
     brand: formData.brand,
     reference: formData.reference,
     subjectPosition: formData.subjectPosition,
-    imageSize: formData.imageSize,
+    aspectRatio: formData.aspectRatio,
     theme: formData.theme,
     description: formData.description,
   };
@@ -103,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         brand: result.data?.brand || req.body.brand,
         reference: result.data?.reference || req.body.reference,
         subjectPosition: result.data?.subjectPosition || req.body.subjectPosition,
-        imageSize: result.data?.imageSize || req.body.imageSize,
+        aspectRatio: result.data?.aspectRatio || req.body.aspectRatio,
         theme: result.data?.theme || req.body.theme,
         description: result.data?.description || req.body.description,
       }

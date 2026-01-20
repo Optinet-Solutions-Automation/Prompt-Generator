@@ -24,7 +24,7 @@ async function generatePrompt(formData: FormData): Promise<GeneratePromptRespons
     brand: formData.brand,
     reference: getReferencePromptName(formData.brand, formData.reference),
     subjectPosition: formData.subjectPosition,
-    imageSize: formData.imageSize,
+    aspectRatio: formData.aspectRatio,
     theme: formData.theme,
     description: formData.description,
   };
