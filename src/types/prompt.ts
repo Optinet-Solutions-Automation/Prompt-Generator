@@ -3,9 +3,22 @@ export type AppState = 'FORM' | 'PROCESSING' | 'RESULT' | 'SAVING' | 'SAVED';
 export interface FormData {
   brand: string;
   reference: string;
+  subjectPosition: string;
   theme: string;
   description: string;
 }
+
+export const SUBJECT_POSITIONS = [
+  'centered',
+  'left-aligned',
+  'right-aligned',
+  'upper left',
+  'upper right',
+  'lower left',
+  'lower right',
+  'foreground',
+  'background',
+] as const;
 
 export interface ReferenceOption {
   id: string;
@@ -168,6 +181,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 export interface PromptMetadata {
   brand: string;
   reference: string;
+  subjectPosition?: string;
   theme: string;
   description: string;
 }
@@ -201,6 +215,7 @@ export const BRANDS = [
 export const INITIAL_FORM_DATA: FormData = {
   brand: '',
   reference: '',
+  subjectPosition: '',
   theme: '',
   description: '',
 };
