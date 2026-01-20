@@ -4,9 +4,28 @@ export interface FormData {
   brand: string;
   reference: string;
   subjectPosition: string;
+  imageSizeGemini: string;
+  imageSizeGPT: string;
   theme: string;
   description: string;
 }
+
+export const GEMINI_IMAGE_SIZES = [
+  'Square Small – 512x512',
+  'Square Medium – 768x768',
+  'Square Large – 1024x1024',
+  'HD Landscape – 1280x720',
+  'Full HD Landscape – 1920x1080',
+  'Full HD Portrait – 1080x1920',
+  'Ultra-Wide – 2048x1024',
+  'Ultra-Tall – 1024x2048',
+] as const;
+
+export const GPT_IMAGE_SIZES = [
+  'Square – 1024x1024',
+  'Landscape – 1792x1024',
+  'Portrait – 1024x1792',
+] as const;
 
 export const SUBJECT_POSITIONS = [
   'centered',
@@ -182,6 +201,8 @@ export interface PromptMetadata {
   brand: string;
   reference: string;
   subjectPosition?: string;
+  imageSizeGemini?: string;
+  imageSizeGPT?: string;
   theme: string;
   description: string;
 }
@@ -216,6 +237,8 @@ export const INITIAL_FORM_DATA: FormData = {
   brand: '',
   reference: '',
   subjectPosition: '',
+  imageSizeGemini: '',
+  imageSizeGPT: '',
   theme: '',
   description: '',
 };
