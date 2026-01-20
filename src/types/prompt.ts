@@ -7,6 +7,14 @@ export interface FormData {
   aspectRatio: string;
   theme: string;
   description: string;
+  format_layout: string;
+  primary_object: string;
+  subject: string;
+  lighting: string;
+  mood: string;
+  background: string;
+  positive_prompt: string;
+  negative_prompt: string;
 }
 
 export interface ReferencePromptData {
@@ -216,4 +224,12 @@ export const INITIAL_FORM_DATA: FormData = {
   aspectRatio: '16:9',
   theme: '',
   description: '',
+  format_layout: '',
+  primary_object: '',
+  subject: '',
+  lighting: '',
+  mood: '',
+  background: '',
+  positive_prompt: '',
+  negative_prompt: '',
 };

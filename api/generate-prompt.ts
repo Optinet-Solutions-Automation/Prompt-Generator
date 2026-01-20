@@ -7,6 +7,14 @@ interface FormData {
   aspectRatio: string;
   theme: string;
   description: string;
+  format_layout?: string;
+  primary_object?: string;
+  subject?: string;
+  lighting?: string;
+  mood?: string;
+  background?: string;
+  positive_prompt?: string;
+  negative_prompt?: string;
 }
 
 // Transform frontend field names to match n8n expected format
@@ -18,6 +26,14 @@ function transformFormData(formData: FormData) {
     aspectRatio: formData.aspectRatio,
     theme: formData.theme,
     description: formData.description,
+    format_layout: formData.format_layout || '',
+    primary_object: formData.primary_object || '',
+    subject: formData.subject || '',
+    lighting: formData.lighting || '',
+    mood: formData.mood || '',
+    background: formData.background || '',
+    positive_prompt: formData.positive_prompt || '',
+    negative_prompt: formData.negative_prompt || '',
   };
 }
 

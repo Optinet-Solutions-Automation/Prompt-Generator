@@ -27,6 +27,14 @@ async function generatePrompt(formData: FormData): Promise<GeneratePromptRespons
     aspectRatio: formData.aspectRatio,
     theme: formData.theme,
     description: formData.description,
+    format_layout: formData.format_layout,
+    primary_object: formData.primary_object,
+    subject: formData.subject,
+    lighting: formData.lighting,
+    mood: formData.mood,
+    background: formData.background,
+    positive_prompt: formData.positive_prompt,
+    negative_prompt: formData.negative_prompt,
   };
 
   const response = await fetch('/api/generate-prompt', {
