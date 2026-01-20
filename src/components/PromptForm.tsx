@@ -3,17 +3,22 @@ import { Button } from '@/components/ui/button';
 import { FormField } from './FormField';
 import { ReferenceSelect } from './ReferenceSelect';
 import { PositionAndRatioSelector } from './PositionAndRatioSelector';
+import { ReferencePromptDataDisplay } from './ReferencePromptDataDisplay';
 import { Sparkles, Trash2 } from 'lucide-react';
 import {
   FormData,
   BRANDS,
   BRAND_REFERENCES,
+  ReferencePromptData,
 } from '@/types/prompt';
 
 interface PromptFormProps {
   formData: FormData;
   errors: Partial<Record<keyof FormData, string>>;
+  referencePromptData: ReferencePromptData | null;
+  isLoadingReferenceData: boolean;
   onFieldChange: (field: keyof FormData, value: string) => void;
+  onReferenceChange: (brand: string, referenceId: string) => void;
   onSubmit: () => void;
   onClear: () => void;
 }
@@ -21,7 +26,10 @@ interface PromptFormProps {
 export function PromptForm({
   formData,
   errors,
+  referencePromptData,
+  isLoadingReferenceData,
   onFieldChange,
+  onReferenceChange,
   onSubmit,
   onClear,
 }: PromptFormProps) {
@@ -39,6 +47,11 @@ export function PromptForm({
     if (formData.reference) {
       onFieldChange('reference', '');
     }
+  };
+
+  const handleReferenceChange = (value: string) => {
+    onFieldChange('reference', value);
+    onReferenceChange(formData.brand, value);
   };
 
   return (
@@ -65,7 +78,7 @@ export function PromptForm({
           label="Reference"
           required
           value={formData.reference}
-          onChange={(value) => onFieldChange('reference', value)}
+          onChange={handleReferenceChange}
           placeholder={formData.brand ? "Select a reference" : "Select a brand first"}
           error={errors.reference}
           disabled={!formData.brand || availableReferences.length === 0}
@@ -99,6 +112,11 @@ export function PromptForm({
         maxLength={500}
         rows={4}
         error={errors.description}
+      />
+
+      <ReferencePromptDataDisplay
+        data={referencePromptData}
+        isLoading={isLoadingReferenceData}
       />
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4">

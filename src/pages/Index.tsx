@@ -5,6 +5,7 @@ import { ProcessingState } from '@/components/ProcessingState';
 import { ResultDisplay } from '@/components/ResultDisplay';
 import { ErrorDisplay } from '@/components/ErrorDisplay';
 import { usePromptGenerator } from '@/hooks/usePromptGenerator';
+import { useReferencePromptData } from '@/hooks/useReferencePromptData';
 
 const Index = () => {
   const {
@@ -31,6 +32,21 @@ const Index = () => {
     handleAddGeneratedImage,
     handleRemoveGeneratedImage,
   } = usePromptGenerator();
+
+  const {
+    referencePromptData,
+    isLoadingReferenceData,
+    fetchReferencePromptData,
+    clearReferencePromptData,
+  } = useReferencePromptData();
+
+  const handleReferenceChange = (brand: string, referenceId: string) => {
+    if (referenceId) {
+      fetchReferencePromptData(brand, referenceId);
+    } else {
+      clearReferencePromptData();
+    }
+  };
 
   const showForm = appState === 'FORM';
   const showProcessing = appState === 'PROCESSING';
@@ -83,7 +99,10 @@ const Index = () => {
                   key="form"
                   formData={formData}
                   errors={errors}
+                  referencePromptData={referencePromptData}
+                  isLoadingReferenceData={isLoadingReferenceData}
                   onFieldChange={handleFieldChange}
+                  onReferenceChange={handleReferenceChange}
                   onSubmit={handleSubmit}
                   onClear={handleClearForm}
                 />
@@ -102,6 +121,9 @@ const Index = () => {
                   appState={appState}
                   generatedImages={generatedImages}
                   isRegeneratingPrompt={isRegeneratingPrompt}
+                  referencePromptData={referencePromptData}
+                  isLoadingReferenceData={isLoadingReferenceData}
+                  onReferenceChange={handleReferenceChange}
                   onSave={handleSave}
                   onDontSave={handleDontSave}
                   onEditForm={handleEditForm}
