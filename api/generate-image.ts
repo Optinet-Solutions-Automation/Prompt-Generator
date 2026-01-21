@@ -22,13 +22,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { prompt, provider } = req.body;
+    const { prompt, provider, aspectRatio } = req.body;
 
     if (!prompt || !provider) {
       return res.status(400).json({ error: 'Prompt and provider are required' });
     }
 
-    console.log('Sending image generation request to n8n:', { prompt, provider });
+    console.log('Sending image generation request to n8n:', { prompt, provider, aspectRatio });
 
     const response = await fetch(webhookUrl, {
       method: 'POST',
@@ -38,6 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         prompt,
         provider, // 'chatgpt' or 'gemini'
+        aspectRatio: aspectRatio || '1:1',
       }),
     });
 
