@@ -96,15 +96,16 @@ export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onI
       const data = await response.json();
       const responseData = Array.isArray(data) ? data[0] : data;
       
-      // Get display URL (thumbnailLink) and edit URL (webViewLink) from response
-      const newDisplayUrl = responseData.imageUrl || 
+      // Get display URL (thumbnailUrl or imageUrl) and edit URL (viewUrl for editing API)
+      const newDisplayUrl = responseData.thumbnailUrl || 
+                            responseData.imageUrl || 
                             responseData.thumbnailLink || 
                             responseData.webContentLink;
       
-      const newEditUrl = responseData.webViewLink || 
-                         responseData.webContentLink || 
+      const newEditUrl = responseData.viewUrl || 
+                         responseData.webViewLink || 
                          responseData.imageUrl ||
-                         (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
+                         (responseData.fileId ? `https://drive.google.com/file/d/${responseData.fileId}/view?usp=drivesdk` : null);
       
       if (newDisplayUrl && newEditUrl) {
         setCurrentDisplayUrl(newDisplayUrl);
