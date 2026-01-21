@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         prompt,
-        provider, // 'chatgpt' or 'gemini'
+        provider,
         aspectRatio: aspectRatio || '1:1',
       }),
     });
@@ -52,19 +52,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await response.json();
-    console.log('n8n image generation response:', data);
+    console.log('n8n RAW response:', JSON.stringify(data));
 
     // n8n returns an array, extract the first item
     const result = Array.isArray(data) ? data[0] : data;
-
-    // Ensure we have the required fields
-    if (!result.imageUrl && !result.thumbnailUrl && !result.fileId) {
-      console.error('Invalid response structure:', result);
-      return res.status(500).json({ 
-        error: 'Invalid response from image generation service',
-        details: 'Missing image URLs'
-      });
-    }
+    console.log('Extracted result:', JSON.stringify(result));
 
     return res.status(200).json(result);
   } catch (error) {
