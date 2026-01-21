@@ -13,6 +13,7 @@ import { PositionAndRatioSelector } from './PositionAndRatioSelector';
 import { ReferencePromptDataDisplay } from './ReferencePromptDataDisplay';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
+import { normalizeN8nImageResponse } from '@/lib/n8nImage';
 import {
   Tooltip,
   TooltipContent,
@@ -125,17 +126,9 @@ export function ResultDisplay({
       }
 
       const data = await response.json();
-      console.log('Image generation raw response:', data);
-      
-      const responseData = Array.isArray(data) ? data[0] : data;
-      console.log('Image generation parsed response:', responseData);
-      
-      // Use imageUrl (lh3.googleusercontent.com direct link) as primary display URL
-      // Use viewUrl for edit operations
-      const displayUrl = responseData.imageUrl || responseData.thumbnailUrl;
-      const editUrl = responseData.viewUrl || responseData.imageUrl;
-      
-      console.log('Extracted URLs:', { displayUrl, editUrl });
+      const normalized = normalizeN8nImageResponse(data);
+      const displayUrl = normalized.displayUrl;
+      const editUrl = normalized.editUrl;
       
       if (displayUrl && editUrl) {
         onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel() });
