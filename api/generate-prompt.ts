@@ -122,6 +122,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         aspectRatio: result.data?.aspectRatio || req.body.aspectRatio,
         theme: result.data?.theme || req.body.theme,
         description: result.data?.description || req.body.description,
+        format_layout: result.data?.format_layout || req.body.format_layout || '',
+        primary_object: result.data?.primary_object || req.body.primary_object || '',
+        subject: result.data?.subject || req.body.subject || '',
+        lighting: result.data?.lighting || req.body.lighting || '',
+        mood: result.data?.mood || req.body.mood || '',
+        background: result.data?.background || req.body.background || '',
+        positive_prompt: result.data?.positive_prompt || req.body.positive_prompt || '',
+        negative_prompt: result.data?.negative_prompt || req.body.negative_prompt || '',
       }
     };
     

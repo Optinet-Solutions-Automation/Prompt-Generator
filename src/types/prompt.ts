@@ -192,6 +192,14 @@ export interface PromptMetadata {
   aspectRatio?: string;
   theme: string;
   description: string;
+  format_layout?: string;
+  primary_object?: string;
+  subject?: string;
+  lighting?: string;
+  mood?: string;
+  background?: string;
+  positive_prompt?: string;
+  negative_prompt?: string;
 }
 
 export interface GeneratePromptResponse {
