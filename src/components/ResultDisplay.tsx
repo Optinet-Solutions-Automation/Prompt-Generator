@@ -127,15 +127,16 @@ export function ResultDisplay({
       const data = await response.json();
       const responseData = Array.isArray(data) ? data[0] : data;
       
-      // Get display URL (thumbnailLink for faster loading) and edit URL (webViewLink/webContentLink for API)
-      const displayUrl = responseData.imageUrl || 
+      // Get display URL (thumbnailUrl or imageUrl) and edit URL (viewUrl for editing API)
+      const displayUrl = responseData.thumbnailUrl || 
+                         responseData.imageUrl || 
                          responseData.thumbnailLink || 
                          responseData.webContentLink;
       
-      const editUrl = responseData.webViewLink || 
-                      responseData.webContentLink || 
+      const editUrl = responseData.viewUrl || 
+                      responseData.webViewLink || 
                       responseData.imageUrl ||
-                      (responseData.id ? `https://drive.google.com/file/d/${responseData.id}/view?usp=drivesdk` : null);
+                      (responseData.fileId ? `https://drive.google.com/file/d/${responseData.fileId}/view?usp=drivesdk` : null);
       
       if (displayUrl && editUrl) {
         onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel() });
