@@ -125,23 +125,22 @@ export function ResultDisplay({
       }
 
       const data = await response.json();
+      console.log('Image generation raw response:', data);
+      
       const responseData = Array.isArray(data) ? data[0] : data;
+      console.log('Image generation parsed response:', responseData);
       
-      // Get display URL (thumbnailUrl or imageUrl) and edit URL (viewUrl for editing API)
-      const displayUrl = responseData.thumbnailUrl || 
-                         responseData.imageUrl || 
-                         responseData.thumbnailLink || 
-                         responseData.webContentLink;
+      // Use imageUrl (lh3.googleusercontent.com direct link) as primary display URL
+      // Use viewUrl for edit operations
+      const displayUrl = responseData.imageUrl || responseData.thumbnailUrl;
+      const editUrl = responseData.viewUrl || responseData.imageUrl;
       
-      const editUrl = responseData.viewUrl || 
-                      responseData.webViewLink || 
-                      responseData.imageUrl ||
-                      (responseData.fileId ? `https://drive.google.com/file/d/${responseData.fileId}/view?usp=drivesdk` : null);
+      console.log('Extracted URLs:', { displayUrl, editUrl });
       
       if (displayUrl && editUrl) {
         onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel() });
       } else {
-        throw new Error('No image URL returned');
+        throw new Error('No image URL returned from response');
       }
     } catch (error) {
       console.error('Image generation error:', error);
