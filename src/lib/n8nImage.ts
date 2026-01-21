@@ -60,6 +60,9 @@ export function normalizeN8nImageResponse(payload: unknown): {
     return { displayUrl: null, editUrl: null, thumbnailUrl: null, fileId: null };
   }
 
+  // Get fileId first - this is the most reliable
+  const fileIdRaw = getString(item, 'fileId', 'file_id');
+  
   const imageUrl = getString(item, 'imageUrl', 'image_url', 'image', 'url');
   const thumbnailUrlRaw = getString(
     item,
@@ -72,8 +75,8 @@ export function normalizeN8nImageResponse(payload: unknown): {
   );
   const downloadUrl = getString(item, 'downloadUrl', 'download_url', 'downloadLink', 'download_link');
   const viewUrl = getString(item, 'viewUrl', 'view_url', 'webViewLink', 'web_view_link', 'webViewUrl', 'web_view_url');
-  const fileIdRaw = getString(item, 'fileId', 'file_id');
 
+  // Extract fileId from URLs as fallback
   const fileId =
     fileIdRaw ||
     (imageUrl ? extractDriveFileIdFromUrl(imageUrl) : null) ||
@@ -81,21 +84,18 @@ export function normalizeN8nImageResponse(payload: unknown): {
     (viewUrl ? extractDriveFileIdFromUrl(viewUrl) : null) ||
     (downloadUrl ? extractDriveFileIdFromUrl(downloadUrl) : null);
 
-  const thumbnailUrl =
-    thumbnailUrlRaw && !isBrokenDriveThumbnailUrl(thumbnailUrlRaw)
-      ? thumbnailUrlRaw
-      : fileId
-        ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`
-        : null;
+  // If we have fileId, always construct clean URLs
+  const thumbnailUrl = fileId
+    ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`
+    : (thumbnailUrlRaw && !isBrokenDriveThumbnailUrl(thumbnailUrlRaw) ? thumbnailUrlRaw : null);
 
-  const displayUrl = imageUrl || downloadUrl || thumbnailUrl || (fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : null);
+  const displayUrl = fileId 
+    ? `https://lh3.googleusercontent.com/d/${fileId}`
+    : (imageUrl || downloadUrl || thumbnailUrl);
 
-  const editUrl =
-    viewUrl ||
-    (fileId ? `https://drive.google.com/file/d/${fileId}/view?usp=drivesdk` : null) ||
-    imageUrl ||
-    downloadUrl ||
-    displayUrl;
+  const editUrl = fileId
+    ? `https://drive.google.com/file/d/${fileId}/view?usp=drivesdk`
+    : (viewUrl || imageUrl || downloadUrl || displayUrl);
 
   return { displayUrl, editUrl, thumbnailUrl, fileId };
 }
