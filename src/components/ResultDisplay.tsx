@@ -114,7 +114,7 @@ export function ResultDisplay({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: editablePrompt, // Use the editable prompt
+          prompt: editablePrompt,
           provider,
           aspectRatio: metadata?.aspectRatio || '1:1',
         }),
@@ -126,9 +126,16 @@ export function ResultDisplay({
       }
 
       const data = await response.json();
+      console.log('RAW API RESPONSE:', data); // ADD THIS
+      
       const normalized = normalizeN8nImageResponse(data);
+      console.log('NORMALIZED RESPONSE:', normalized); // ADD THIS
+      
       const displayUrl = normalized.displayUrl;
       const editUrl = normalized.editUrl;
+      
+      console.log('DISPLAY URL:', displayUrl); // ADD THIS
+      console.log('EDIT URL:', editUrl); // ADD THIS
       
       if (displayUrl && editUrl) {
         onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel() });
