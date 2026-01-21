@@ -115,6 +115,7 @@ export function ResultDisplay({
         body: JSON.stringify({
           prompt: editablePrompt, // Use the editable prompt
           provider,
+          aspectRatio: metadata?.aspectRatio || '1:1',
         }),
       });
 
