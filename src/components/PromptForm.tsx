@@ -117,6 +117,7 @@ export function PromptForm({
       <ReferencePromptDataDisplay
         data={referencePromptData}
         isLoading={isLoadingReferenceData}
+        disabled={false}
       />
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
