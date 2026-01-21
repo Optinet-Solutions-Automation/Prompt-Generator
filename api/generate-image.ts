@@ -54,7 +54,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const data = await response.json();
     console.log('n8n image generation response:', data);
 
-    return res.status(200).json(data);
+    // n8n returns an array, extract the first item
+    const result = Array.isArray(data) ? data[0] : data;
+
+    // Ensure we have the required fields
+    if (!result.imageUrl && !result.thumbnailUrl && !result.fileId) {
+      console.error('Invalid response structure:', result);
+      return res.status(500).json({ 
+        error: 'Invalid response from image generation service',
+        details: 'Missing image URLs'
+      });
+    }
+
+    return res.status(200).json(result);
   } catch (error) {
     console.error('Image generation error:', error);
     return res.status(500).json({ 
