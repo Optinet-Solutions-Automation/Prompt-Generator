@@ -83,6 +83,12 @@ const Index = () => {
     }
   };
 
+  // Wrap handleClearForm to also clear reference prompt data
+  const handleClearFormWithReference = () => {
+    handleClearForm();
+    clearReferencePromptData();
+  };
+
   const showForm = appState === 'FORM';
   const showProcessing = appState === 'PROCESSING';
   const showResult = ['RESULT', 'SAVING', 'SAVED'].includes(appState);
@@ -139,7 +145,7 @@ const Index = () => {
                   onFieldChange={handleFieldChange}
                   onReferenceChange={handleReferenceChange}
                   onSubmit={handleSubmit}
-                  onClear={handleClearForm}
+                  onClear={handleClearFormWithReference}
                 />
               )}
 
@@ -163,7 +169,7 @@ const Index = () => {
                   onDontSave={handleDontSave}
                   onEditForm={handleEditForm}
                   onGenerateAgain={handleGenerateAgain}
-                  onClearForm={handleClearForm}
+                  onClearForm={handleClearFormWithReference}
                   onPromptChange={handlePromptChange}
                   onMetadataChange={handleMetadataChange}
                   onAddGeneratedImage={handleAddGeneratedImage}
