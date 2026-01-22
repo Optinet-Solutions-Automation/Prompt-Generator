@@ -102,20 +102,20 @@ const Index = () => {
         <div className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full gradient-primary opacity-[0.03] blur-3xl" />
       </div>
 
-      <div className="relative container max-w-3xl mx-auto px-4 py-8 md:py-16">
+      <div className="relative container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-16">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
+          className="text-center mb-6 sm:mb-10"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-glow mb-6">
-            <Sparkles className="w-8 h-8 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl gradient-primary shadow-glow mb-4 sm:mb-6">
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 sm:mb-3">
             AI Prompt Generator
           </h1>
-          <p className="text-muted-foreground text-lg max-w-lg mx-auto">
+          <p className="text-muted-foreground text-base sm:text-lg max-w-lg mx-auto px-2">
             Create stunning AI image prompts tailored for your brand and campaign needs
           </p>
         </motion.div>
@@ -123,9 +123,9 @@ const Index = () => {
         {/* Main Card */}
         <motion.div
           layout
-          className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden"
+          className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden"
         >
-          <div className="p-6 md:p-8">
+          <div className="p-4 sm:p-6 md:p-8">
             <AnimatePresence mode="wait">
               {showError && (
                 <ErrorDisplay
@@ -185,7 +185,7 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-center text-sm text-muted-foreground mt-8"
+          className="text-center text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8"
         >
           Powered by AI • Generate professional prompts in seconds
         </motion.p>

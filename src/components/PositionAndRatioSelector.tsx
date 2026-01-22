@@ -173,23 +173,23 @@ export function PositionAndRatioSelector({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-6">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
         {/* Combined Visual Preview */}
-        <div className="flex items-center justify-center w-32 h-32 flex-shrink-0">
+        <div className="flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0">
           <div
             className="border-2 border-dashed border-muted-foreground/40 rounded-lg relative overflow-hidden transition-all duration-300 ease-out bg-muted/20"
             style={{ width: `${width}px`, height: `${height}px` }}
           >
             {/* Position Indicator Circle */}
             <div
-              className="absolute w-9 h-9 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center transition-all duration-300 ease-out shadow-sm"
+              className="absolute w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center transition-all duration-300 ease-out shadow-sm"
               style={{
                 left: `${indicatorPos.x}%`,
                 top: `${indicatorPos.y}%`,
                 transform: 'translate(-50%, -50%)',
               }}
             >
-              <span className="text-[9px] font-bold text-primary whitespace-nowrap">
+              <span className="text-[8px] sm:text-[9px] font-bold text-primary whitespace-nowrap">
                 {aspectRatio}
               </span>
             </div>
@@ -197,7 +197,7 @@ export function PositionAndRatioSelector({
         </div>
 
         {/* Controls */}
-        <div className="flex-1 space-y-5">
+        <div className="flex-1 w-full space-y-5">
           {/* Subject Position Section */}
           <div className="space-y-3">
             <Label className="text-sm font-medium text-foreground">Subject Position</Label>
@@ -212,7 +212,7 @@ export function PositionAndRatioSelector({
                     disabled={disabled}
                     onClick={() => handleAlignmentClick(type)}
                     className={cn(
-                      'px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200',
+                      'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all duration-200',
                       alignment === type
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground',
@@ -258,7 +258,7 @@ export function PositionAndRatioSelector({
                     disabled={disabled}
                     onClick={() => handleOrientationClick(type)}
                     className={cn(
-                      'px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200',
+                      'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all duration-200',
                       orientation === type
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground',
