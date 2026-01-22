@@ -207,6 +207,8 @@ export function ResultDisplay({
                 const ref = refs.find(r => r.id === refId);
                 if (ref) {
                   onMetadataChange?.('reference', `${ref.label} — ${ref.description}`);
+                  // Trigger API call to fetch reference prompt data
+                  onReferenceChange(metadata.brand, refId);
                 }
               }}
               placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
