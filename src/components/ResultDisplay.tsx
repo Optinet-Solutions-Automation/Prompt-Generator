@@ -176,7 +176,7 @@ export function ResultDisplay({
           className="bg-card rounded-xl border border-border p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Request Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               type="select"
               label="Brand"
@@ -216,7 +216,7 @@ export function ResultDisplay({
               references={BRAND_REFERENCES[metadata.brand] || []}
             />
 
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2">
               <PositionAndRatioSelector
                 subjectPosition={metadata.subjectPosition || 'Centered'}
                 aspectRatio={metadata.aspectRatio || '16:9'}
@@ -356,11 +356,11 @@ export function ResultDisplay({
       >
         <div className="absolute -inset-1 gradient-primary rounded-2xl opacity-20 blur-sm" />
         <div className="relative bg-card rounded-xl border-2 border-primary/30 shadow-lg shadow-primary/10 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
             <div>
-              <h3 className="font-bold text-lg text-foreground tracking-tight">Your Generated Prompt</h3>
-              <p className="text-sm text-muted-foreground">
-                Generated in {processingTime.toFixed(1)}s • Edit before generating image
+              <h3 className="font-bold text-base sm:text-lg text-foreground tracking-tight">Your Generated Prompt</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Generated in {processingTime.toFixed(1)}s • Edit before generating
               </p>
             </div>
             
@@ -425,11 +425,11 @@ export function ResultDisplay({
               </div>
             </TooltipProvider>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <Textarea
               value={editablePrompt}
               onChange={(e) => handlePromptEdit(e.target.value)}
-              className="text-foreground leading-relaxed text-[15px] font-medium bg-muted/30 p-5 rounded-lg min-h-[200px] max-h-96 border border-border/50 resize-y"
+              className="text-foreground leading-relaxed text-sm sm:text-[15px] font-medium bg-muted/30 p-4 sm:p-5 rounded-lg min-h-[180px] sm:min-h-[200px] max-h-96 border border-border/50 resize-y"
               placeholder="Your generated prompt will appear here..."
             />
           </div>
@@ -480,17 +480,17 @@ export function ResultDisplay({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-card rounded-xl border border-border p-6 shadow-md"
+        className="bg-card rounded-xl border border-border p-4 sm:p-6 shadow-md"
       >
-        <p className="text-center text-muted-foreground text-sm mb-4">
+        <p className="text-center text-muted-foreground text-xs sm:text-sm mb-4">
           Generate images using this prompt
         </p>
-        <div className="flex gap-3 justify-center flex-wrap">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
           <Button
             onClick={() => handleGenerateImage('chatgpt')}
             disabled={generatingImage.chatgpt}
             variant="outline"
-            className="gap-2 min-w-[120px]"
+            className="gap-2 w-full sm:w-auto sm:min-w-[120px]"
           >
             {generatingImage.chatgpt ? (
               <>
@@ -508,7 +508,7 @@ export function ResultDisplay({
             onClick={() => handleGenerateImage('gemini')}
             disabled={generatingImage.gemini}
             variant="outline"
-            className="gap-2 min-w-[120px]"
+            className="gap-2 w-full sm:w-auto sm:min-w-[120px]"
           >
             {generatingImage.gemini ? (
               <>
@@ -526,7 +526,7 @@ export function ResultDisplay({
             onClick={handleGenerateBoth}
             disabled={generatingImage.chatgpt || generatingImage.gemini}
             variant="default"
-            className="gap-2 gradient-primary min-w-[140px]"
+            className="gap-2 gradient-primary w-full sm:w-auto sm:min-w-[140px]"
           >
             {(generatingImage.chatgpt && generatingImage.gemini) ? (
               <>
@@ -569,7 +569,7 @@ export function ResultDisplay({
                     <Sparkles className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-muted-foreground">{label} ({images.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4">
                     {images.map((img, index) => (
                       <div
                         key={`${label}-${img.provider}-${index}`}
