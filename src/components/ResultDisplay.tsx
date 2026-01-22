@@ -323,13 +323,18 @@ export function ResultDisplay({
           <div className="mt-4 flex justify-end">
             <Button
               onClick={onGenerateAgain}
-              disabled={isRegeneratingPrompt}
+              disabled={isRegeneratingPrompt || isLoadingReferenceData}
               className="gap-2 gradient-primary"
             >
               {isRegeneratingPrompt ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Regenerating...
+                </>
+              ) : isLoadingReferenceData ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
                 </>
               ) : (
                 <>
