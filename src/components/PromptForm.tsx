@@ -123,15 +123,17 @@ export function PromptForm({
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button
           type="submit"
-          className="flex-1 sm:flex-none gradient-primary gap-2 h-12 text-base font-medium shadow-glow"
+          disabled={isLoadingReferenceData}
+          className="flex-1 sm:flex-none gradient-primary gap-2 h-12 text-base font-medium shadow-glow disabled:opacity-50"
         >
           <Sparkles className="w-5 h-5" />
-          Generate Prompt
+          {isLoadingReferenceData ? 'Loading...' : 'Generate Prompt'}
         </Button>
         <Button
           type="button"
           variant="outline"
           onClick={onClear}
+          disabled={isLoadingReferenceData}
           className="gap-2 h-12"
         >
           <Trash2 className="w-4 h-4" />
