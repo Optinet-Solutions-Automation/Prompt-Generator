@@ -41,9 +41,10 @@ const Index = () => {
     clearReferencePromptData,
   } = useReferencePromptData();
 
-  // Sync reference prompt data to formData when loaded
+  // Sync reference prompt data to formData and metadata when loaded
   useEffect(() => {
     if (referencePromptData) {
+      // Update formData (for form view)
       handleFieldChange('format_layout', referencePromptData.format_layout || '');
       handleFieldChange('primary_object', referencePromptData.primary_object || '');
       handleFieldChange('subject', referencePromptData.subject || '');
@@ -52,8 +53,18 @@ const Index = () => {
       handleFieldChange('background', referencePromptData.background || '');
       handleFieldChange('positive_prompt', referencePromptData.positive_prompt || '');
       handleFieldChange('negative_prompt', referencePromptData.negative_prompt || '');
+      
+      // Update promptMetadata (for results view)
+      handleMetadataChange('format_layout', referencePromptData.format_layout || '');
+      handleMetadataChange('primary_object', referencePromptData.primary_object || '');
+      handleMetadataChange('subject', referencePromptData.subject || '');
+      handleMetadataChange('lighting', referencePromptData.lighting || '');
+      handleMetadataChange('mood', referencePromptData.mood || '');
+      handleMetadataChange('background', referencePromptData.background || '');
+      handleMetadataChange('positive_prompt', referencePromptData.positive_prompt || '');
+      handleMetadataChange('negative_prompt', referencePromptData.negative_prompt || '');
     }
-  }, [referencePromptData, handleFieldChange]);
+  }, [referencePromptData, handleFieldChange, handleMetadataChange]);
 
   const handleReferenceChange = (brand: string, referenceId: string) => {
     if (referenceId) {
