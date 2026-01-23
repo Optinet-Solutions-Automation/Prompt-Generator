@@ -56,10 +56,8 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled }: Refere
             </Label>
             <Textarea
               value={value}
-              readOnly
               disabled={disabled}
-              className="text-sm bg-muted/30 border-border/50 resize-none min-h-[60px]"
-              rows={Math.max(2, Math.ceil(value.length / 80))}
+              className="text-sm bg-muted/30 border-border/50 min-h-[60px]"
             />
           </div>
         ))}
