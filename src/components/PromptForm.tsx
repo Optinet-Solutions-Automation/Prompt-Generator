@@ -115,9 +115,23 @@ export function PromptForm({
       />
 
       <ReferencePromptDataDisplay
-        data={referencePromptData}
+        data={
+          formData.reference
+            ? {
+                format_layout: formData.format_layout || referencePromptData?.format_layout || '',
+                primary_object: formData.primary_object || referencePromptData?.primary_object || '',
+                subject: formData.subject || referencePromptData?.subject || '',
+                lighting: formData.lighting || referencePromptData?.lighting || '',
+                mood: formData.mood || referencePromptData?.mood || '',
+                background: formData.background || referencePromptData?.background || '',
+                positive_prompt: formData.positive_prompt || referencePromptData?.positive_prompt || '',
+                negative_prompt: formData.negative_prompt || referencePromptData?.negative_prompt || '',
+              }
+            : null
+        }
         isLoading={isLoadingReferenceData}
         disabled={false}
+        onChange={(field, value) => onFieldChange(field, value)}
       />
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
