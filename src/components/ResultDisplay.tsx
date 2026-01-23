@@ -245,81 +245,25 @@ export function ResultDisplay({
               disabled={isRegeneratingPrompt}
             />
 
-            {/* 8 Optional Fields from Webhook Response */}
-            <FormField
-              type="text"
-              label="Format/Layout"
-              value={metadata.format_layout || ''}
-              onChange={(value) => onMetadataChange?.('format_layout', value)}
-              placeholder="e.g., Wide banner, square..."
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="text"
-              label="Primary Object"
-              value={metadata.primary_object || ''}
-              onChange={(value) => onMetadataChange?.('primary_object', value)}
-              placeholder="e.g., Large trophy, product..."
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="text"
-              label="Subject"
-              value={metadata.subject || ''}
-              onChange={(value) => onMetadataChange?.('subject', value)}
-              placeholder="e.g., Product, character..."
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="text"
-              label="Lighting"
-              value={metadata.lighting || ''}
-              onChange={(value) => onMetadataChange?.('lighting', value)}
-              placeholder="e.g., Golden hour, neon..."
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="text"
-              label="Mood"
-              value={metadata.mood || ''}
-              onChange={(value) => onMetadataChange?.('mood', value)}
-              placeholder="e.g., Cinematic, dramatic..."
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="text"
-              label="Background"
-              value={metadata.background || ''}
-              onChange={(value) => onMetadataChange?.('background', value)}
-              placeholder="e.g., Outdoor, studio..."
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="textarea"
-              label="Positive Prompt"
-              value={metadata.positive_prompt || ''}
-              onChange={(value) => onMetadataChange?.('positive_prompt', value)}
-              placeholder="Additional positive prompts..."
-              rows={2}
-              disabled={isRegeneratingPrompt}
-            />
-
-            <FormField
-              type="textarea"
-              label="Negative Prompt"
-              value={metadata.negative_prompt || ''}
-              onChange={(value) => onMetadataChange?.('negative_prompt', value)}
-              placeholder="Things to avoid..."
-              rows={2}
-              disabled={isRegeneratingPrompt}
-            />
           </div>
+
+          {/* Reference Prompt Data - Collapsible & Editable */}
+          <ReferencePromptDataDisplay
+            data={{
+              format_layout: metadata.format_layout || '',
+              primary_object: metadata.primary_object || '',
+              subject: metadata.subject || '',
+              lighting: metadata.lighting || '',
+              mood: metadata.mood || '',
+              background: metadata.background || '',
+              positive_prompt: metadata.positive_prompt || '',
+              negative_prompt: metadata.negative_prompt || '',
+            }}
+            isLoading={isLoadingReferenceData}
+            disabled={isRegeneratingPrompt}
+            onChange={(field, value) => onMetadataChange?.(field, value)}
+          />
+
           <div className="mt-4 flex justify-end">
             <Button
               onClick={onGenerateAgain}
