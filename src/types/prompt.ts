@@ -75,7 +75,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'golden_cup_clash', label: 'Golden Cup Clash', description: 'A right-weighted soccer promo banner with a mid-air player, a central gold trophy, and a large 0 - 0 score', category: 'Sports - Promotions' },
     { id: 'golden_striker', label: 'Golden Striker', description: 'A right-side soccer player mid-kick with a gold particle burst and floating casino chips over a dark banner layout', category: 'Sports - Promotions' },
     { id: 'golden_dribbler', label: 'Basketball Dribbler', description: 'A right-side basketball player sprinting with a ball through a burst of glowing gold particles and floating coins', category: 'Sports - Promotions' },
-    { id: 'golden_dribble', label: 'Golden Dribble', description: 'A right-aligned soccer player in a gray kit controlling a ball amid explosive gold dust on a dark banner', category: 'Sports - Promotions' },
+    { id: 'golden_dribble', label: 'Football Dribbler', description: 'A right-aligned soccer player in a gray kit controlling a ball amid explosive gold dust on a dark banner', category: 'Sports - Promotions' },
     { id: 'victory_trophy_esports', label: 'Victory Trophy', description: 'A group of esports players on the right lift a gold cup amid golden confetti with a dark negative-space banner on the left', category: 'Sports - Promotions' },
     { id: 'elite_athletes', label: 'Elite Athletes', description: 'A right-aligned lineup of five multi-sport players in matching dark uniforms with gold accents and dramatic particle lighting', category: 'Sports - Promotions' },
   ],
