@@ -129,7 +129,6 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'mystic_croupier', label: 'Mystic Croupier', description: 'A stylish showman in a purple coat spins a glowing casino prize wheel surrounded by swirling neon energy', category: 'Casino - Promotions' },
     { id: 'arcane_magician', label: 'Arcane Magician', description: 'A right-side, half-body stage magician presenting a glowing neon vortex in his hands under circus tent lights', category: 'Casino - Promotions' },
     { id: 'fire_ringmaster', label: 'Fire Ringmaster', description: 'A muscular showman in an ornate red jacket stands beside a lion with a burning circus tent behind', category: 'Casino - Promotions' },
-    { id: 'astral_monk', label: 'Astral Monk', description: 'A levitating monk in red robes meditates on a circular stage as golden energy spirals behind him in a night circus', category: 'Casino - Promotions' },
     { id: 'arcane_seer', label: 'Arcane Seer', description: 'A right-aligned crimson-robed sorceress holding a glowing spiral crystal orb in a dark, mystical study', category: 'Casino - Promotions' },
     { id: 'mystic_magician', label: 'Mystic Magician', description: 'A right-side close-up of gloved hands presenting a top hat with glowing playing cards bursting into purple sparkles', category: 'Casino - Promotions' },
     { id: 'carnival_enchantress', label: 'Carnival Enchantress', description: 'A smiling woman in a red corset on the right, wrapped in glowing golden light trails at a night fair', category: 'Casino - Promotions' },
