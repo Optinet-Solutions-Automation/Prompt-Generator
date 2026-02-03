@@ -82,7 +82,6 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'PlayMojo': [
     { id: 'casino_rabbit_1', label: 'Rabbit with Roulette', description: 'A half-body white rabbit in leather and sunglasses smoking a cigar beside a glowing prize wheel', category: 'Casino - Promotions' },
-    { id: 'casino_rabbit_2', label: 'Casino Rabbit', description: 'A cool white rabbit in a leather jacket and sunglasses holding a cigar beside a colorful prize wheel', category: 'Casino - Promotions' },
     { id: 'gangster_rabbit', label: 'Gangster Rabbit', description: 'A right-aligned anthropomorphic rabbit in sunglasses smoking in a leather armchair with a whiskey glass and heavy blue haze', category: 'Casino - Promotions' },
     { id: 'cigar_lounge_1', label: 'Cigar Lounge', description: 'Two whiskey glasses on a reflective table with cigars and ornate case in moody blue-amber lighting', category: 'Casino - Promotions' },
     { id: 'midnight_wager', label: 'Midnight Wager', description: 'A moody bar tabletop with a whiskey glass, scattered cash, and stacked cards in blue-and-amber cinematic lighting', category: 'Casino - Promotions' },
