@@ -183,6 +183,59 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'nebula_riches', label: 'Nebula Riches', description: 'A swirling purple-gold nebula on the right with floating gold coins and star clusters fading into darkness', category: 'Casino - Promotions' },
     { id: 'starfall_portal', label: 'Starfall Portal', description: 'A right-weighted portal of swirling cosmic energy and falling stars leading into deep violet space', category: 'Casino - Promotions' },
   ],
+
+  'Rollero': [
+    // --- Casino - Promotions ---
+    {
+      id: 'crimson_helm',
+      label: 'Crimson Helm',
+      description: 'A right-aligned, half-body armored warrior with a red plume helmet emerging from dark negative space in cinematic haze',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'battle_relic',
+      label: 'Battle Relic',
+      description: 'A right-aligned close-up of a warrior’s ornate round shield and diagonal sword in dramatic cinematic shadow',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'fallen_helm',
+      label: 'Fallen Helm',
+      description: 'A battle-worn Spartan helmet with a red crest resting on cobblestones at sunset with dark ruins in the distance',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'battle_knight',
+      label: 'Battle Knight',
+      description: 'A close-up armored knight on the right raising a sword and shield, framed against dark negative space with drifting sparks',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'iron_sentinel',
+      label: 'Iron Sentinel',
+      description: 'A gritty close-up of a battle-worn armored warrior staring forward with intense eyes against deep black negative space',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'sunset_excalibur',
+      label: 'Sunset Excalibur',
+      description: 'A lone medieval sword embedded in a rocky ledge, framed on the right against a glowing sunset with dark negative space',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'gladiator_relic',
+      label: 'Gladiator Relic',
+      description: 'A right-aligned close-up of an ornate Roman helmet with red crest beside a sword, set against the Colosseum at sunset',
+      category: 'Casino - Promotions'
+    },
+    {
+      id: 'arena_gladiator',
+      label: 'Arena Gladiator',
+      description: 'A muscular armored warrior on the right holding a round shield in a smoky colosseum with dramatic warm rim light',
+      category: 'Casino - Promotions'
+    },
+  ],
+
 };
 
 export interface PromptMetadata {
@@ -223,6 +276,7 @@ export const BRANDS = [
   'LuckyVibe',
   'Lucky7even',
   'NovaDreams',
+  'Rollero'
 ] as const;
 
 export const INITIAL_FORM_DATA: FormData = {
