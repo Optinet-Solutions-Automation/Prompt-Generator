@@ -150,7 +150,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     // --- Sports - Promotions ---
     { id: 'desert_final', label: 'Desert Final', description: 'Two footballers on a sandy pitch flank a glowing golden trophy beneath a 0 - 0 scoreboard in warm cinematic haze', category: 'Sports - Promotions' },
     { id: 'sunset_kick', label: 'Sunset Kick', description: 'A barefoot player about to kick a soccer ball on a tropical beach at sunset with an oversized casino-style chip in the foreground', category: 'Sports - Promotions' },
-    { id: 'sunset_showdown', label: 'Sunset Showdown', description: 'Two barefoot footballers contesting a ball on sandy beach at golden hour with dark left-side negative space', category: 'Sports - Promotions' },
+    { id: 'sunset_showdown', label: 'Football Beach', description: 'Two barefoot footballers contesting a ball on sandy beach at golden hour with dark left-side negative space', category: 'Sports - Promotions' },
     { id: 'victory_trophy_sports', label: 'Victory Trophy', description: 'Two athletes on the right side lift a giant cup in a stadium at sunset with dramatic backlight', category: 'Sports - Promotions' },
     { id: 'beach_champions_esports', label: 'Beach Champions', description: 'A jubilant esports-style team in headsets celebrating with a trophy on a sunset shoreline with large left-side negative space', category: 'Sports - Promotions' },
     { id: 'beach_champions_athletes', label: 'Beach Champions', description: 'Five athletes pose on a sandy court at sunset in matching uniforms with sports gear and dramatic negative space', category: 'Sports - Promotions' },
