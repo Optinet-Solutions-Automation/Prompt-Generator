@@ -100,7 +100,6 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'neon_astronaut', label: 'Neon Astronaut', description: 'A right-side astronaut sprinting across a rocky alien surface with a glowing purple planet backdrop and dramatic rim light', category: 'Casino - Promotions' },
     { id: 'starlit_astronaut_1', label: 'Starlit Astronaut', description: 'A right-aligned, close-up astronaut portrait in a reflective helmet with blue eyes and purple cosmic glow', category: 'Casino - Promotions' },
     { id: 'neon_citadel', label: 'Neon Citadel', description: 'A right-weighted futuristic skyline of glowing spires beneath a looming planet in violet atmospheric haze', category: 'Casino - Promotions' },
-    { id: 'nebula_runner', label: 'Nebula Runner', description: 'A sleek black starship on the right rockets through violet space, leaving a long magenta engine trail into dark negative space', category: 'Casino - Promotions' },
     { id: 'starlit_astronaut_2', label: 'Starlit Astronaut', description: 'A right-side close-up portrait of a young astronaut gazing upward, helmet visor reflecting a purple-blue galaxy', category: 'Casino - Promotions' },
   ],
 
