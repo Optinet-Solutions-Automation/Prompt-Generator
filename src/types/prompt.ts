@@ -64,7 +64,7 @@ export interface ReferenceOption {
 export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
   'FortunePlay': [
     // --- Casino - Promotions ---
-    { id: 'nightlife_lion', label: 'Nightlife Lion', description: 'A right-side, half-body lion in a sharp suit wearing sunglasses', category: 'Casino - Promotions' },
+    { id: 'nightlife_lion', label: 'Lion with roulette', description: 'A right-side, half-body lion in a sharp suit wearing sunglasses', category: 'Casino - Promotions' },
     { id: 'explorer_lion', label: 'Explorer Lion', description: 'A center-position, half-body lion in adventure gear holding a treasure map', category: 'Casino - Promotions' },
     { id: 'smoking_lion', label: 'Smoking Lion', description: 'A right-side, half-body lion in ornate attire holding a cigar', category: 'Casino - Promotions' },
     { id: 'driver_lion', label: 'Driver Lion', description: 'A right-side, half-body lion in red clothes driving a car', category: 'Casino - Promotions' },
