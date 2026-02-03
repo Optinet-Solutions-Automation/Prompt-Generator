@@ -90,7 +90,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'noir_rabbit_1', label: 'Noir Rabbit', description: 'A right-aligned, half-body rabbit in a red suit wearing sunglasses and gold chains with drifting smoke in a dark studio', category: 'Casino - Promotions' },
     { id: 'midnight_lounge', label: 'Midnight Lounge', description: 'A right-weighted still life of a whiskey bottle and coupe glass on a tray beside a tufted leather sofa', category: 'Casino - Promotions' },
     { id: 'cigar_lounge_2', label: 'Cigar Lounge', description: 'A cinematic close-up of cigars and amber spirits on a marble coffee table in a dark luxury living room', category: 'Casino - Promotions' },
-    { id: 'noir_rabbit_2', label: 'Noir Rabbit', description: 'A right-side close-up rabbit in a dark suit wearing reflective sunglasses against a smoky teal studio backdrop', category: 'Casino - Promotions' },
+    { id: 'noir_rabbit_2', label: 'Grey Noir Rabbit', description: 'A right-side close-up rabbit in a dark suit wearing reflective sunglasses against a smoky teal studio backdrop', category: 'Casino - Promotions' },
   ],
 
   'SpinJo': [
