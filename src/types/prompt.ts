@@ -144,7 +144,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'golden_festival', label: 'Golden Festival', description: 'A laughing woman in mirrored sunglasses framed on the right with dark negative space and a sunlit crowd behind', category: 'Casino - Promotions' },
     { id: 'sunset_dj_deck', label: 'Sunset DJ Deck', description: 'A close-up DJ controller in the foreground with glowing pads, facing a calm ocean sunset and palm silhouettes', category: 'Casino - Promotions' },
     { id: 'sunset_cheers', label: 'Sunset Cheers', description: 'Two iced cocktails clink in close-up against a glowing tropical beach sunset with palm silhouettes and soft party bokeh', category: 'Casino - Promotions' },
-    { id: 'sunset_dj_blonde', label: 'Sunset DJ', description: 'A smiling blonde woman in headphones mixes music at a beach party with warm golden-hour backlight and heavy left-side negative space', category: 'Casino - Promotions' },
+    { id: 'sunset_dj_blonde', label: 'Sunset DJ Woman', description: 'A smiling blonde woman in headphones mixes music at a beach party with warm golden-hour backlight and heavy left-side negative space', category: 'Casino - Promotions' },
     { id: 'jackpot_burst', label: 'Jackpot Burst', description: 'A glossy slot machine on the right erupting with flying gold coins against dark negative space', category: 'Casino - Promotions' },
 
     // --- Sports - Promotions ---
