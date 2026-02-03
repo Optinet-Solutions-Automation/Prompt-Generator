@@ -157,9 +157,9 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     'Lucky7even': [
     { id: 'purple_jackpot', label: 'Purple Jackpot', description: 'A right-weighted casino promo scene with a glowing slot machine, roulette wheel, and scattered gold coins on a purple gradient background', category: 'Casino - Promotions' },
     { id: 'royal_casino', label: 'Royal Casino', description: 'A right-aligned cluster of glossy roulette, poker cards, chips, and dice on a deep purple gradient banner', category: 'Casino - Promotions' },
-    { id: 'lucky_wheel', label: 'Lucky Wheel', description: 'A right-edge, cropped prize spin wheel glowing in neon colors over a dark blue casino-style background', category: 'Casino - Promotions' },
+    
     { id: 'lucky_spin', label: 'Lucky Spin', description: 'A right-weighted casino prize wheel surrounded by coins, chips, dice, and cards on a purple gradient banner', category: 'Casino - Promotions' },
-    { id: 'royal_chips', label: 'Royal Chips', description: 'A glossy stack of blue-and-gold poker chips on the right with warm golden negative space on the left', category: 'Casino - Promotions' },
+    
     { id: 'royal_spade', label: 'Royal Spade', description: 'A glossy purple casino chip with a spade emblem floating on the right against a magenta gradient haze', category: 'Casino - Promotions' },
     { id: 'lucky_seven', label: 'Lucky Seven', description: 'A glossy blue slot reel with a gold number 7 and floating dice in a wide smoky banner composition', category: 'Casino - Promotions' },
     { id: 'royal_aces', label: 'Royal Aces', description: 'A purple casino banner with stacked ace playing cards and floating dice on the right against smoky negative space', category: 'Casino - Promotions' },
