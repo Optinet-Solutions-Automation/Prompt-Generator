@@ -127,7 +127,6 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'SpinsUp': [
     { id: 'mystic_croupier', label: 'Mystic Croupier', description: 'A stylish showman in a purple coat spins a glowing casino prize wheel surrounded by swirling neon energy', category: 'Casino - Promotions' },
-    { id: 'lucky_wheel', label: 'Lucky Wheel', description: 'A glamorous female casino host poses beside a glowing prize wheel labeled "LUCKY SPIN" in a neon purple night scene', category: 'Casino - Promotions' },
     { id: 'arcane_magician', label: 'Arcane Magician', description: 'A right-side, half-body stage magician presenting a glowing neon vortex in his hands under circus tent lights', category: 'Casino - Promotions' },
     { id: 'fire_ringmaster', label: 'Fire Ringmaster', description: 'A muscular showman in an ornate red jacket stands beside a lion with a burning circus tent behind', category: 'Casino - Promotions' },
     { id: 'astral_monk', label: 'Astral Monk', description: 'A levitating monk in red robes meditates on a circular stage as golden energy spirals behind him in a night circus', category: 'Casino - Promotions' },
