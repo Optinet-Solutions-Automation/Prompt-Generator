@@ -94,7 +94,6 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'SpinJo': [
     { id: 'neon_portal', label: 'Astronaut with Roulette', description: 'A lone astronaut stands in a dark spacecraft bay beside a massive glowing wheel-like machine', category: 'Casino - Promotions' },
-    { id: 'cosmic_spin', label: 'Cosmic Spin', description: 'A helmeted astronaut on the right presents a glowing lucky prize wheel floating in a dark space casino scene', category: 'Casino - Promotions' },
     { id: 'nebula_cruiser', label: 'Nebula Cruiser', description: 'A sleek starship angled upward on the right, backlit by a violet nebula with deep negative space on the left', category: 'Casino - Promotions' },
     { id: 'nebula_interceptor', label: 'Nebula Interceptor', description: 'A sleek starship seen head-on, drifting through a violet nebula with bright engine glows and vast dark space', category: 'Casino - Promotions' },
     { id: 'stormcraft_arrival', label: 'Stormcraft Arrival', description: 'A massive alien ship hovers low over a rain-slick roadway under storm clouds with magenta glow and blue haze', category: 'Casino - Promotions' },
