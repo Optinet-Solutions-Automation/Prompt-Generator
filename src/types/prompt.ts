@@ -111,7 +111,6 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'neon_rooster_1', label: 'Neon Rooster', description: 'A close-up, right-framed rooster in sunglasses and a leather jacket with a red muscle car glowing behind', category: 'Casino - Promotions' },
     { id: 'neon_rooster_2', label: 'Neon Rooster', description: 'A close-up rooster portrait on the right wearing glowing neon sunglasses against a dark futuristic light-streak background', category: 'Casino - Promotions' },
     { id: 'rockstar_rooster', label: 'Rockstar Rooster', description: 'A right-side close-up rooster in sunglasses holding a vintage microphone on a warm-lit concert stage', category: 'Casino - Promotions' },
-    { id: 'neon_roosters', label: 'Neon Roosters', description: 'A wide neon-noir promo scene with a close-up rooster in purple sunglasses and a suited rooster beside a red muscle car', category: 'Casino - Promotions' },
     { id: 'casino_rooster', label: 'Casino Rooster', description: 'A stylish rooster in sunglasses and a suit presenting a glowing prize wheel that reads FREE PLAY', category: 'Casino - Promotions' },
 
     // --- Sports - Promotions ---
