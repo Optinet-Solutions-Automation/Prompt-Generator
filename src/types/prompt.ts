@@ -166,13 +166,13 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'NovaDreams': [
     { id: 'cosmic_prizewheel', label: 'Cosmic Prizewheel', description: 'A right-side astronaut reaches toward a large numbered prize wheel in glossy cinematic sci-fi lighting', category: 'Casino - Promotions' },
-    { id: 'nebula_explorer', label: 'Nebula Explorer', description: 'A right-side astronaut gazes at a vivid purple-and-gold nebula swirl in the darkness of space', category: 'Casino - Promotions' },
-    { id: 'space_jackpot', label: 'Space Jackpot', description: 'A glossy, futuristic slot machine erupts with golden coins against a star-filled space backdrop', category: 'Casino - Promotions' },
-    { id: 'aurora_astronaut', label: 'Aurora Astronaut', description: 'A solo astronaut floats on the right beneath shimmering cosmic auroras with deep negative space on the left', category: 'Casino - Promotions' },
-    { id: 'cosmic_spin', label: 'Cosmic Spin', description: 'A holographic casino wheel spins at the center of a futuristic space station interior with neon accents', category: 'Casino - Promotions' },
-    { id: 'stellar_phoenix', label: 'Stellar Phoenix', description: 'A glowing space phoenix rises on the right in vivid gold and purple flames against the starry void', category: 'Casino - Promotions' },
-    { id: 'nebula_riches', label: 'Nebula Riches', description: 'A swirling purple-gold nebula on the right with floating gold coins and star clusters fading into darkness', category: 'Casino - Promotions' },
-    { id: 'starfall_portal', label: 'Starfall Portal', description: 'A right-weighted portal of swirling cosmic energy and falling stars leading into deep violet space', category: 'Casino - Promotions' },
+    { id: 'space_spin', label: 'Space Spin', description: 'A futuristic astronaut beside a colorful prize wheel with a bold LUCKY SPIN badge on a dark cosmic backdrop', category: 'Casino - Promotions' },
+    { id: 'lone_astronaut', label: 'Lone Astronaut', description: 'A back-facing astronaut walks across a barren alien landscape beneath a massive planet with a fiery atmospheric glow', category: 'Casino - Promotions' },
+    { id: 'starlit_visor', label: 'Starlit Visor', description: 'A centered, extreme close-up of a blue-eyed young woman framed by a helmet-like circular visor with floating dust and bokeh', category: 'Casino - Promotions' },
+    { id: 'orbital_sentinel', label: 'Orbital Sentinel', description: 'A futuristic satellite with broad solar panels drifting through a glowing nebula with dramatic rim light', category: 'Casino - Promotions' },
+    { id: 'starlit_astronaut', label: 'Starlit Astronaut', description: 'An intense close-up portrait of a helmeted astronaut with glowing embers drifting across a dark, cinematic frame', category: 'Casino - Promotions' },
+    { id: 'crimson_astronaut', label: 'Crimson Astronaut', description: 'A right-aligned astronaut in a white EVA suit emerging from smoky orange light with wide negative space on the left', category: 'Casino - Promotions' },
+    { id: 'orbital_sunrise', label: 'Orbital Sunrise', description: 'A cinematic sunrise peeking over Earth\'s curved horizon with glowing city lights and deep space negative space', category: 'Casino - Promotions' },
   ],
 
   'Rollero': [
