@@ -172,7 +172,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
     { id: 'orbital_sentinel', label: 'Orbital Sentinel', description: 'A futuristic satellite with broad solar panels drifting through a glowing nebula with dramatic rim light', category: 'Casino - Promotions' },
     { id: 'starlit_astronaut', label: 'Starlit Astronaut', description: 'An intense close-up portrait of a helmeted astronaut with glowing embers drifting across a dark, cinematic frame', category: 'Casino - Promotions' },
     { id: 'crimson_astronaut', label: 'Crimson Astronaut', description: 'A right-aligned astronaut in a white EVA suit emerging from smoky orange light with wide negative space on the left', category: 'Casino - Promotions' },
-    { id: 'orbital_sunrise', label: 'Orbital Sunrise', description: "A cinematic sunrise peeking over Earth's curved horizon with glowing city lights and deep space negative space", category: 'Casino - Promotions' },
+    { id: 'orbital_sunrise', label: 'Orbital Sunrise', description: "A cinematic sunrise peeking over Earth’s curved horizon with glowing city lights and deep space negative space", category: 'Casino - Promotions' },
   ],
 
   'Rollero': [
