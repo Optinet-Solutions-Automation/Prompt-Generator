@@ -166,7 +166,7 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 
   'NovaDreams': [
     { id: 'cosmic_prizewheel', label: 'Cosmic Prizewheel', description: 'A right-side astronaut reaches toward a large numbered prize wheel in glossy cinematic sci-fi lighting', category: 'Casino - Promotions' },
-    { id: 'space_spin', label: 'Space Spin', description: 'A futuristic astronaut beside a colorful prize wheel with a bold LUCKY SPIN badge on a dark cosmic backdrop', category: 'Casino - Promotions' },
+    
     { id: 'lone_astronaut', label: 'Lone Astronaut', description: 'A back-facing astronaut walks across a barren alien landscape beneath a massive planet with a fiery atmospheric glow', category: 'Casino - Promotions' },
     { id: 'starlit_visor', label: 'Starlit Visor', description: 'A centered, extreme close-up of a blue-eyed young woman framed by a helmet-like circular visor with floating dust and bokeh', category: 'Casino - Promotions' },
     { id: 'orbital_sentinel', label: 'Orbital Sentinel', description: 'A futuristic satellite with broad solar panels drifting through a glowing nebula with dramatic rim light', category: 'Casino - Promotions' },
