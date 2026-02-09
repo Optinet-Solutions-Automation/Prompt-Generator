@@ -88,10 +88,22 @@ export function ResultDisplay({
       const urlStart = imageId.indexOf('-', imageId.indexOf('-') + 1) + 1;
       const imgUrl = imageId.substring(urlStart);
 
+      // Derive record_id from the file name (last segment of the URL path)
+      let recordId: string;
+      try {
+        const urlObj = new URL(imgUrl);
+        const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+        recordId = pathSegments[pathSegments.length - 1] || imgUrl;
+      } catch {
+        // Fallback: use everything after the last slash
+        const lastSlash = imgUrl.lastIndexOf('/');
+        recordId = lastSlash >= 0 ? imgUrl.substring(lastSlash + 1) : imgUrl;
+      }
+
       fetch('https://automateoptinet.app.n8n.cloud/webhook/like-img', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ img_url: imgUrl }),
+        body: JSON.stringify({ record_id: recordId, img_url: imgUrl }),
       }).catch(() => {
         // Silently ignore errors
       });
