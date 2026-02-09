@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Download, FileCode, Loader2, Wand2 } from 'lucide-react';
 import { HtmlConversionModal } from './HtmlConversionModal';
+import { FavoriteHeart } from './FavoriteHeart';
 
 interface ImageModalProps {
   isOpen: boolean;
@@ -17,9 +18,12 @@ interface ImageModalProps {
   editUrl: string;
   provider: 'chatgpt' | 'gemini';
   onImageUpdated?: (newDisplayUrl: string, newEditUrl: string) => void;
+  imageId?: string;
+  liked?: boolean;
+  onToggleFavorite?: (imageId: string, liked: boolean) => void;
 }
 
-export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onImageUpdated }: ImageModalProps) {
+export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onImageUpdated, imageId, liked, onToggleFavorite }: ImageModalProps) {
   const [editInstructions, setEditInstructions] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -142,6 +146,14 @@ export function ImageModal({ isOpen, onClose, displayUrl, editUrl, provider, onI
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="relative w-full overflow-auto max-h-[50vh] rounded-lg bg-muted/50">
+              {imageId && onToggleFavorite && (
+                <FavoriteHeart
+                  imageId={imageId}
+                  liked={!!liked}
+                  onToggle={onToggleFavorite}
+                  className="top-2 right-2 opacity-100"
+                />
+              )}
               <img
                 src={currentDisplayUrl}
                 alt="Generated image"

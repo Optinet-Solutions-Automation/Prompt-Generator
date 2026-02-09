@@ -66,7 +66,7 @@ export function ResultDisplay({
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({ chatgpt: false, gemini: false });
   const [imageError, setImageError] = useState<string | null>(null);
-  const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
+  const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini'; imageId: string } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -527,9 +527,9 @@ export function ResultDisplay({
                   <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4">
                     {images.map((img, index) => (
                       <div
-                        key={`${label}-${img.provider}-${index}`}
+key={`${label}-${img.provider}-${index}`}
                         className="relative group cursor-pointer aspect-square"
-                        onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: img.provider })}
+                        onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: img.provider, imageId: `${img.provider}-${img.originalIndex}-${img.displayUrl}` })}
                       >
                         <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                           <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
@@ -587,6 +587,9 @@ export function ResultDisplay({
           displayUrl={modalImage.displayUrl}
           editUrl={modalImage.editUrl}
           provider={modalImage.provider}
+          imageId={modalImage.imageId}
+          liked={favorites.has(modalImage.imageId)}
+          onToggleFavorite={handleToggleFavorite}
           onImageUpdated={(newDisplayUrl, newEditUrl) => {
             setModalImage(prev => prev ? { ...prev, displayUrl: newDisplayUrl, editUrl: newEditUrl } : null);
           }}
