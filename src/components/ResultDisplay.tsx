@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { FavoriteHeart } from './FavoriteHeart';
 import type { AppState, PromptMetadata, ReferencePromptData } from '@/types/prompt';
 import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
@@ -71,6 +71,8 @@ export function ResultDisplay({
   const [editablePrompt, setEditablePrompt] = useState(prompt);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
+  const webhookSentRef = useRef<Set<string>>(new Set());
+
   const handleToggleFavorite = useCallback((imageId: string, liked: boolean) => {
     setFavorites(prev => {
       const next = new Set(prev);
@@ -78,6 +80,27 @@ export function ResultDisplay({
       else next.delete(imageId);
       return next;
     });
+
+    // Fire webhook only on like, not unlike, and prevent duplicates
+    if (liked && !webhookSentRef.current.has(imageId)) {
+      webhookSentRef.current.add(imageId);
+      // Extract the actual image URL from the imageId (format: "provider-index-url")
+      const urlStart = imageId.indexOf('-', imageId.indexOf('-') + 1) + 1;
+      const imgUrl = imageId.substring(urlStart);
+
+      fetch('https://automateoptinet.app.n8n.cloud/webhook/like-img', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ img_url: imgUrl }),
+      }).catch(() => {
+        // Silently ignore errors
+      });
+    }
+
+    // If unliking, allow re-sending webhook if liked again later
+    if (!liked) {
+      webhookSentRef.current.delete(imageId);
+    }
   }, []);
   
   // Elapsed time trackers for different operations
