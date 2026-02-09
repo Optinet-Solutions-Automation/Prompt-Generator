@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { FavoriteHeart } from './FavoriteHeart';
 import type { AppState, PromptMetadata, ReferencePromptData } from '@/types/prompt';
 import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
 import { ImageModal } from './ImageModal';
@@ -68,6 +69,16 @@ export function ResultDisplay({
   const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini' } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  const handleToggleFavorite = useCallback((imageId: string, liked: boolean) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (liked) next.add(imageId);
+      else next.delete(imageId);
+      return next;
+    });
+  }, []);
   
   // Elapsed time trackers for different operations
   const chatgptTimer = useElapsedTime();
@@ -534,6 +545,13 @@ export function ResultDisplay({
                         >
                           <X className="w-3 h-3" />
                         </button>
+                        {/* Favorite heart */}
+                        <FavoriteHeart
+                          imageId={`${img.provider}-${img.originalIndex}-${img.displayUrl}`}
+                          liked={favorites.has(`${img.provider}-${img.originalIndex}-${img.displayUrl}`)}
+                          onToggle={handleToggleFavorite}
+                          className="top-1 right-8"
+                        />
                         {/* Provider badge */}
                         <div className="absolute top-1 right-1 z-10">
                           {img.provider === 'chatgpt' ? (
