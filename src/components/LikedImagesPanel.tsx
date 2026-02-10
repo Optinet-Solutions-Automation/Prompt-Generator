@@ -12,10 +12,22 @@ const airtableConfig = {
 
 interface AirtableRecord {
   id: string;
-  fields: {
-    record_id?: string;
-    img_url?: string;
-  };
+  fields: Record<string, unknown>;
+}
+
+function getField(fields: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    if (fields[key] && typeof fields[key] === 'string') return fields[key] as string;
+  }
+  return undefined;
+}
+
+function getImgUrl(record: AirtableRecord): string | undefined {
+  return getField(record.fields, 'img_url', 'Img_URL', 'Image URL', 'image_url', 'ImgUrl', 'url', 'URL');
+}
+
+function getRecordId(record: AirtableRecord): string {
+  return (getField(record.fields, 'record_id', 'Record_ID', 'RecordId', 'record_ID', 'name', 'Name') || record.id);
 }
 
 interface LikedImagesPanelProps {
@@ -68,8 +80,11 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
       }
 
       const data = await response.json();
-      console.log('Airtable data received:', data);
       console.log('Number of records:', data.records?.length || 0);
+      if (data.records?.[0]) {
+        console.log('First record fields:', Object.keys(data.records[0].fields));
+        console.log('First record sample:', JSON.stringify(data.records[0].fields));
+      }
 
       setRecords(data.records || []);
     } catch (err) {
@@ -114,7 +129,7 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
 
   if (!isOpen) return null;
 
-  const validRecords = records.filter(r => r.fields.img_url);
+  const validRecords = records.filter(r => getImgUrl(r));
 
   return (
     <>
@@ -183,22 +198,19 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
 
           {!loading && !error && validRecords.length > 0 && (
             <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-2 justify-items-center">
-              {validRecords.map((record) => (
-                <LikedImageCard
-                  key={record.id}
-                  imgUrl={record.fields.img_url!}
-                  recordId={record.fields.record_id || record.id}
-                  onView={() =>
-                    setViewImage({
-                      imgUrl: record.fields.img_url!,
-                      recordId: record.fields.record_id || record.id,
-                    })
-                  }
-                  onDownload={() =>
-                    handleDownload(record.fields.img_url!, record.fields.record_id || record.id)
-                  }
-                />
-              ))}
+              {validRecords.map((record) => {
+                const imgUrl = getImgUrl(record)!;
+                const recordId = getRecordId(record);
+                return (
+                  <LikedImageCard
+                    key={record.id}
+                    imgUrl={imgUrl}
+                    recordId={recordId}
+                    onView={() => setViewImage({ imgUrl, recordId })}
+                    onDownload={() => handleDownload(imgUrl, recordId)}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
