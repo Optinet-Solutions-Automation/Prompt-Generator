@@ -71,7 +71,33 @@ export function ResultDisplay({
   const [editablePrompt, setEditablePrompt] = useState(prompt);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const webhookSentRef = useRef<Set<string>>(new Set());
+  // Store record_id and img_url per imageId for consistent like/unlike payloads
+  const imageMetaRef = useRef<Map<string, { recordId: string; imgUrl: string }>>(new Map());
+  const pendingWebhookRef = useRef<Set<string>>(new Set());
+
+  const getImageMeta = useCallback((imageId: string) => {
+    if (imageMetaRef.current.has(imageId)) {
+      return imageMetaRef.current.get(imageId)!;
+    }
+    // Extract the actual image URL from the imageId (format: "provider-index-url")
+    const urlStart = imageId.indexOf('-', imageId.indexOf('-') + 1) + 1;
+    const imgUrl = imageId.substring(urlStart);
+
+    // Derive record_id from the file name (last segment of the URL path)
+    let recordId: string;
+    try {
+      const urlObj = new URL(imgUrl);
+      const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+      recordId = pathSegments[pathSegments.length - 1] || imgUrl;
+    } catch {
+      const lastSlash = imgUrl.lastIndexOf('/');
+      recordId = lastSlash >= 0 ? imgUrl.substring(lastSlash + 1) : imgUrl;
+    }
+
+    const meta = { recordId, imgUrl };
+    imageMetaRef.current.set(imageId, meta);
+    return meta;
+  }, []);
 
   const handleToggleFavorite = useCallback((imageId: string, liked: boolean) => {
     setFavorites(prev => {
@@ -81,39 +107,25 @@ export function ResultDisplay({
       return next;
     });
 
-    // Fire webhook only on like, not unlike, and prevent duplicates
-    if (liked && !webhookSentRef.current.has(imageId)) {
-      webhookSentRef.current.add(imageId);
-      // Extract the actual image URL from the imageId (format: "provider-index-url")
-      const urlStart = imageId.indexOf('-', imageId.indexOf('-') + 1) + 1;
-      const imgUrl = imageId.substring(urlStart);
+    // Prevent duplicate rapid clicks
+    if (pendingWebhookRef.current.has(imageId)) return;
+    pendingWebhookRef.current.add(imageId);
 
-      // Derive record_id from the file name (last segment of the URL path)
-      let recordId: string;
-      try {
-        const urlObj = new URL(imgUrl);
-        const pathSegments = urlObj.pathname.split('/').filter(Boolean);
-        recordId = pathSegments[pathSegments.length - 1] || imgUrl;
-      } catch {
-        // Fallback: use everything after the last slash
-        const lastSlash = imgUrl.lastIndexOf('/');
-        recordId = lastSlash >= 0 ? imgUrl.substring(lastSlash + 1) : imgUrl;
-      }
+    const { recordId, imgUrl } = getImageMeta(imageId);
+    const endpoint = liked
+      ? 'https://automateoptinet.app.n8n.cloud/webhook/like-img'
+      : 'https://automateoptinet.app.n8n.cloud/webhook/unlike-img';
 
-      fetch('https://automateoptinet.app.n8n.cloud/webhook/like-img', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ record_id: recordId, img_url: imgUrl }),
-      }).catch(() => {
-        // Silently ignore errors
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ record_id: recordId, img_url: imgUrl }),
+    })
+      .catch(() => {})
+      .finally(() => {
+        pendingWebhookRef.current.delete(imageId);
       });
-    }
-
-    // If unliking, allow re-sending webhook if liked again later
-    if (!liked) {
-      webhookSentRef.current.delete(imageId);
-    }
-  }, []);
+  }, [getImageMeta]);
   
   // Elapsed time trackers for different operations
   const chatgptTimer = useElapsedTime();
