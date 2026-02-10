@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { LikedImageCard } from './LikedImageCard';
 import { LikedImageViewModal } from './LikedImageViewModal';
 
+const AIRTABLE_PAT = import.meta.env.VITE_AIRTABLE_PAT;
+const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID;
+const AIRTABLE_TABLE_NAME = import.meta.env.VITE_AIRTABLE_TABLE_NAME;
+
 interface AirtableRecord {
   id: string;
   fields: {
@@ -27,23 +31,22 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
     setLoading(true);
     setError(null);
     try {
-      const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID;
-      const tableName = import.meta.env.VITE_AIRTABLE_TABLE_NAME;
-      const pat = import.meta.env.VITE_AIRTABLE_PAT;
-
-      if (!baseId || !tableName || !pat) {
-        throw new Error('Airtable configuration missing');
+      if (!AIRTABLE_BASE_ID || !AIRTABLE_TABLE_NAME || !AIRTABLE_PAT) {
+        console.error('Missing Airtable environment variables');
+        console.log('PAT defined:', !!AIRTABLE_PAT);
+        console.log('Base ID:', AIRTABLE_BASE_ID);
+        console.log('Table Name:', AIRTABLE_TABLE_NAME);
+        throw new Error('Airtable configuration not found');
       }
 
-      const response = await fetch(
-        `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${pat}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${AIRTABLE_PAT}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Airtable API error: ${response.status}`);
