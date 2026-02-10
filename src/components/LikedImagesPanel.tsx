@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { LikedImageCard } from './LikedImageCard';
 import { LikedImageViewModal } from './LikedImageViewModal';
 
-const AIRTABLE_PAT = import.meta.env.VITE_AIRTABLE_PAT;
-const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID;
-const AIRTABLE_TABLE_NAME = import.meta.env.VITE_AIRTABLE_TABLE_NAME;
+const airtableConfig = {
+  pat: import.meta.env.VITE_AIRTABLE_PAT as string,
+  baseId: import.meta.env.VITE_AIRTABLE_BASE_ID as string,
+  tableName: import.meta.env.VITE_AIRTABLE_TABLE_NAME as string,
+};
 
 interface AirtableRecord {
   id: string;
@@ -28,31 +30,47 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
   const [viewImage, setViewImage] = useState<{ imgUrl: string; recordId: string } | null>(null);
 
   const fetchLikedImages = useCallback(async () => {
+    console.log('=== Starting Airtable Fetch ===');
+    console.log('Config:', {
+      hasToken: !!airtableConfig.pat,
+      baseId: airtableConfig.baseId,
+      tableName: airtableConfig.tableName,
+    });
+
     setLoading(true);
     setError(null);
+
     try {
-      if (!AIRTABLE_BASE_ID || !AIRTABLE_TABLE_NAME || !AIRTABLE_PAT) {
-        console.error('Missing Airtable environment variables');
-        console.log('PAT defined:', !!AIRTABLE_PAT);
-        console.log('Base ID:', AIRTABLE_BASE_ID);
-        console.log('Table Name:', AIRTABLE_TABLE_NAME);
-        throw new Error('Airtable configuration not found');
+      if (!airtableConfig.pat || !airtableConfig.baseId || !airtableConfig.tableName) {
+        const msg = 'Missing Airtable configuration. Check environment variables in Vercel.';
+        console.error(msg);
+        throw new Error(msg);
       }
 
-      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+      const url = `https://api.airtable.com/v0/${airtableConfig.baseId}/${encodeURIComponent(airtableConfig.tableName)}`;
+      console.log('Fetching from URL:', url);
 
       const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          Authorization: `Bearer ${AIRTABLE_PAT}`,
+          'Authorization': `Bearer ${airtableConfig.pat}`,
           'Content-Type': 'application/json',
         },
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error(`Airtable API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Airtable error response:', errorText);
+        throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Airtable data received:', data);
+      console.log('Number of records:', data.records?.length || 0);
+
       setRecords(data.records || []);
     } catch (err) {
       console.error('Error fetching liked images:', err);
