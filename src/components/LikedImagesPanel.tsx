@@ -23,11 +23,11 @@ function getField(fields: Record<string, unknown>, ...keys: string[]): string | 
 }
 
 function getImgUrl(record: AirtableRecord): string | undefined {
-  return getField(record.fields, 'img_url', 'Img_URL', 'Image URL', 'image_url', 'ImgUrl', 'url', 'URL');
+  return getField(record.fields, 'image_from_url', 'Direct Link', 'img_url', 'Image URL', 'url');
 }
 
 function getRecordId(record: AirtableRecord): string {
-  return (getField(record.fields, 'record_id', 'Record_ID', 'RecordId', 'record_ID', 'name', 'Name') || record.id);
+  return (getField(record.fields, 'record_id', 'Record_ID', 'name') || record.id);
 }
 
 interface LikedImagesPanelProps {
