@@ -162,6 +162,7 @@ const Index = () => {
                   onMetadataChange={handleMetadataChange}
                   onAddGeneratedImage={handleAddGeneratedImage}
                   onRemoveGeneratedImage={handleRemoveGeneratedImage}
+                  onOpenFavorites={() => setShowLikedPanel(true)}
                 />
               )}
             </AnimatePresence>
