@@ -150,7 +150,7 @@ export function PromptForm({
           <Trash2 className="w-4 h-4" />
           Clear Form
         </Button>
-        <Button type="button" variant="outline" onClick={onOpenFavorites} className="gap-2 h-12">
+        <Button type="button" variant="outline" onClick={onOpenFavorites} className="gap-2 h-12 sm:ml-auto">
           <Heart className="w-4 h-4" />
           Favorites
         </Button>
