@@ -40,7 +40,7 @@ interface ResultDisplayProps {
   onClearForm: () => void;
   onPromptChange?: (newPrompt: string) => void;
   onMetadataChange?: (field: keyof PromptMetadata, value: string) => void;
-  onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string }) => void;
+  onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string; generatedBrand: string }) => void;
   onRemoveGeneratedImage?: (provider: 'chatgpt' | 'gemini', index: number) => void;
 }
 
@@ -75,6 +75,8 @@ export function ResultDisplay({
 
   // Store record_id and img_url per imageId for consistent like/unlike payloads
   const imageMetaRef = useRef<Map<string, { recordId: string; imgUrl: string }>>(new Map());
+  // Store generated brand per imageId separately
+  const imageBrandRef = useRef<Map<string, string>>(new Map());
   const pendingWebhookRef = useRef<Set<string>>(new Set());
 
   const getImageMeta = useCallback((imageId: string) => {
@@ -114,17 +116,23 @@ export function ResultDisplay({
     pendingWebhookRef.current.add(imageId);
 
     const { recordId, imgUrl } = getImageMeta(imageId);
+
+    // Get the stored brand from the image brand ref
+    const storedBrand = imageBrandRef.current.get(imageId);
+    const brandName = storedBrand || metadata?.brand || 'No Brand';
+
     const endpoint = liked
       ? 'https://automateoptinet.app.n8n.cloud/webhook/like-img'
       : 'https://automateoptinet.app.n8n.cloud/webhook/unlike-img';
 
-    const brandName = metadata?.brand || 'No Brand';
     const payload = liked
       ? { record_id: recordId, img_url: imgUrl, brand_name: brandName }
       : { record_id: recordId, img_url: imgUrl };
 
     if (liked) {
-      console.log('Sending like webhook with brand:', brandName);
+      console.log('Liking image generated for brand:', brandName);
+      console.log('Current brand selector:', metadata?.brand);
+      console.log('Using stored brand:', storedBrand);
       console.log('Payload:', payload);
     }
 
@@ -208,7 +216,8 @@ export function ResultDisplay({
       console.log('EDIT URL:', editUrl); // ADD THIS
       
       if (displayUrl && editUrl) {
-        onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel() });
+        const generatedBrand = metadata?.brand || 'No Brand';
+        onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel(), generatedBrand });
       } else {
         throw new Error('No image URL returned from response');
       }
@@ -593,11 +602,17 @@ export function ResultDisplay({
                     <span className="text-sm font-medium text-muted-foreground">{label} ({images.length})</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4">
-                    {images.map((img, index) => (
+                    {images.map((img, index) => {
+                      const imageId = `${img.provider}-${img.originalIndex}-${img.displayUrl}`;
+                      // Register the brand stored at generation time
+                      if (img.generatedBrand && !imageBrandRef.current.has(imageId)) {
+                        imageBrandRef.current.set(imageId, img.generatedBrand);
+                      }
+                      return (
                       <div
 key={`${label}-${img.provider}-${index}`}
                         className="relative group cursor-pointer aspect-square"
-                        onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: img.provider, imageId: `${img.provider}-${img.originalIndex}-${img.displayUrl}` })}
+                        onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: img.provider, imageId })}
                       >
                         <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                           <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
@@ -615,8 +630,8 @@ key={`${label}-${img.provider}-${index}`}
                         </button>
                         {/* Favorite heart */}
                         <FavoriteHeart
-                          imageId={`${img.provider}-${img.originalIndex}-${img.displayUrl}`}
-                          liked={favorites.has(`${img.provider}-${img.originalIndex}-${img.displayUrl}`)}
+                          imageId={imageId}
+                          liked={favorites.has(imageId)}
                           onToggle={handleToggleFavorite}
                           className="top-1 right-8"
                         />
@@ -632,13 +647,22 @@ key={`${label}-${img.provider}-${index}`}
                             </div>
                           )}
                         </div>
+                        {/* Brand badge */}
+                        {img.generatedBrand && (
+                          <div className="absolute bottom-1 left-1 z-10">
+                            <span className="bg-background/80 backdrop-blur-sm text-foreground text-[10px] font-medium px-1.5 py-0.5 rounded">
+                              {img.generatedBrand}
+                            </span>
+                          </div>
+                        )}
                         <img
                           src={img.displayUrl}
                           alt={`${label} - ${img.provider}`}
                           className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
                         />
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ));
