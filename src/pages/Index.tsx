@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
-import { useEffect } from 'react';
+import { Heart, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { PromptForm } from '@/components/PromptForm';
 import { ProcessingState } from '@/components/ProcessingState';
 import { ResultDisplay } from '@/components/ResultDisplay';
 import { ErrorDisplay } from '@/components/ErrorDisplay';
 import { usePromptGenerator } from '@/hooks/usePromptGenerator';
 import { useReferencePromptData } from '@/hooks/useReferencePromptData';
+import { LikedImagesPanel } from '@/components/LikedImagesPanel';
 
 const Index = () => {
   const {
@@ -41,10 +42,14 @@ const Index = () => {
     clearReferencePromptData,
   } = useReferencePromptData();
 
+  const [showLikedPanel, setShowLikedPanel] = useState(false);
+
+  // Get current brand from metadata (result view) or formData (form view)
+  const currentBrand = promptMetadata?.brand || formData.brand || '';
+
   // Sync reference prompt data to formData and metadata when loaded
   useEffect(() => {
     if (referencePromptData) {
-      // Update formData (for form view)
       handleFieldChange('format_layout', referencePromptData.format_layout || '');
       handleFieldChange('primary_object', referencePromptData.primary_object || '');
       handleFieldChange('subject', referencePromptData.subject || '');
@@ -54,7 +59,6 @@ const Index = () => {
       handleFieldChange('positive_prompt', referencePromptData.positive_prompt || '');
       handleFieldChange('negative_prompt', referencePromptData.negative_prompt || '');
       
-      // Update promptMetadata (for results view)
       handleMetadataChange('format_layout', referencePromptData.format_layout || '');
       handleMetadataChange('primary_object', referencePromptData.primary_object || '');
       handleMetadataChange('subject', referencePromptData.subject || '');
@@ -71,7 +75,6 @@ const Index = () => {
       fetchReferencePromptData(brand, referenceId);
     } else {
       clearReferencePromptData();
-      // Clear the fields when reference is cleared
       handleFieldChange('format_layout', '');
       handleFieldChange('primary_object', '');
       handleFieldChange('subject', '');
@@ -83,7 +86,6 @@ const Index = () => {
     }
   };
 
-  // Wrap handleClearForm to also clear reference prompt data
   const handleClearFormWithReference = () => {
     handleClearForm();
     clearReferencePromptData();
@@ -190,6 +192,25 @@ const Index = () => {
           Powered by AI • Generate professional prompts in seconds
         </motion.p>
       </div>
+
+      {/* Floating Favorites Button - Always visible */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        onClick={() => setShowLikedPanel(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl gradient-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-xl transition-all duration-200 cursor-pointer"
+        aria-label="View favorites"
+      >
+        Favorites <Heart className="w-4 h-4 fill-current" />
+      </motion.button>
+
+      {/* Liked Images Panel */}
+      <LikedImagesPanel
+        isOpen={showLikedPanel}
+        onClose={() => setShowLikedPanel(false)}
+        brand={currentBrand}
+      />
     </div>
   );
 };
