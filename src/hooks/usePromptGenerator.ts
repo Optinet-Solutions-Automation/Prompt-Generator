@@ -82,6 +82,7 @@ export type GeneratedImage = {
   editUrl: string;
   referenceLabel: string;
   provider: 'chatgpt' | 'gemini';
+  generatedBrand: string;
 };
 
 export type GeneratedImages = { 
@@ -222,7 +223,7 @@ export function usePromptGenerator() {
     }
   }, [promptMetadata, handleSubmit]);
 
-  const handleAddGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string }) => {
+  const handleAddGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string; generatedBrand: string }) => {
     setGeneratedImages(prev => ({
       ...prev,
       [provider]: [...prev[provider], { ...image, provider }]
