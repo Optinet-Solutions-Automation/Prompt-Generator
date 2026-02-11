@@ -1,13 +1,13 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { PromptForm } from '@/components/PromptForm';
-import { ProcessingState } from '@/components/ProcessingState';
-import { ResultDisplay } from '@/components/ResultDisplay';
-import { ErrorDisplay } from '@/components/ErrorDisplay';
-import { usePromptGenerator } from '@/hooks/usePromptGenerator';
-import { useReferencePromptData } from '@/hooks/useReferencePromptData';
-import { LikedImagesPanel } from '@/components/LikedImagesPanel';
+import { AnimatePresence, motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { PromptForm } from "@/components/PromptForm";
+import { ProcessingState } from "@/components/ProcessingState";
+import { ResultDisplay } from "@/components/ResultDisplay";
+import { ErrorDisplay } from "@/components/ErrorDisplay";
+import { usePromptGenerator } from "@/hooks/usePromptGenerator";
+import { useReferencePromptData } from "@/hooks/useReferencePromptData";
+import { LikedImagesPanel } from "@/components/LikedImagesPanel";
 
 const Index = () => {
   const {
@@ -35,38 +35,34 @@ const Index = () => {
     handleRemoveGeneratedImage,
   } = usePromptGenerator();
 
-  const {
-    referencePromptData,
-    isLoadingReferenceData,
-    fetchReferencePromptData,
-    clearReferencePromptData,
-  } = useReferencePromptData();
+  const { referencePromptData, isLoadingReferenceData, fetchReferencePromptData, clearReferencePromptData } =
+    useReferencePromptData();
 
   const [showLikedPanel, setShowLikedPanel] = useState(false);
 
   // Get current brand from metadata (result view) or formData (form view)
-  const currentBrand = promptMetadata?.brand || formData.brand || '';
+  const currentBrand = promptMetadata?.brand || formData.brand || "";
 
   // Sync reference prompt data to formData and metadata when loaded
   useEffect(() => {
     if (referencePromptData) {
-      handleFieldChange('format_layout', referencePromptData.format_layout || '');
-      handleFieldChange('primary_object', referencePromptData.primary_object || '');
-      handleFieldChange('subject', referencePromptData.subject || '');
-      handleFieldChange('lighting', referencePromptData.lighting || '');
-      handleFieldChange('mood', referencePromptData.mood || '');
-      handleFieldChange('background', referencePromptData.background || '');
-      handleFieldChange('positive_prompt', referencePromptData.positive_prompt || '');
-      handleFieldChange('negative_prompt', referencePromptData.negative_prompt || '');
-      
-      handleMetadataChange('format_layout', referencePromptData.format_layout || '');
-      handleMetadataChange('primary_object', referencePromptData.primary_object || '');
-      handleMetadataChange('subject', referencePromptData.subject || '');
-      handleMetadataChange('lighting', referencePromptData.lighting || '');
-      handleMetadataChange('mood', referencePromptData.mood || '');
-      handleMetadataChange('background', referencePromptData.background || '');
-      handleMetadataChange('positive_prompt', referencePromptData.positive_prompt || '');
-      handleMetadataChange('negative_prompt', referencePromptData.negative_prompt || '');
+      handleFieldChange("format_layout", referencePromptData.format_layout || "");
+      handleFieldChange("primary_object", referencePromptData.primary_object || "");
+      handleFieldChange("subject", referencePromptData.subject || "");
+      handleFieldChange("lighting", referencePromptData.lighting || "");
+      handleFieldChange("mood", referencePromptData.mood || "");
+      handleFieldChange("background", referencePromptData.background || "");
+      handleFieldChange("positive_prompt", referencePromptData.positive_prompt || "");
+      handleFieldChange("negative_prompt", referencePromptData.negative_prompt || "");
+
+      handleMetadataChange("format_layout", referencePromptData.format_layout || "");
+      handleMetadataChange("primary_object", referencePromptData.primary_object || "");
+      handleMetadataChange("subject", referencePromptData.subject || "");
+      handleMetadataChange("lighting", referencePromptData.lighting || "");
+      handleMetadataChange("mood", referencePromptData.mood || "");
+      handleMetadataChange("background", referencePromptData.background || "");
+      handleMetadataChange("positive_prompt", referencePromptData.positive_prompt || "");
+      handleMetadataChange("negative_prompt", referencePromptData.negative_prompt || "");
     }
   }, [referencePromptData, handleFieldChange, handleMetadataChange]);
 
@@ -75,14 +71,14 @@ const Index = () => {
       fetchReferencePromptData(brand, referenceId);
     } else {
       clearReferencePromptData();
-      handleFieldChange('format_layout', '');
-      handleFieldChange('primary_object', '');
-      handleFieldChange('subject', '');
-      handleFieldChange('lighting', '');
-      handleFieldChange('mood', '');
-      handleFieldChange('background', '');
-      handleFieldChange('positive_prompt', '');
-      handleFieldChange('negative_prompt', '');
+      handleFieldChange("format_layout", "");
+      handleFieldChange("primary_object", "");
+      handleFieldChange("subject", "");
+      handleFieldChange("lighting", "");
+      handleFieldChange("mood", "");
+      handleFieldChange("background", "");
+      handleFieldChange("positive_prompt", "");
+      handleFieldChange("negative_prompt", "");
     }
   };
 
@@ -91,10 +87,10 @@ const Index = () => {
     clearReferencePromptData();
   };
 
-  const showForm = appState === 'FORM';
-  const showProcessing = appState === 'PROCESSING';
-  const showResult = ['RESULT', 'SAVING', 'SAVED'].includes(appState);
-  const showError = !!errorMessage && appState === 'FORM';
+  const showForm = appState === "FORM";
+  const showProcessing = appState === "PROCESSING";
+  const showResult = ["RESULT", "SAVING", "SAVED"].includes(appState);
+  const showError = !!errorMessage && appState === "FORM";
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,19 +119,10 @@ const Index = () => {
         </motion.div>
 
         {/* Main Card */}
-        <motion.div
-          layout
-          className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden"
-        >
+        <motion.div layout className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden">
           <div className="p-4 sm:p-6 md:p-8">
             <AnimatePresence mode="wait">
-              {showError && (
-                <ErrorDisplay
-                  key="error"
-                  message={errorMessage}
-                  onGoBack={handleGoBack}
-                />
-              )}
+              {showError && <ErrorDisplay key="error" message={errorMessage} onGoBack={handleGoBack} />}
 
               {showForm && !showError && (
                 <PromptForm
@@ -148,12 +135,11 @@ const Index = () => {
                   onReferenceChange={handleReferenceChange}
                   onSubmit={handleSubmit}
                   onClear={handleClearFormWithReference}
+                  onOpenFavorites={() => setShowLikedPanel(true)}
                 />
               )}
 
-              {showProcessing && (
-                <ProcessingState key="processing" elapsedTime={elapsedTime} />
-              )}
+              {showProcessing && <ProcessingState key="processing" elapsedTime={elapsedTime} />}
 
               {showResult && (
                 <ResultDisplay
@@ -193,24 +179,8 @@ const Index = () => {
         </motion.p>
       </div>
 
-      {/* Floating Favorites Button - Always visible */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        onClick={() => setShowLikedPanel(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl gradient-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-xl transition-all duration-200 cursor-pointer"
-        aria-label="View favorites"
-      >
-        Favorites <Heart className="w-4 h-4 fill-current" />
-      </motion.button>
-
       {/* Liked Images Panel */}
-      <LikedImagesPanel
-        isOpen={showLikedPanel}
-        onClose={() => setShowLikedPanel(false)}
-        brand={currentBrand}
-      />
+      <LikedImagesPanel isOpen={showLikedPanel} onClose={() => setShowLikedPanel(false)} brand={currentBrand} />
     </div>
   );
 };
