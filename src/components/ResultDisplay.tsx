@@ -681,6 +681,13 @@ export function ResultDisplay({
                 </div>
               ));
             })()}
+            {/* Add Favorites button at the bottom right of the generated images section */}
+            <div className="flex justify-end mt-4">
+              <Button type="button" variant="outline" onClick={onOpenFavorites} className="gap-2 h-10">
+                <Heart className="w-4 h-4" />
+                Favorites
+              </Button>
+            </div>
           </div>
         )}
       </motion.div>
