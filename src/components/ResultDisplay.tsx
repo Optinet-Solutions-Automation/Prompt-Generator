@@ -1,26 +1,21 @@
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { FavoriteHeart } from './FavoriteHeart';
-import type { AppState, PromptMetadata, ReferencePromptData } from '@/types/prompt';
-import { BRANDS, BRAND_REFERENCES } from '@/types/prompt';
-import { ImageModal } from './ImageModal';
-import { SavePromptModal } from './SavePromptModal';
-import { FormField } from './FormField';
-import { ReferenceSelect } from './ReferenceSelect';
-import { PositionAndRatioSelector } from './PositionAndRatioSelector';
-import { ReferencePromptDataDisplay } from './ReferencePromptDataDisplay';
-import type { GeneratedImages } from '@/hooks/usePromptGenerator';
-import { useElapsedTime } from '@/hooks/useElapsedTime';
-import { normalizeN8nImageResponse } from '@/lib/n8nImage';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X, Heart } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { FavoriteHeart } from "./FavoriteHeart";
+import type { AppState, PromptMetadata, ReferencePromptData } from "@/types/prompt";
+import { BRANDS, BRAND_REFERENCES } from "@/types/prompt";
+import { ImageModal } from "./ImageModal";
+import { SavePromptModal } from "./SavePromptModal";
+import { FormField } from "./FormField";
+import { ReferenceSelect } from "./ReferenceSelect";
+import { PositionAndRatioSelector } from "./PositionAndRatioSelector";
+import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
+import type { GeneratedImages } from "@/hooks/usePromptGenerator";
+import { useElapsedTime } from "@/hooks/useElapsedTime";
+import { normalizeN8nImageResponse } from "@/lib/n8nImage";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ResultDisplayProps {
   prompt: string;
@@ -37,10 +32,14 @@ interface ResultDisplayProps {
   onEditForm: () => void;
   onGenerateAgain: () => void;
   onClearForm: () => void;
+  onOpenFavorites: () => void;
   onPromptChange?: (newPrompt: string) => void;
   onMetadataChange?: (field: keyof PromptMetadata, value: string) => void;
-  onAddGeneratedImage?: (provider: 'chatgpt' | 'gemini', image: { displayUrl: string; editUrl: string; referenceLabel: string; generatedBrand: string }) => void;
-  onRemoveGeneratedImage?: (provider: 'chatgpt' | 'gemini', index: number) => void;
+  onAddGeneratedImage?: (
+    provider: "chatgpt" | "gemini",
+    image: { displayUrl: string; editUrl: string; referenceLabel: string; generatedBrand: string },
+  ) => void;
+  onRemoveGeneratedImage?: (provider: "chatgpt" | "gemini", index: number) => void;
 }
 
 export function ResultDisplay({
@@ -58,19 +57,27 @@ export function ResultDisplay({
   onEditForm,
   onGenerateAgain,
   onClearForm,
+  onOpenFavorites,
   onPromptChange,
   onMetadataChange,
   onAddGeneratedImage,
   onRemoveGeneratedImage,
 }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
-  const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({ chatgpt: false, gemini: false });
+  const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({
+    chatgpt: false,
+    gemini: false,
+  });
   const [imageError, setImageError] = useState<string | null>(null);
-  const [modalImage, setModalImage] = useState<{ displayUrl: string; editUrl: string; provider: 'chatgpt' | 'gemini'; imageId: string } | null>(null);
+  const [modalImage, setModalImage] = useState<{
+    displayUrl: string;
+    editUrl: string;
+    provider: "chatgpt" | "gemini";
+    imageId: string;
+  } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  
 
   // Store record_id and img_url per imageId for consistent like/unlike payloads
   const imageMetaRef = useRef<Map<string, { recordId: string; imgUrl: string }>>(new Map());
@@ -83,17 +90,17 @@ export function ResultDisplay({
       return imageMetaRef.current.get(imageId)!;
     }
     // Extract the actual image URL from the imageId (format: "provider-index-url")
-    const urlStart = imageId.indexOf('-', imageId.indexOf('-') + 1) + 1;
+    const urlStart = imageId.indexOf("-", imageId.indexOf("-") + 1) + 1;
     const imgUrl = imageId.substring(urlStart);
 
     // Derive record_id from the file name (last segment of the URL path)
     let recordId: string;
     try {
       const urlObj = new URL(imgUrl);
-      const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+      const pathSegments = urlObj.pathname.split("/").filter(Boolean);
       recordId = pathSegments[pathSegments.length - 1] || imgUrl;
     } catch {
-      const lastSlash = imgUrl.lastIndexOf('/');
+      const lastSlash = imgUrl.lastIndexOf("/");
       recordId = lastSlash >= 0 ? imgUrl.substring(lastSlash + 1) : imgUrl;
     }
 
@@ -102,50 +109,53 @@ export function ResultDisplay({
     return meta;
   }, []);
 
-  const handleToggleFavorite = useCallback((imageId: string, liked: boolean) => {
-    setFavorites(prev => {
-      const next = new Set(prev);
-      if (liked) next.add(imageId);
-      else next.delete(imageId);
-      return next;
-    });
-
-    // Prevent duplicate rapid clicks
-    if (pendingWebhookRef.current.has(imageId)) return;
-    pendingWebhookRef.current.add(imageId);
-
-    const { recordId, imgUrl } = getImageMeta(imageId);
-
-    // Get the stored brand from the image brand ref
-    const storedBrand = imageBrandRef.current.get(imageId);
-    const brandName = storedBrand || metadata?.brand || 'No Brand';
-
-    const endpoint = liked
-      ? 'https://automateoptinet.app.n8n.cloud/webhook/like-img'
-      : 'https://automateoptinet.app.n8n.cloud/webhook/unlike-img';
-
-    const payload = liked
-      ? { record_id: recordId, img_url: imgUrl, brand_name: brandName }
-      : { record_id: recordId, img_url: imgUrl };
-
-    if (liked) {
-      console.log('Liking image generated for brand:', brandName);
-      console.log('Current brand selector:', metadata?.brand);
-      console.log('Using stored brand:', storedBrand);
-      console.log('Payload:', payload);
-    }
-
-    fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .catch(() => {})
-      .finally(() => {
-        pendingWebhookRef.current.delete(imageId);
+  const handleToggleFavorite = useCallback(
+    (imageId: string, liked: boolean) => {
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (liked) next.add(imageId);
+        else next.delete(imageId);
+        return next;
       });
-  }, [getImageMeta, metadata]);
-  
+
+      // Prevent duplicate rapid clicks
+      if (pendingWebhookRef.current.has(imageId)) return;
+      pendingWebhookRef.current.add(imageId);
+
+      const { recordId, imgUrl } = getImageMeta(imageId);
+
+      // Get the stored brand from the image brand ref
+      const storedBrand = imageBrandRef.current.get(imageId);
+      const brandName = storedBrand || metadata?.brand || "No Brand";
+
+      const endpoint = liked
+        ? "https://automateoptinet.app.n8n.cloud/webhook/like-img"
+        : "https://automateoptinet.app.n8n.cloud/webhook/unlike-img";
+
+      const payload = liked
+        ? { record_id: recordId, img_url: imgUrl, brand_name: brandName }
+        : { record_id: recordId, img_url: imgUrl };
+
+      if (liked) {
+        console.log("Liking image generated for brand:", brandName);
+        console.log("Current brand selector:", metadata?.brand);
+        console.log("Using stored brand:", storedBrand);
+        console.log("Payload:", payload);
+      }
+
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .catch(() => {})
+        .finally(() => {
+          pendingWebhookRef.current.delete(imageId);
+        });
+    },
+    [getImageMeta, metadata],
+  );
+
   // Elapsed time trackers for different operations
   const chatgptTimer = useElapsedTime();
   const geminiTimer = useElapsedTime();
@@ -168,75 +178,75 @@ export function ResultDisplay({
 
   // Get reference label from metadata
   const getReferenceLabel = (): string => {
-    if (!metadata?.brand || !metadata?.reference) return 'Unknown';
+    if (!metadata?.brand || !metadata?.reference) return "Unknown";
     const refs = BRAND_REFERENCES[metadata.brand] || [];
-    const found = refs.find(r => `${r.label} — ${r.description}` === metadata.reference);
-    return found?.label || metadata.reference.split(' — ')[0] || 'Unknown';
+    const found = refs.find((r) => `${r.label} — ${r.description}` === metadata.reference);
+    return found?.label || metadata.reference.split(" — ")[0] || "Unknown";
   };
 
-  const handleGenerateImage = async (provider: 'chatgpt' | 'gemini') => {
+  const handleGenerateImage = async (provider: "chatgpt" | "gemini") => {
     // Prevent multiple simultaneous requests for the same provider
     if (generatingImage[provider]) return;
-    
-    const timer = provider === 'chatgpt' ? chatgptTimer : geminiTimer;
-    
-    setGeneratingImage(prev => ({ ...prev, [provider]: true }));
+
+    const timer = provider === "chatgpt" ? chatgptTimer : geminiTimer;
+
+    setGeneratingImage((prev) => ({ ...prev, [provider]: true }));
     timer.start();
     setImageError(null);
 
     try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           prompt: editablePrompt,
           provider,
-          aspectRatio: metadata?.aspectRatio || '1:1',
+          aspectRatio: metadata?.aspectRatio || "1:1",
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to generate image');
+        throw new Error(error.error || "Failed to generate image");
       }
 
       const data = await response.json();
-      console.log('RAW API RESPONSE:', data); // ADD THIS
-      
+      console.log("RAW API RESPONSE:", data); // ADD THIS
+
       const normalized = normalizeN8nImageResponse(data);
-      console.log('NORMALIZED RESPONSE:', normalized); // ADD THIS
-      
+      console.log("NORMALIZED RESPONSE:", normalized); // ADD THIS
+
       const displayUrl = normalized.displayUrl;
       const editUrl = normalized.editUrl;
-      
-      console.log('DISPLAY URL:', displayUrl); // ADD THIS
-      console.log('EDIT URL:', editUrl); // ADD THIS
-      
+
+      console.log("DISPLAY URL:", displayUrl); // ADD THIS
+      console.log("EDIT URL:", editUrl); // ADD THIS
+
       if (displayUrl && editUrl) {
-        const generatedBrand = metadata?.brand || 'No Brand';
+        const generatedBrand = metadata?.brand || "No Brand";
         onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel(), generatedBrand });
       } else {
-        throw new Error('No image URL returned from response');
+        throw new Error("No image URL returned from response");
       }
     } catch (error) {
-      console.error('Image generation error:', error);
-      setImageError(error instanceof Error ? error.message : 'Failed to generate image');
+      console.error("Image generation error:", error);
+      setImageError(error instanceof Error ? error.message : "Failed to generate image");
     } finally {
-      setGeneratingImage(prev => ({ ...prev, [provider]: false }));
+      setGeneratingImage((prev) => ({ ...prev, [provider]: false }));
       timer.stop();
     }
   };
 
   const handleGenerateBoth = async () => {
     // Start both generations simultaneously
-    handleGenerateImage('chatgpt');
-    handleGenerateImage('gemini');
+    handleGenerateImage("chatgpt");
+    handleGenerateImage("gemini");
   };
 
-  const isSaving = appState === 'SAVING';
-  const isSaved = appState === 'SAVED';
+  const isSaving = appState === "SAVING";
+  const isSaved = appState === "SAVED";
 
   return (
     <motion.div
@@ -262,9 +272,9 @@ export function ResultDisplay({
               options={[...BRANDS]}
               value={metadata.brand}
               onChange={(value) => {
-                onMetadataChange?.('brand', value);
+                onMetadataChange?.("brand", value);
                 // Reset reference when brand changes
-                onMetadataChange?.('reference', '');
+                onMetadataChange?.("reference", "");
               }}
               placeholder="Select a brand"
               disabled={isRegeneratingPrompt}
@@ -276,30 +286,32 @@ export function ResultDisplay({
               value={(() => {
                 // Find reference ID from the formatted string "Label — Description"
                 const refs = BRAND_REFERENCES[metadata.brand] || [];
-                const found = refs.find(r => `${r.label} — ${r.description}` === metadata.reference);
-                return found?.id || '';
+                const found = refs.find((r) => `${r.label} — ${r.description}` === metadata.reference);
+                return found?.id || "";
               })()}
               onChange={(refId) => {
                 // Convert ID back to formatted string for API
                 const refs = BRAND_REFERENCES[metadata.brand] || [];
-                const ref = refs.find(r => r.id === refId);
+                const ref = refs.find((r) => r.id === refId);
                 if (ref) {
-                  onMetadataChange?.('reference', `${ref.label} — ${ref.description}`);
+                  onMetadataChange?.("reference", `${ref.label} — ${ref.description}`);
                   // Trigger API call to fetch reference prompt data
                   onReferenceChange(metadata.brand, refId);
                 }
               }}
               placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
-              disabled={!metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0 || isRegeneratingPrompt}
+              disabled={
+                !metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0 || isRegeneratingPrompt
+              }
               references={BRAND_REFERENCES[metadata.brand] || []}
             />
 
             <div className="sm:col-span-2">
               <PositionAndRatioSelector
-                subjectPosition={metadata.subjectPosition || 'Centered'}
-                aspectRatio={metadata.aspectRatio || '16:9'}
-                onSubjectPositionChange={(value) => onMetadataChange?.('subjectPosition', value)}
-                onAspectRatioChange={(value) => onMetadataChange?.('aspectRatio', value)}
+                subjectPosition={metadata.subjectPosition || "Centered"}
+                aspectRatio={metadata.aspectRatio || "16:9"}
+                onSubjectPositionChange={(value) => onMetadataChange?.("subjectPosition", value)}
+                onAspectRatioChange={(value) => onMetadataChange?.("aspectRatio", value)}
                 disabled={isRegeneratingPrompt}
               />
             </div>
@@ -307,8 +319,8 @@ export function ResultDisplay({
             <FormField
               type="text"
               label="Theme"
-              value={metadata.theme || ''}
-              onChange={(value) => onMetadataChange?.('theme', value)}
+              value={metadata.theme || ""}
+              onChange={(value) => onMetadataChange?.("theme", value)}
               placeholder="e.g., Dark Luxury Noir Valentine's"
               disabled={isRegeneratingPrompt}
             />
@@ -316,26 +328,25 @@ export function ResultDisplay({
             <FormField
               type="textarea"
               label="Description"
-              value={metadata.description || ''}
-              onChange={(value) => onMetadataChange?.('description', value)}
+              value={metadata.description || ""}
+              onChange={(value) => onMetadataChange?.("description", value)}
               placeholder="Describe your image..."
               rows={2}
               disabled={isRegeneratingPrompt}
             />
-
           </div>
 
           {/* Reference Prompt Data - Collapsible & Editable */}
           <ReferencePromptDataDisplay
             data={{
-              format_layout: metadata.format_layout || '',
-              primary_object: metadata.primary_object || '',
-              subject: metadata.subject || '',
-              lighting: metadata.lighting || '',
-              mood: metadata.mood || '',
-              background: metadata.background || '',
-              positive_prompt: metadata.positive_prompt || '',
-              negative_prompt: metadata.negative_prompt || '',
+              format_layout: metadata.format_layout || "",
+              primary_object: metadata.primary_object || "",
+              subject: metadata.subject || "",
+              lighting: metadata.lighting || "",
+              mood: metadata.mood || "",
+              background: metadata.background || "",
+              positive_prompt: metadata.positive_prompt || "",
+              negative_prompt: metadata.negative_prompt || "",
             }}
             isLoading={isLoadingReferenceData}
             disabled={isRegeneratingPrompt}
@@ -385,27 +396,18 @@ export function ResultDisplay({
                 Generated in {processingTime.toFixed(1)}s • Edit before generating
               </p>
             </div>
-            
+
             {/* Toolbar */}
             <TooltipProvider>
               <div className="flex items-center gap-0.5 bg-background rounded-lg p-1 border border-border shadow-sm">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleCopy}
-                      className="h-8 w-8 hover:bg-primary/10"
-                    >
-                      {copied ? (
-                        <Check className="w-4 h-4 text-success" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
+                    <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 hover:bg-primary/10">
+                      {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{copied ? 'Copied!' : 'Copy'}</p>
+                    <p>{copied ? "Copied!" : "Copy"}</p>
                   </TooltipContent>
                 </Tooltip>
 
@@ -413,12 +415,7 @@ export function ResultDisplay({
 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onClearForm}
-                      className="h-8 w-8 hover:bg-primary/10"
-                    >
+                    <Button variant="ghost" size="icon" onClick={onClearForm} className="h-8 w-8 hover:bg-primary/10">
                       <RotateCcw className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
@@ -444,6 +441,24 @@ export function ResultDisplay({
                     <p>Save Prompt</p>
                   </TooltipContent>
                 </Tooltip>
+
+                <div className="w-px h-4 bg-border" />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onOpenFavorites}
+                      className="h-8 w-8 text-primary hover:bg-primary/10"
+                    >
+                      <Heart className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Favorites</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </TooltipProvider>
           </div>
@@ -457,7 +472,6 @@ export function ResultDisplay({
           </div>
         </div>
       </motion.div>
-
 
       {/* Save Prompt Modal - Only opens on icon click */}
       <SavePromptModal
@@ -504,12 +518,10 @@ export function ResultDisplay({
         transition={{ delay: 0.3 }}
         className="bg-card rounded-xl border border-border p-4 sm:p-6 shadow-md"
       >
-        <p className="text-center text-muted-foreground text-xs sm:text-sm mb-4">
-          Generate images using this prompt
-        </p>
+        <p className="text-center text-muted-foreground text-xs sm:text-sm mb-4">Generate images using this prompt</p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
           <Button
-            onClick={() => handleGenerateImage('chatgpt')}
+            onClick={() => handleGenerateImage("chatgpt")}
             disabled={generatingImage.chatgpt}
             variant="outline"
             className="gap-2 w-full sm:w-auto sm:min-w-[120px]"
@@ -527,7 +539,7 @@ export function ResultDisplay({
             )}
           </Button>
           <Button
-            onClick={() => handleGenerateImage('gemini')}
+            onClick={() => handleGenerateImage("gemini")}
             disabled={generatingImage.gemini}
             variant="outline"
             className="gap-2 w-full sm:w-auto sm:min-w-[120px]"
@@ -550,7 +562,7 @@ export function ResultDisplay({
             variant="default"
             className="gap-2 gradient-primary w-full sm:w-auto sm:min-w-[140px]"
           >
-            {(generatingImage.chatgpt && generatingImage.gemini) ? (
+            {generatingImage.chatgpt && generatingImage.gemini ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Generating...
@@ -565,9 +577,7 @@ export function ResultDisplay({
         </div>
 
         {/* Error Message */}
-        {imageError && (
-          <p className="text-destructive text-sm text-center mt-3">{imageError}</p>
-        )}
+        {imageError && <p className="text-destructive text-sm text-center mt-3">{imageError}</p>}
 
         {/* Generated Images Gallery - Combined by reference label */}
         {(generatedImages.chatgpt.length > 0 || generatedImages.gemini.length > 0) && (
@@ -578,18 +588,23 @@ export function ResultDisplay({
               const chatgptWithIndex = generatedImages.chatgpt.map((img, idx) => ({ ...img, originalIndex: idx }));
               const geminiWithIndex = generatedImages.gemini.map((img, idx) => ({ ...img, originalIndex: idx }));
               const allImages = [...chatgptWithIndex, ...geminiWithIndex];
-              const groupedByRef = allImages.reduce((acc, img) => {
-                const label = img.referenceLabel || 'Unknown';
-                if (!acc[label]) acc[label] = [];
-                acc[label].push(img);
-                return acc;
-              }, {} as Record<string, typeof allImages>);
+              const groupedByRef = allImages.reduce(
+                (acc, img) => {
+                  const label = img.referenceLabel || "Unknown";
+                  if (!acc[label]) acc[label] = [];
+                  acc[label].push(img);
+                  return acc;
+                },
+                {} as Record<string, typeof allImages>,
+              );
 
               return Object.entries(groupedByRef).map(([label, images]) => (
                 <div key={label}>
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">{label} ({images.length})</span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {label} ({images.length})
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4">
                     {images.map((img, index) => {
@@ -599,58 +614,67 @@ export function ResultDisplay({
                         imageBrandRef.current.set(imageId, img.generatedBrand);
                       }
                       return (
-                      <div
-key={`${label}-${img.provider}-${index}`}
-                        className="relative group cursor-pointer aspect-square"
-                        onClick={() => setModalImage({ displayUrl: img.displayUrl, editUrl: img.editUrl, provider: img.provider, imageId })}
-                      >
-                        <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
-                          <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">View</span>
-                        </div>
-                        {/* Remove button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveGeneratedImage?.(img.provider, img.originalIndex);
-                          }}
-                          className="absolute top-1 left-1 z-20 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Remove image"
+                        <div
+                          key={`${label}-${img.provider}-${index}`}
+                          className="relative group cursor-pointer aspect-square"
+                          onClick={() =>
+                            setModalImage({
+                              displayUrl: img.displayUrl,
+                              editUrl: img.editUrl,
+                              provider: img.provider,
+                              imageId,
+                            })
+                          }
                         >
-                          <X className="w-3 h-3" />
-                        </button>
-                        {/* Favorite heart */}
-                        <FavoriteHeart
-                          imageId={imageId}
-                          liked={favorites.has(imageId)}
-                          onToggle={handleToggleFavorite}
-                          className="top-1 right-8"
-                        />
-                        {/* Provider badge */}
-                        <div className="absolute top-1 right-1 z-10">
-                          {img.provider === 'chatgpt' ? (
-                            <div className="bg-background/80 backdrop-blur-sm rounded p-1">
-                              <Bot className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          ) : (
-                            <div className="bg-background/80 backdrop-blur-sm rounded p-1">
-                              <Gem className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        {/* Brand badge */}
-                        {img.generatedBrand && (
-                          <div className="absolute bottom-1 left-1 z-10">
-                            <span className="bg-background/80 backdrop-blur-sm text-foreground text-[10px] font-medium px-1.5 py-0.5 rounded">
-                              {img.generatedBrand}
+                          <div className="absolute inset-0 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                            <span className="text-primary-foreground bg-primary/80 px-2 py-1 rounded text-xs font-medium">
+                              View
                             </span>
                           </div>
-                        )}
-                        <img
-                          src={img.displayUrl}
-                          alt={`${label} - ${img.provider}`}
-                          className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
-                        />
-                      </div>
+                          {/* Remove button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveGeneratedImage?.(img.provider, img.originalIndex);
+                            }}
+                            className="absolute top-1 left-1 z-20 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          {/* Favorite heart */}
+                          <FavoriteHeart
+                            imageId={imageId}
+                            liked={favorites.has(imageId)}
+                            onToggle={handleToggleFavorite}
+                            className="top-1 right-8"
+                          />
+                          {/* Provider badge */}
+                          <div className="absolute top-1 right-1 z-10">
+                            {img.provider === "chatgpt" ? (
+                              <div className="bg-background/80 backdrop-blur-sm rounded p-1">
+                                <Bot className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            ) : (
+                              <div className="bg-background/80 backdrop-blur-sm rounded p-1">
+                                <Gem className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          {/* Brand badge */}
+                          {img.generatedBrand && (
+                            <div className="absolute bottom-1 left-1 z-10">
+                              <span className="bg-background/80 backdrop-blur-sm text-foreground text-[10px] font-medium px-1.5 py-0.5 rounded">
+                                {img.generatedBrand}
+                              </span>
+                            </div>
+                          )}
+                          <img
+                            src={img.displayUrl}
+                            alt={`${label} - ${img.provider}`}
+                            className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
+                          />
+                        </div>
                       );
                     })}
                   </div>
@@ -673,11 +697,10 @@ key={`${label}-${img.provider}-${index}`}
           liked={favorites.has(modalImage.imageId)}
           onToggleFavorite={handleToggleFavorite}
           onImageUpdated={(newDisplayUrl, newEditUrl) => {
-            setModalImage(prev => prev ? { ...prev, displayUrl: newDisplayUrl, editUrl: newEditUrl } : null);
+            setModalImage((prev) => (prev ? { ...prev, displayUrl: newDisplayUrl, editUrl: newEditUrl } : null));
           }}
         />
       )}
-
     </motion.div>
   );
 }
