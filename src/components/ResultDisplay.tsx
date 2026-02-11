@@ -118,16 +118,26 @@ export function ResultDisplay({
       ? 'https://automateoptinet.app.n8n.cloud/webhook/like-img'
       : 'https://automateoptinet.app.n8n.cloud/webhook/unlike-img';
 
+    const brandName = metadata?.brand || 'No Brand';
+    const payload = liked
+      ? { record_id: recordId, img_url: imgUrl, brand_name: brandName }
+      : { record_id: recordId, img_url: imgUrl };
+
+    if (liked) {
+      console.log('Sending like webhook with brand:', brandName);
+      console.log('Payload:', payload);
+    }
+
     fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ record_id: recordId, img_url: imgUrl }),
+      body: JSON.stringify(payload),
     })
       .catch(() => {})
       .finally(() => {
         pendingWebhookRef.current.delete(imageId);
       });
-  }, [getImageMeta]);
+  }, [getImageMeta, metadata]);
   
   // Elapsed time trackers for different operations
   const chatgptTimer = useElapsedTime();
