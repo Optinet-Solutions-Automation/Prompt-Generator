@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X, Heart } from 'lucide-react';
+import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FavoriteHeart } from './FavoriteHeart';
 import type { AppState, PromptMetadata, ReferencePromptData } from '@/types/prompt';
@@ -15,7 +15,6 @@ import { ReferencePromptDataDisplay } from './ReferencePromptDataDisplay';
 import type { GeneratedImages } from '@/hooks/usePromptGenerator';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import { normalizeN8nImageResponse } from '@/lib/n8nImage';
-import { LikedImagesPanel } from './LikedImagesPanel';
 import {
   Tooltip,
   TooltipContent,
@@ -71,7 +70,7 @@ export function ResultDisplay({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [showLikedPanel, setShowLikedPanel] = useState(false);
+  
 
   // Store record_id and img_url per imageId for consistent like/unlike payloads
   const imageMetaRef = useRef<Map<string, { recordId: string; imgUrl: string }>>(new Map());
@@ -366,15 +365,6 @@ export function ResultDisplay({
                 </>
               )}
             </Button>
-            {(generatedImages.chatgpt.length > 0 || generatedImages.gemini.length > 0) && (
-              <Button
-                onClick={() => setShowLikedPanel(true)}
-                className="gap-2 gradient-primary"
-              >
-                <Heart className="w-4 h-4 fill-current" />
-                View Liked Images
-              </Button>
-            )}
           </div>
         </motion.div>
       )}
@@ -687,12 +677,6 @@ key={`${label}-${img.provider}-${index}`}
           }}
         />
       )}
-
-      {/* Liked Images Panel */}
-      <LikedImagesPanel
-        isOpen={showLikedPanel}
-        onClose={() => setShowLikedPanel(false)}
-      />
 
     </motion.div>
   );

@@ -30,37 +30,41 @@ function getRecordId(record: AirtableRecord): string {
   return (getField(record.fields, 'record_id', 'Record_ID', 'name') || record.id);
 }
 
+function getBrandName(record: AirtableRecord): string {
+  return (getField(record.fields, 'brand_name', 'Brand', 'brand') || '');
+}
+
 interface LikedImagesPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  brand: string;
 }
 
-export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
+export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelProps) {
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewImage, setViewImage] = useState<{ imgUrl: string; recordId: string } | null>(null);
 
+  const hasBrand = !!brand && brand !== 'Select a brand';
+
+  const headerLabel = hasBrand
+    ? `FAVORITES - ${brand.toUpperCase()}`
+    : 'FAVORITES - SELECT BRAND';
+
   const fetchLikedImages = useCallback(async () => {
-    console.log('=== Starting Airtable Fetch ===');
-    console.log('Config:', {
-      hasToken: !!airtableConfig.pat,
-      baseId: airtableConfig.baseId,
-      tableName: airtableConfig.tableName,
-    });
+    if (!hasBrand) return;
 
     setLoading(true);
     setError(null);
 
     try {
       if (!airtableConfig.pat || !airtableConfig.baseId || !airtableConfig.tableName) {
-        const msg = 'Missing Airtable configuration. Check environment variables in Vercel.';
-        console.error(msg);
-        throw new Error(msg);
+        throw new Error('Missing Airtable configuration. Check environment variables.');
       }
 
-      const url = `https://api.airtable.com/v0/${airtableConfig.baseId}/${encodeURIComponent(airtableConfig.tableName)}`;
-      console.log('Fetching from URL:', url);
+      const filterFormula = encodeURIComponent(`{brand_name}="${brand}"`);
+      const url = `https://api.airtable.com/v0/${airtableConfig.baseId}/${encodeURIComponent(airtableConfig.tableName)}?filterByFormula=${filterFormula}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -70,22 +74,12 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
         },
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Airtable error response:', errorText);
         throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('Number of records:', data.records?.length || 0);
-      if (data.records?.[0]) {
-        console.log('First record fields:', Object.keys(data.records[0].fields));
-        console.log('First record sample:', JSON.stringify(data.records[0].fields));
-      }
-
       setRecords(data.records || []);
     } catch (err) {
       console.error('Error fetching liked images:', err);
@@ -93,11 +87,15 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [brand, hasBrand]);
 
   useEffect(() => {
-    if (isOpen) fetchLikedImages();
-  }, [isOpen, fetchLikedImages]);
+    if (isOpen && hasBrand) fetchLikedImages();
+    if (isOpen && !hasBrand) {
+      setRecords([]);
+      setError(null);
+    }
+  }, [isOpen, hasBrand, fetchLikedImages]);
 
   const handleEsc = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && !viewImage) onClose();
@@ -145,20 +143,20 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Liked Images"
+        aria-label="Favorites panel"
         className="fixed right-5 flex flex-col bg-card rounded-xl border border-border animate-slide-in-right
           max-sm:inset-0 max-sm:right-0 max-sm:rounded-none max-sm:w-full max-sm:h-full
-          sm:w-[450px] md:w-[550px]"
+          sm:w-[600px] md:w-[700px]"
         style={{
           zIndex: 999,
           top: 'max(5vh, 20px)',
-          height: 'min(90vh, calc(100vh - 40px))',
+          height: 'min(88vh, calc(100vh - 40px))',
           boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
         }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-card rounded-t-xl sticky top-0 z-10">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Liked Images</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">{headerLabel}</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-md hover:bg-muted transition-colors"
@@ -170,17 +168,30 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          {loading && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm">Loading liked images...</p>
+          {/* No brand selected state */}
+          {!hasBrand && (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
+              <Heart className="w-24 h-24 text-muted-foreground/20 stroke-1" />
+              <p className="text-xl font-semibold text-foreground">Please select a brand</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Choose a brand from the dropdown to view your favorites
+              </p>
             </div>
           )}
 
-          {error && !loading && (
+          {/* Loading */}
+          {hasBrand && loading && (
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm">Loading favorites...</p>
+            </div>
+          )}
+
+          {/* Error */}
+          {hasBrand && error && !loading && (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
               <AlertTriangle className="w-16 h-16 text-destructive/60" />
-              <p className="text-sm font-medium text-foreground">Failed to load liked images</p>
+              <p className="text-sm font-medium text-foreground">Failed to load favorites</p>
               <p className="text-xs text-muted-foreground">{error}</p>
               <Button variant="outline" size="sm" onClick={fetchLikedImages}>
                 Retry
@@ -188,16 +199,22 @@ export function LikedImagesPanel({ isOpen, onClose }: LikedImagesPanelProps) {
             </div>
           )}
 
-          {!loading && !error && validRecords.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-              <Heart className="w-16 h-16 text-muted-foreground/30" />
-              <p className="text-sm font-medium text-foreground">No liked images yet</p>
-              <p className="text-xs">Start liking images to see them here!</p>
+          {/* No favorites for this brand */}
+          {hasBrand && !loading && !error && validRecords.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
+              <Heart className="w-24 h-24 text-muted-foreground/20 stroke-1" />
+              <p className="text-xl font-semibold text-foreground">
+                No {brand} favorites yet
+              </p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Start generating {brand} images and like your favorites!
+              </p>
             </div>
           )}
 
-          {!loading && !error && validRecords.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-2 justify-items-center">
+          {/* Image grid */}
+          {hasBrand && !loading && !error && validRecords.length > 0 && (
+            <div className="grid grid-cols-3 gap-5 max-sm:grid-cols-2 justify-items-center">
               {validRecords.map((record) => {
                 const imgUrl = getImgUrl(record)!;
                 const recordId = getRecordId(record);
