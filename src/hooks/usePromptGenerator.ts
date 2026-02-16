@@ -7,9 +7,9 @@ import {
   PromptMetadata,
   BRAND_REFERENCES,
 } from '@/types/prompt';
+// Import the new API function we created
 import { savePrompt } from '@/api/save-prompt';
-import { generateImage, GenerateImageResponse } from '@/api/generate-image';
-import { editImage } from '@/api/edit-image';
+// Import toast for notifications
 import { useToast } from '@/hooks/use-toast';
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
@@ -73,32 +73,26 @@ export function usePromptGenerator() {
   const [appState, setAppState] = useState<AppState>('FORM');
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<FormErrors>({});
-  
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [promptMetadata, setPromptMetadata] = useState<PromptMetadata | null>(null);
-  
   const [processingTime, setProcessingTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const [generatedTimestamp, setGeneratedTimestamp] = useState('');
-  
   const [generatedImages, setGeneratedImages] = useState<GeneratedImages>({ chatgpt: [], gemini: [] });
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isRegeneratingPrompt, setIsRegeneratingPrompt] = useState(false);
-  
+
   const { toast } = useToast();
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
 
   // Timer effect
   useEffect(() => {
-    if (appState === 'PROCESSING' || isGeneratingImage) {
-      if (!timerRef.current) {
-        startTimeRef.current = Date.now();
-        timerRef.current = window.setInterval(() => {
-          setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
-        }, 100);
-      }
+    if (appState === 'PROCESSING') {
+      startTimeRef.current = Date.now();
+      timerRef.current = window.setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }, 100);
     } else {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -111,7 +105,7 @@ export function usePromptGenerator() {
         clearInterval(timerRef.current);
       }
     };
-  }, [appState, isGeneratingImage]);
+  }, [appState]);
 
   const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors = {};
@@ -125,6 +119,7 @@ export function usePromptGenerator() {
 
   const handleFieldChange = useCallback((field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -141,7 +136,6 @@ export function usePromptGenerator() {
       const startTime = Date.now();
       const response = await generatePrompt(formData);
       const endTime = Date.now();
-      
       setGeneratedPrompt(response.prompt);
       setPromptMetadata(response.metadata);
       setProcessingTime((endTime - startTime) / 1000);
@@ -154,77 +148,29 @@ export function usePromptGenerator() {
     }
   }, [formData, validateForm]);
 
-  // Restored handleGenerateImage logic
-  const handleGenerateImage = useCallback(async (provider: 'chatgpt' | 'gemini', prompt?: string) => {
-    if (!promptMetadata && !prompt) return;
-    
-    setIsGeneratingImage(true);
-    setErrorMessage('');
-    
-    try {
-      // Use provided prompt or fall back to state
-      const promptText = prompt || generatedPrompt;
-      
-      const response = await generateImage({
-        prompt: promptText,
-        provider,
-        aspectRatio: promptMetadata?.aspectRatio || '1:1',
-      });
-      
-      const newImage: GeneratedImage = {
-        displayUrl: response.displayUrl,
-        editUrl: response.editUrl || '',
-        referenceLabel: promptMetadata?.reference ? getReferencePromptName(promptMetadata.brand, promptMetadata.reference) : 'Unknown',
-        provider,
-        generatedBrand: promptMetadata?.brand || 'No Brand'
-      };
-      
-      setGeneratedImages(prev => ({
-        ...prev,
-        [provider]: [...prev[provider], newImage]
-      }));
-      
-    } catch (error) {
-      console.error(`Error generating image with ${provider}:`, error);
-      setErrorMessage(`Failed to generate image with ${provider}. Please try again.`);
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  }, [generatedPrompt, promptMetadata]);
-
-  // Restored handleEditImage logic (placeholder if you use it)
-  const handleEditImage = useCallback(async (imageUrl: string, prompt: string) => {
-    // Implementation depends on your edit-image.ts API
-    try {
-        await editImage({ imageUrl, prompt });
-        toast({ title: "Success", description: "Image edit request sent." });
-    } catch (error) {
-        console.error('Error editing image:', error);
-        toast({ title: "Error", description: "Failed to edit image.", variant: "destructive" });
-    }
-  }, [toast]);
-
-  // New Save Handler with Title support
+  // Updated handleSave to accept title and prompt arguments
   const handleSave = useCallback(async (title: string, promptToSave: string) => {
     if (!promptMetadata) return;
 
     setAppState('SAVING');
 
     try {
+      // Use the new API function
       await savePrompt({
         brand: promptMetadata.brand,
         title: title,
         reference: promptMetadata.reference,
         saved_prompt: promptToSave,
       });
-      
+
       setAppState('SAVED');
       
       toast({
         title: "Success",
         description: "Prompt saved successfully.",
       });
-
+      
+      // Reset back to result view after delay
       setTimeout(() => {
         setAppState('RESULT');
       }, 2000);
@@ -242,23 +188,29 @@ export function usePromptGenerator() {
   }, [promptMetadata, toast]);
 
   const handleDontSave = useCallback(() => {
-    setAppState('SAVED');
+    setAppState('SAVED'); // Just hide the save buttons
   }, []);
 
   const handleGenerateAgain = useCallback(async () => {
+    // Use metadata values if available (for regenerating from result page)
     if (promptMetadata) {
       setIsRegeneratingPrompt(true);
       setErrorMessage('');
 
       try {
         const startTime = Date.now();
+        // Send metadata directly to API (already has formatted reference)
         const response = await fetch('/api/generate-prompt', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify(promptMetadata),
         });
 
-        if (!response.ok) throw new Error('Failed to generate prompt');
+        if (!response.ok) {
+          throw new Error('Failed to generate prompt');
+        }
 
         const data = await response.json();
         const endTime = Date.now();
@@ -318,6 +270,7 @@ export function usePromptGenerator() {
   }, []);
 
   const handleEditForm = useCallback(() => {
+    // Go back to form but keep data
     setAppState('FORM');
   }, []);
 
@@ -331,7 +284,6 @@ export function usePromptGenerator() {
     elapsedTime,
     errorMessage,
     generatedImages,
-    isGeneratingImage,
     isRegeneratingPrompt,
     handleFieldChange,
     handleSubmit,
@@ -339,8 +291,6 @@ export function usePromptGenerator() {
     handleDontSave,
     handleEditForm,
     handleGenerateAgain,
-    handleGenerateImage,
-    handleEditImage,
     handleClearForm,
     handleGoBack,
     handlePromptChange,
