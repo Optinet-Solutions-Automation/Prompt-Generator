@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 const airtableConfig = {
   pat: import.meta.env.VITE_AIRTABLE_PAT as string,
   baseId: import.meta.env.VITE_AIRTABLE_BASE_ID as string,
-  tableName: 'Saved Prompts', // This matches your new table name
+  tableName: 'Saved Prompts', // Hardcoded as per your request
 };
 
 interface SavedPromptRecord {
