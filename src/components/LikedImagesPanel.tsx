@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Heart, Loader2, AlertTriangle } from 'lucide-react';
+import { X, Heart, Loader2, AlertTriangle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LikedImageCard } from './LikedImageCard';
 import { LikedImageViewModal } from './LikedImageViewModal';
@@ -125,9 +125,41 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
     }
   };
 
-  if (!isOpen) return null;
+  const handleUnlike = async (recordId: string, imgUrl: string) => {
+    // Optimistic update: Remove immediately from UI
+    setRecords(prev => prev.filter(r => getRecordId(r) !== recordId));
+
+    try {
+      // Call the webhook to handle unliking in the backend
+      await fetch('https://automateoptinet.app.n8n.cloud/webhook/unlike-img', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record_id: recordId, img_url: imgUrl }),
+      });
+    } catch (err) {
+      console.error('Error unliking image:', err);
+      // Optionally handle error (e.g., show toast), but UI is already updated
+    }
+  };
 
   const validRecords = records.filter(r => getImgUrl(r));
+
+  const handleDownloadAll = async () => {
+    if (!validRecords.length) return;
+
+    // Iterate through all valid records and trigger download
+    // Using a small delay to prevent browser "multiple downloads" blocking issues
+    for (const record of validRecords) {
+      const imgUrl = getImgUrl(record);
+      const recordId = getRecordId(record);
+      if (imgUrl) {
+        handleDownload(imgUrl, recordId);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -155,7 +187,7 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-card rounded-t-xl sticky top-0 z-10">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-card rounded-t-xl sticky top-0 z-10 shrink-0">
           <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">{headerLabel}</h2>
           <button
             onClick={onClose}
@@ -212,25 +244,43 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
             </div>
           )}
 
-          {/* Image grid */}
+          {/* Content: Image Grid */}
           {hasBrand && !loading && !error && validRecords.length > 0 && (
-            <div className="grid grid-cols-3 gap-5 max-sm:grid-cols-2 justify-items-center">
-              {validRecords.map((record) => {
-                const imgUrl = getImgUrl(record)!;
-                const recordId = getRecordId(record);
-                return (
-                  <LikedImageCard
-                    key={record.id}
-                    imgUrl={imgUrl}
-                    recordId={recordId}
-                    onView={() => setViewImage({ imgUrl, recordId })}
-                    onDownload={() => handleDownload(imgUrl, recordId)}
-                  />
-                );
-              })}
+            <div className="space-y-6">
+              {/* Image grid */}
+              <div className="grid grid-cols-3 gap-5 max-sm:grid-cols-2 justify-items-center">
+                {validRecords.map((record) => {
+                  const imgUrl = getImgUrl(record)!;
+                  const recordId = getRecordId(record);
+                  return (
+                    <LikedImageCard
+                      key={record.id}
+                      imgUrl={imgUrl}
+                      recordId={recordId}
+                      onView={() => setViewImage({ imgUrl, recordId })}
+                      onDownload={() => handleDownload(imgUrl, recordId)}
+                      onUnlike={() => handleUnlike(recordId, imgUrl)}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
+
+        {/* Footer: Download All Button */}
+        {hasBrand && !loading && !error && validRecords.length > 0 && (
+          <div className="p-4 border-t border-border bg-card flex justify-end shrink-0 rounded-b-xl">
+            <Button 
+              onClick={handleDownloadAll} 
+              variant="outline"
+              className="gap-2 border-primary/20 hover:bg-primary/5 text-foreground"
+            >
+              <Download className="w-4 h-4" />
+              Download All ({validRecords.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Full-size view modal */}
