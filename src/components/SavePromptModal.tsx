@@ -1,47 +1,75 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Save, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface SavePromptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
-  onDontSave: () => void;
+  onSave: (title: string, prompt: string) => void;
+  initialPrompt: string;
 }
 
-export function SavePromptModal({ isOpen, onClose, onSave, onDontSave }: SavePromptModalProps) {
+export function SavePromptModal({ isOpen, onClose, onSave, initialPrompt }: SavePromptModalProps) {
+  const [title, setTitle] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPrompt(initialPrompt);
+      setTitle('');
+    }
+  }, [isOpen, initialPrompt]);
+
+  const handleSave = () => {
+    if (title.trim() && prompt.trim()) {
+      onSave(title, prompt);
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </button>
-        <DialogHeader className="pt-2">
-          <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-            <Save className="w-7 h-7 text-primary" />
-          </div>
-          <DialogTitle className="text-center text-xl font-semibold">Save this prompt?</DialogTitle>
-          <DialogDescription className="text-center text-muted-foreground">
-            Save this generated prompt to your collection for future reference.
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Save Prompt</DialogTitle>
+          <DialogDescription>
+            Give your prompt a title to save it to your library.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="sm:justify-center gap-3 pt-4">
-          <Button variant="outline" onClick={onDontSave} className="min-w-28">
-            Don't Save
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title" className="text-left font-medium">
+              Title
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Summer Campaign V1"
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="prompt" className="text-left font-medium">
+              Prompt Content
+            </Label>
+            <Textarea
+              id="prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="min-h-[150px] font-mono text-xs leading-relaxed"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
           </Button>
-          <Button onClick={onSave} className="gradient-primary min-w-28 text-primary-foreground">
-            Save Prompt
+          <Button onClick={handleSave} disabled={!title.trim() || !prompt.trim()} className="gradient-primary">
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
