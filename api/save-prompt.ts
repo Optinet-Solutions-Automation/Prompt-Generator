@@ -6,15 +6,8 @@ export interface SavePromptPayload {
 }
 
 export async function savePrompt(data: SavePromptPayload) {
-  // Checks for the variable with VITE_ prefix (standard) or without (custom config)
-  // Also includes your fallback URL directly just in case
-  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_SAVE_PROMPT || 
-                     import.meta.env.N8N_WEBHOOK_SAVE_PROMPT ||
-                     "https://automateoptinet.app.n8n.cloud/webhook/save-prompt";
-
-  if (!webhookUrl) {
-    throw new Error('Save Prompt Webhook URL is not configured. Please set VITE_N8N_WEBHOOK_SAVE_PROMPT in your environment variables.');
-  }
+  // Use the webhook URL provided
+  const webhookUrl = import.meta.env.VITE_SAVE_PROMPT_WEBHOOK || "https://automateoptinet.app.n8n.cloud/webhook/save-prompt";
 
   const response = await fetch(webhookUrl, {
     method: 'POST',
