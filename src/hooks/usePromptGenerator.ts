@@ -7,8 +7,6 @@ import {
   PromptMetadata,
   BRAND_REFERENCES,
 } from '@/types/prompt';
-import { savePrompt } from '@/api/save-prompt';
-import { useToast } from '@/hooks/use-toast';
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
@@ -54,6 +52,31 @@ async function generatePrompt(formData: FormData): Promise<GeneratePromptRespons
   return response.json();
 }
 
+// API call to save prompt via n8n webhook
+async function savePrompt(
+  formData: FormData,
+  generatedPrompt: string,
+  timestamp: string
+): Promise<{ success: boolean; message: string }> {
+  const response = await fetch('/api/save-prompt', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ...formData,
+      generated_prompt: generatedPrompt,
+      timestamp,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to save prompt');
+  }
+
+  return response.json();
+}
+
 export type GeneratedImage = {
   displayUrl: string;
   editUrl: string;
@@ -79,8 +102,7 @@ export function usePromptGenerator() {
   const [generatedTimestamp, setGeneratedTimestamp] = useState('');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImages>({ chatgpt: [], gemini: [] });
   const [isRegeneratingPrompt, setIsRegeneratingPrompt] = useState(false);
-  
-  const { toast } = useToast();
+
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
 
@@ -146,42 +168,18 @@ export function usePromptGenerator() {
     }
   }, [formData, validateForm]);
 
-  const handleSave = useCallback(async (title: string, promptToSave: string) => {
-    if (!promptMetadata) return;
-
+  const handleSave = useCallback(async () => {
     setAppState('SAVING');
 
     try {
-      await savePrompt({
-        brand: promptMetadata.brand,
-        title: title,
-        reference: promptMetadata.reference,
-        saved_prompt: promptToSave,
-      });
-      
+      await savePrompt(formData, generatedPrompt, generatedTimestamp);
       setAppState('SAVED');
-      
-      toast({
-        title: "Success",
-        description: "Prompt saved successfully.",
-      });
-
-      // Optional: Reset back to result view after delay
-      setTimeout(() => {
-        setAppState('RESULT');
-      }, 2000);
-
     } catch (error) {
       console.error('Error saving prompt:', error);
       setErrorMessage('Failed to save prompt. Please try again.');
       setAppState('RESULT');
-      toast({
-        title: "Error",
-        description: "Failed to save prompt.",
-        variant: "destructive",
-      });
     }
-  }, [promptMetadata, toast]);
+  }, [formData, generatedPrompt, generatedTimestamp]);
 
   const handleDontSave = useCallback(() => {
     setAppState('SAVED'); // Just hide the save buttons
