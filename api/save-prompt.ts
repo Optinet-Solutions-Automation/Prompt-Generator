@@ -1,26 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// 1. Update interface to match what the frontend sends now
 interface SavePromptData {
   brand: string;
-  theme: string;
-  description: string;
-  generated_prompt: string;
-  timestamp: string;
-}
-
-// Transform frontend field names to match Airtable expected format
-function transformSaveData(data: SavePromptData) {
-  return {
-    Brand: data.brand,
-    Theme: data.theme,
-    Description: data.description,
-    'Generated Prompt': data.generated_prompt,
-    'Date Generated': data.timestamp,
-  };
+  title: string;        // New
+  reference: string;    // New
+  saved_prompt: string; // New
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -35,17 +23,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('Sending save request to n8n webhook:', n8nWebhookUrl);
     
-    // Transform the data to match Airtable's expected format
-    const transformedData = transformSaveData(req.body);
-    console.log('Transformed save data:', transformedData);
+    // 2. Extract the new data structure directly
+    const { brand, title, reference, saved_prompt } = req.body as SavePromptData;
 
-    // Call n8n webhook
+    // 3. Create the exact payload you asked for
+    const payload = {
+      brand,
+      title,
+      reference,
+      saved_prompt
+    };
+
+    console.log('Sending payload:', payload);
+
+    // 4. Send to n8n
     const response = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(transformedData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -54,11 +51,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error(`n8n webhook failed with status ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log('Received save response from n8n:', data);
-    
-    // Return success response
+    // 5. Handle response (Text or JSON) safely
+    const contentType = response.headers.get("content-type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { success: true, message: text };
+    }
+
     return res.status(200).json(data);
+
   } catch (error) {
     console.error('Error in save-prompt API:', error);
     return res.status(500).json({ 
