@@ -5,7 +5,8 @@ import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X, Heart } f
 import { useState, useEffect, useCallback, useRef } from "react";
 import { FavoriteHeart } from "./FavoriteHeart";
 import type { AppState, PromptMetadata, ReferencePromptData } from "@/types/prompt";
-import { BRANDS, BRAND_REFERENCES } from "@/types/prompt";
+import { BRANDS } from "@/types/prompt";
+import { usePromptList } from "@/hooks/usePromptList";
 import { ImageModal } from "./ImageModal";
 import { SavePromptModal } from "./SavePromptModal";
 import { FormField } from "./FormField";
@@ -63,6 +64,9 @@ export function ResultDisplay({
   onAddGeneratedImage,
   onRemoveGeneratedImage,
 }: ResultDisplayProps) {
+  // Load all prompts from Airtable via n8n (same as the form page)
+  const { getReferencesForBrand, getRecordId } = usePromptList();
+
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({
     chatgpt: false,
@@ -176,12 +180,10 @@ export function ResultDisplay({
     onPromptChange?.(value);
   };
 
-  // Get reference label from metadata
+  // Get reference label from metadata.
+  // metadata.reference is now the prompt_name directly (e.g. "Stormcraft Arrival").
   const getReferenceLabel = (): string => {
-    if (!metadata?.brand || !metadata?.reference) return "Unknown";
-    const refs = BRAND_REFERENCES[metadata.brand] || [];
-    const found = refs.find((r) => `${r.label} — ${r.description}` === metadata.reference);
-    return found?.label || metadata.reference.split(" — ")[0] || "Unknown";
+    return metadata?.reference || "Unknown";
   };
 
   const handleGenerateImage = async (provider: "chatgpt" | "gemini") => {
@@ -283,27 +285,18 @@ export function ResultDisplay({
             <ReferenceSelect
               label="Reference"
               required
-              value={(() => {
-                // Find reference ID from the formatted string "Label — Description"
-                const refs = BRAND_REFERENCES[metadata.brand] || [];
-                const found = refs.find((r) => `${r.label} — ${r.description}` === metadata.reference);
-                return found?.id || "";
-              })()}
-              onChange={(refId) => {
-                // Convert ID back to formatted string for API
-                const refs = BRAND_REFERENCES[metadata.brand] || [];
-                const ref = refs.find((r) => r.id === refId);
-                if (ref) {
-                  onMetadataChange?.("reference", `${ref.label} — ${ref.description}`);
-                  // Trigger API call to fetch reference prompt data
-                  onReferenceChange(metadata.brand, refId);
-                }
+              value={metadata.reference || ""}
+              onChange={(selectedValue) => {
+                // selectedValue is the prompt_name (we use prompt_name as option id).
+                // Store prompt_name as the reference, then look up the Airtable record ID
+                // so we can fetch the full reference data.
+                onMetadataChange?.("reference", selectedValue);
+                const recordId = getRecordId(selectedValue, metadata.brand);
+                onReferenceChange(metadata.brand, recordId);
               }}
               placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
-              disabled={
-                !metadata.brand || (BRAND_REFERENCES[metadata.brand] || []).length === 0 || isRegeneratingPrompt
-              }
-              references={BRAND_REFERENCES[metadata.brand] || []}
+              disabled={!metadata.brand || isRegeneratingPrompt}
+              references={getReferencesForBrand(metadata.brand)}
             />
 
             <div className="sm:col-span-2">
