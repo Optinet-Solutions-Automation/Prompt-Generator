@@ -43,13 +43,22 @@ export function usePromptList() {
   const getReferencesForBrand = (brand: string): ReferenceOption[] => {
     return allPrompts
       .filter(p => p.brand_name === brand)
-      .map(p => ({
-        id: p.prompt_name.trim(),          // value stored in formData.reference
-        label: p.prompt_name.trim(),       // text shown in dropdown
-        description: '',
-        // Try all possible field names the n8n workflow might use, then fallback
-        category: p.prompt_category || p.category || p.prompt_type || 'Casino - Promotions',
-      }));
+      .map(p => {
+        // prompt_name may include a description after " — " e.g. "Sunset Sippers — Three colorful..."
+        // We only show the short name before the dash in the dropdown label.
+        const fullName = p.prompt_name.trim();
+        const shortName = fullName.includes(' — ')
+          ? fullName.split(' — ')[0].trim()
+          : fullName;
+
+        return {
+          id: fullName,        // keep full string as value (n8n expects this)
+          label: shortName,    // only short name shown in dropdown
+          description: '',
+          // Try all possible field names the n8n workflow might use, then fallback
+          category: p.prompt_category || p.category || p.prompt_type || 'Casino - Promotions',
+        };
+      });
   };
 
   // Given a prompt_name and brand, returns the Airtable record ID.
