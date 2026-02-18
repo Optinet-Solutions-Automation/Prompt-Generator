@@ -37,31 +37,44 @@ export function usePromptList() {
       });
   }, []);
 
+  // Normalizes any category value to a consistent display name.
+  // This means you can add any new category in Airtable and it will either:
+  //   - Map to "Sports - Promotions" if the value contains the word "sports"
+  //   - Map to "Casino - Promotions" if the value contains "casino" or "promo"
+  //   - Show as-is for any entirely new category (e.g. "Email Templates")
+  const normalizeCategory = (raw: string | undefined): string => {
+    if (!raw) return 'Casino - Promotions';
+    const lower = raw.toLowerCase();
+    if (lower.includes('sports')) return 'Sports - Promotions';
+    if (lower.includes('casino') || lower.includes('promo')) return 'Casino - Promotions';
+    return raw; // unknown future categories pass through unchanged
+  };
+
   // Returns all prompts for a given brand, formatted for the ReferenceSelect dropdown.
   // We use prompt_name as the option "id" so that formData.reference stores
   // the human-readable name (which is what the generate-prompt n8n workflow expects).
   const getReferencesForBrand = (brand: string): ReferenceOption[] => {
     return allPrompts
-      .filter(p => p.brand_name === brand)
+      .filter(p => p.brand_name === brand && p.prompt_name) // skip records with no name (prevents crash)
       .map(p => {
-        // prompt_name may include a description after " — " e.g. "Sunset Sippers — Three colorful..."
-        // We only show the short name before the dash in the dropdown label.
-        const fullName = p.prompt_name.trim();
-        const shortName = fullName.includes(' — ')
-          ? fullName.split(' — ')[0].trim()
-          : fullName;
+        // Guard against null/undefined prompt_name — if Airtable has an empty record
+        // for this brand, we don't want the whole app to crash.
+        const fullName = (p.prompt_name || '').trim();
 
-        // If prompt_name contains " — ", the part after it is the description
-        const description = fullName.includes(' — ')
-          ? fullName.split(' — ').slice(1).join(' — ').trim()
-          : '';
+        // prompt_name may include a description after " — " e.g. "Sunset Sippers — Three colorful..."
+        const parts = fullName.split(' — ');
+        const shortName = parts[0].trim();
+        const description = parts.length > 1 ? parts.slice(1).join(' — ').trim() : '';
+
+        // Read category from whichever field name n8n returns, then normalize
+        const rawCategory = p.prompt_category || p.category || p.prompt_type;
+        const category = normalizeCategory(rawCategory);
 
         return {
-          id: fullName,          // keep full string as value (n8n expects this)
-          label: shortName,      // short name shown as main text in dropdown
-          description,           // description shown as secondary text below
-          // Try all possible field names the n8n workflow might use, then fallback
-          category: p.prompt_category || p.category || p.prompt_type || 'Casino - Promotions',
+          id: fullName,     // full string stored as value (n8n expects this)
+          label: shortName, // short name shown as main text in dropdown
+          description,      // description shown as secondary text below
+          category,
         };
       });
   };
@@ -70,7 +83,8 @@ export function usePromptList() {
   // This is needed to call /api/get-prompt-by-id when the user selects a reference.
   const getRecordId = (promptName: string, brand: string): string => {
     const found = allPrompts.find(
-      p => p.prompt_name === promptName && p.brand_name === brand
+      // trim both sides to avoid whitespace mismatches
+      p => (p.prompt_name || '').trim() === promptName.trim() && p.brand_name === brand
     );
     return found?.id || '';
   };
