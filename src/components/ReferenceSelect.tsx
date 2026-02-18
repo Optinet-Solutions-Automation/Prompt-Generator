@@ -73,7 +73,7 @@ export function ReferenceSelect({
         <SelectContent>
           {/* Email Templates — coming soon */}
           <SelectGroup>
-            <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+            <SelectLabel className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
               Email Templates
             </SelectLabel>
             <div className="px-8 py-2 text-sm text-muted-foreground italic">
@@ -86,7 +86,7 @@ export function ReferenceSelect({
             <span key={category}>
               <SelectSeparator />
               <SelectGroup>
-                <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                <SelectLabel className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
                   {category}
                 </SelectLabel>
                 {groupedReferences[category].map((ref) => (
