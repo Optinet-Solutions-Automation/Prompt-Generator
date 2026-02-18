@@ -55,22 +55,8 @@ async function savePrompt(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      brand:          formData.brand,
-      reference:      formData.reference,
-      subjectPosition: formData.subjectPosition,
-      aspectRatio:    formData.aspectRatio,
-      theme:          formData.theme,
-      description:    formData.description,
-      format_layout:  formData.format_layout,
-      primary_object: formData.primary_object,
-      subject:        formData.subject,
-      lighting:       formData.lighting,
-      mood:           formData.mood,
-      background:     formData.background,
-      positive_prompt: formData.positive_prompt,
-      negative_prompt: formData.negative_prompt,
-      generated_prompt: generatedPrompt, // the final output text
-      timestamp,
+      brand:            formData.brand,
+      generated_prompt: generatedPrompt, // n8n sends this to GPT for dissection
     }),
   });
 
