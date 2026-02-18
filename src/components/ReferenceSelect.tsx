@@ -54,14 +54,6 @@ export function ReferenceSelect({
     return aIndex - bIndex;
   });
 
-  // Get display value for the current selection
-  const getDisplayValue = () => {
-    if (!value) return '';
-    const ref = references.find(r => r.id === value);
-    if (!ref) return '';
-    return ref.label;
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -79,37 +71,32 @@ export function ReferenceSelect({
             error ? 'border-destructive' : ''
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <SelectValue placeholder={placeholder}>
-            {getDisplayValue()}
-          </SelectValue>
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-popover">
           {/* Email Templates placeholder group */}
           <SelectGroup>
-            <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-2 py-2">
+            <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-2 py-1.5">
               Email Templates
             </SelectLabel>
-            <div className="px-8 py-2 text-sm text-muted-foreground italic">
+            <div className="px-3 py-2 text-sm text-muted-foreground italic">
               Coming soon...
             </div>
           </SelectGroup>
 
-          {/* Promotions group with actual items */}
+          {/* Dynamic groups from Airtable */}
           {categories.filter(cat => cat !== 'Email Templates').map((category) => (
             <SelectGroup key={category}>
-              <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-2 py-2">
+              <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-2 py-1.5">
                 {category}
               </SelectLabel>
               {groupedReferences[category].map((ref) => (
-                <SelectItem 
-                  key={ref.id} 
+                <SelectItem
+                  key={ref.id}
                   value={ref.id}
-                  className="cursor-pointer"
+                  className="cursor-pointer py-2 px-3 text-sm"
                 >
-                  <div className="flex flex-col">
-                    <span className="font-medium">{ref.label}</span>
-                    <span className="text-xs text-muted-foreground">{ref.description}</span>
-                  </div>
+                  {ref.label}
                 </SelectItem>
               ))}
             </SelectGroup>

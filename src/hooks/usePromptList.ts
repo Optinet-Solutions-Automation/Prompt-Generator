@@ -3,9 +3,10 @@ import type { ReferenceOption } from '@/types/prompt';
 
 // Shape of each prompt returned by the n8n list endpoint
 export interface AirtablePrompt {
-  id: string;          // Airtable record ID, e.g. "rec111aaa"
-  prompt_name: string; // Human-readable name, e.g. "Stormcraft Arrival"
-  brand_name: string;  // e.g. "SpinJo"
+  id: string;              // Airtable record ID, e.g. "rec111aaa"
+  prompt_name: string;     // Human-readable name, e.g. "Stormcraft Arrival"
+  brand_name: string;      // e.g. "SpinJo"
+  prompt_category: string; // e.g. "Casino - Promotions", "Sports - Promotions"
 }
 
 export function usePromptList() {
@@ -39,10 +40,10 @@ export function usePromptList() {
     return allPrompts
       .filter(p => p.brand_name === brand)
       .map(p => ({
-        id: p.prompt_name,         // value stored in formData.reference
-        label: p.prompt_name,      // text shown in dropdown
+        id: p.prompt_name.trim(),          // value stored in formData.reference
+        label: p.prompt_name.trim(),       // text shown in dropdown
         description: '',
-        category: 'Casino - Promotions', // keeps the existing group header style
+        category: p.prompt_category || 'Casino - Promotions', // from Airtable, with fallback
       }));
   };
 
