@@ -1,13 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// 1. Update interface to match what the frontend sends now
-interface SavePromptData {
-  brand: string;
-  title: string;        // New
-  reference: string;    // New
-  saved_prompt: string; // New
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -15,34 +7,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_SAVE_PROMPT;
-    
+
     if (!n8nWebhookUrl) {
       console.error('N8N_WEBHOOK_SAVE_PROMPT environment variable not set');
       throw new Error('Webhook URL not configured');
     }
 
-    console.log('Sending save request to n8n webhook:', n8nWebhookUrl);
-    
-    // 2. Extract the new data structure directly
-    const { brand, title, reference, saved_prompt } = req.body as SavePromptData;
-
-    // 3. Create the exact payload you asked for
-    const payload = {
-      brand,
-      title,
-      reference,
-      saved_prompt
-    };
-
-    console.log('Sending payload:', payload);
-
-    // 4. Send to n8n
+    // Forward the complete body to n8n as-is.
+    // This way adding new fields in the frontend never requires updating this file.
     const response = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(req.body),
     });
 
     if (!response.ok) {

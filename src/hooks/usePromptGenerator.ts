@@ -5,24 +5,15 @@ import {
   INITIAL_FORM_DATA,
   GeneratePromptResponse,
   PromptMetadata,
-  BRAND_REFERENCES,
 } from '@/types/prompt';
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-// Helper to get reference prompt_name from ID (format: "Label — Description")
-function getReferencePromptName(brand: string, referenceId: string): string {
-  const references = BRAND_REFERENCES[brand] || [];
-  const ref = references.find(r => r.id === referenceId);
-  return ref ? `${ref.label} — ${ref.description}` : referenceId;
-}
-
 // API call to generate prompt via n8n webhook
 async function generatePrompt(formData: FormData): Promise<GeneratePromptResponse> {
-  // Transform reference ID to description for API
   const apiData = {
     brand: formData.brand,
-    reference: getReferencePromptName(formData.brand, formData.reference),
+    reference: formData.reference, // already the full prompt_name from Airtable
     subjectPosition: formData.subjectPosition,
     aspectRatio: formData.aspectRatio,
     theme: formData.theme,
@@ -64,8 +55,21 @@ async function savePrompt(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      ...formData,
-      generated_prompt: generatedPrompt,
+      brand:          formData.brand,
+      reference:      formData.reference,
+      subjectPosition: formData.subjectPosition,
+      aspectRatio:    formData.aspectRatio,
+      theme:          formData.theme,
+      description:    formData.description,
+      format_layout:  formData.format_layout,
+      primary_object: formData.primary_object,
+      subject:        formData.subject,
+      lighting:       formData.lighting,
+      mood:           formData.mood,
+      background:     formData.background,
+      positive_prompt: formData.positive_prompt,
+      negative_prompt: formData.negative_prompt,
+      generated_prompt: generatedPrompt, // the final output text
       timestamp,
     }),
   });
