@@ -5,7 +5,8 @@ import { ReferenceSelect } from "./ReferenceSelect";
 import { PositionAndRatioSelector } from "./PositionAndRatioSelector";
 import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
 import { Heart, Sparkles, Trash2 } from "lucide-react";
-import { FormData, BRANDS, BRAND_REFERENCES, ReferencePromptData } from "@/types/prompt";
+import { FormData, BRANDS, ReferencePromptData } from "@/types/prompt";
+import { usePromptList } from "@/hooks/usePromptList";
 
 interface PromptFormProps {
   formData: FormData;
@@ -30,13 +31,16 @@ export function PromptForm({
   onClear,
   onOpenFavorites,
 }: PromptFormProps) {
+  // Load all prompts from Airtable via n8n
+  const { getReferencesForBrand, getRecordId, isLoading: isLoadingList, error: listError } = usePromptList();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
   };
 
-  // Get references for selected brand
-  const availableReferences = formData.brand ? BRAND_REFERENCES[formData.brand] || [] : [];
+  // Get references for the selected brand from Airtable (dynamic, not hardcoded)
+  const availableReferences = formData.brand ? getReferencesForBrand(formData.brand) : [];
 
   // Reset reference when brand changes
   const handleBrandChange = (value: string) => {
@@ -46,9 +50,14 @@ export function PromptForm({
     }
   };
 
-  const handleReferenceChange = (value: string) => {
-    onFieldChange("reference", value);
-    onReferenceChange(formData.brand, value);
+  const handleReferenceChange = (selectedValue: string) => {
+    // selectedValue is the prompt_name (we use prompt_name as the option id).
+    // Store it in formData.reference — this is what gets sent to the generate-prompt n8n workflow.
+    onFieldChange("reference", selectedValue);
+
+    // Look up the Airtable record ID so we can fetch the full reference data.
+    const recordId = getRecordId(selectedValue, formData.brand);
+    onReferenceChange(formData.brand, recordId);
   };
 
   return (
@@ -76,12 +85,27 @@ export function PromptForm({
           required
           value={formData.reference}
           onChange={handleReferenceChange}
-          placeholder={formData.brand ? "Select a reference" : "Select a brand first"}
+          placeholder={
+            !formData.brand
+              ? "Select a brand first"
+              : isLoadingList
+              ? "Loading prompts..."
+              : availableReferences.length === 0
+              ? "No prompts found for this brand"
+              : "Select a reference"
+          }
           error={errors.reference}
-          disabled={!formData.brand || availableReferences.length === 0}
+          disabled={!formData.brand || isLoadingList || availableReferences.length === 0}
           references={availableReferences}
         />
       </div>
+
+      {/* Show error if the prompt list failed to load */}
+      {listError && (
+        <p className="text-sm text-destructive">
+          Could not load prompts: {listError}. Please refresh the page.
+        </p>
+      )}
 
       <PositionAndRatioSelector
         subjectPosition={formData.subjectPosition}
