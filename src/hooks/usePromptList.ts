@@ -37,17 +37,12 @@ export function usePromptList() {
       });
   }, []);
 
-  // Normalizes any category value to a consistent display name.
-  // This means you can add any new category in Airtable and it will either:
-  //   - Map to "Sports - Promotions" if the value contains the word "sports"
-  //   - Map to "Casino - Promotions" if the value contains "casino" or "promo"
-  //   - Show as-is for any entirely new category (e.g. "Email Templates")
+  // Returns the category value as-is from Airtable (just trimmed).
+  // Whatever you type in Airtable becomes the group header in the dropdown,
+  // so adding a new category in Airtable automatically creates a new group.
   const normalizeCategory = (raw: string | undefined): string => {
     if (!raw) return 'Casino - Promotions';
-    const lower = raw.toLowerCase();
-    if (lower.includes('sports')) return 'Sports - Promotions';
-    if (lower.includes('casino') || lower.includes('promo')) return 'Casino - Promotions';
-    return raw; // unknown future categories pass through unchanged
+    return raw.trim();
   };
 
   // Returns all prompts for a given brand, formatted for the ReferenceSelect dropdown.

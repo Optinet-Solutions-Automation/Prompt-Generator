@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { motion } from 'framer-motion';
 import { ReferenceOption } from '@/types/prompt';
 
 interface ReferenceSelectProps {
@@ -56,11 +55,7 @@ export function ReferenceSelect({
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-2"
-    >
+    <div className="space-y-2">
       <Label className="text-sm font-medium text-foreground">
         {label}
         {required && <span className="text-destructive ml-1">*</span>}
@@ -72,8 +67,7 @@ export function ReferenceSelect({
             error ? 'border-destructive' : ''
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {/* flex-1 min-w-0 ensures the text truncates and leaves room for the chevron icon */}
-          <SelectValue placeholder={placeholder} className="flex-1 min-w-0 truncate" />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {/* Email Templates — coming soon */}
@@ -113,14 +107,8 @@ export function ReferenceSelect({
       </Select>
 
       {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-destructive"
-        >
-          {error}
-        </motion.p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
-    </motion.div>
+    </div>
   );
 }
