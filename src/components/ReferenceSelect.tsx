@@ -3,12 +3,13 @@ import {
   Select,
   SelectContent,
   SelectGroup,
-  SelectItem,
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import * as SelectPrimitive from '@radix-ui/react-select';
+import { Check } from 'lucide-react';
 import { ReferenceOption } from '@/types/prompt';
 
 interface ReferenceSelectProps {
@@ -43,7 +44,7 @@ export function ReferenceSelect({
 
   // Define category order (Email Templates first as placeholder, then Promotions)
   const categoryOrder = ['Email Templates', 'Casino - Promotions', 'Sports - Promotions'];
-  
+
   // Get all categories, sorted by order preference
   const categories = Object.keys(groupedReferences).sort((a, b) => {
     const aIndex = categoryOrder.indexOf(a);
@@ -81,7 +82,7 @@ export function ReferenceSelect({
           </SelectGroup>
 
           {/* Dynamic groups from Airtable, each separated by a divider */}
-          {categories.filter(cat => cat !== 'Email Templates').map((category, index) => (
+          {categories.filter(cat => cat !== 'Email Templates').map((category) => (
             <span key={category}>
               <SelectSeparator />
               <SelectGroup>
@@ -89,16 +90,36 @@ export function ReferenceSelect({
                   {category}
                 </SelectLabel>
                 {groupedReferences[category].map((ref) => (
-                  <SelectItem key={ref.id} value={ref.id} className="cursor-pointer py-2">
+                  /*
+                   * Using SelectPrimitive.Item directly instead of the shadcn SelectItem wrapper.
+                   * This lets us put ONLY the label inside SelectPrimitive.ItemText — which is
+                   * the part that appears in the trigger box when an item is selected.
+                   * The description is a sibling outside ItemText so it shows in the dropdown
+                   * list only, never in the trigger box (fixing the centering issue).
+                   */
+                  <SelectPrimitive.Item
+                    key={ref.id}
+                    value={ref.id}
+                    className="relative flex w-full cursor-pointer select-none items-start rounded-sm py-2 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center mt-0.5">
+                      <SelectPrimitive.ItemIndicator>
+                        <Check className="h-4 w-4" />
+                      </SelectPrimitive.ItemIndicator>
+                    </span>
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-medium text-sm">{ref.label}</span>
+                      {/* Only the label is inside ItemText — this is what shows in the trigger */}
+                      <SelectPrimitive.ItemText>
+                        <span className="font-medium">{ref.label}</span>
+                      </SelectPrimitive.ItemText>
+                      {/* Description is outside ItemText — shows in dropdown list only */}
                       {ref.description && (
                         <span className="text-xs text-muted-foreground line-clamp-1">
                           {ref.description}
                         </span>
                       )}
                     </div>
-                  </SelectItem>
+                  </SelectPrimitive.Item>
                 ))}
               </SelectGroup>
             </span>
