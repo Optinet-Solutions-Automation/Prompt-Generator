@@ -95,8 +95,15 @@ export function ReferenceSelect({
                   {category}
                 </SelectLabel>
                 {groupedReferences[category].map((ref) => (
-                  <SelectItem key={ref.id} value={ref.id} className="cursor-pointer">
-                    {ref.label}
+                  <SelectItem key={ref.id} value={ref.id} className="cursor-pointer py-2">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-sm">{ref.label}</span>
+                      {ref.description && (
+                        <span className="text-xs text-muted-foreground line-clamp-1">
+                          {ref.description}
+                        </span>
+                      )}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectGroup>

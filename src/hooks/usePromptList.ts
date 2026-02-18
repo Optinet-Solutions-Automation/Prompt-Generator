@@ -51,10 +51,15 @@ export function usePromptList() {
           ? fullName.split(' — ')[0].trim()
           : fullName;
 
+        // If prompt_name contains " — ", the part after it is the description
+        const description = fullName.includes(' — ')
+          ? fullName.split(' — ').slice(1).join(' — ').trim()
+          : '';
+
         return {
-          id: fullName,        // keep full string as value (n8n expects this)
-          label: shortName,    // only short name shown in dropdown
-          description: '',
+          id: fullName,          // keep full string as value (n8n expects this)
+          label: shortName,      // short name shown as main text in dropdown
+          description,           // description shown as secondary text below
           // Try all possible field names the n8n workflow might use, then fallback
           category: p.prompt_category || p.category || p.prompt_type || 'Casino - Promotions',
         };
