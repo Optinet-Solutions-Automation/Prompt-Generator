@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import type { ReferenceOption } from '@/types/prompt';
 
-// Shape of each prompt returned by the n8n list endpoint
+// Shape of each prompt returned by the n8n list endpoint.
+// The category field can come back under different names depending on
+// how the n8n workflow is set up — we handle all common variants below.
 export interface AirtablePrompt {
-  id: string;              // Airtable record ID, e.g. "rec111aaa"
-  prompt_name: string;     // Human-readable name, e.g. "Stormcraft Arrival"
-  brand_name: string;      // e.g. "SpinJo"
-  prompt_category: string; // e.g. "Casino - Promotions", "Sports - Promotions"
+  id: string;               // Airtable record ID, e.g. "rec111aaa"
+  prompt_name: string;      // Human-readable name, e.g. "Stormcraft Arrival"
+  brand_name: string;       // e.g. "SpinJo"
+  prompt_category?: string; // preferred field name
+  category?: string;        // alternative field name some n8n setups use
+  prompt_type?: string;     // another possible alternative
 }
 
 export function usePromptList() {
@@ -43,7 +47,8 @@ export function usePromptList() {
         id: p.prompt_name.trim(),          // value stored in formData.reference
         label: p.prompt_name.trim(),       // text shown in dropdown
         description: '',
-        category: p.prompt_category || 'Casino - Promotions', // from Airtable, with fallback
+        // Try all possible field names the n8n workflow might use, then fallback
+        category: p.prompt_category || p.category || p.prompt_type || 'Casino - Promotions',
       }));
   };
 
