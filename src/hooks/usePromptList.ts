@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { ReferenceOption } from '@/types/prompt';
 
 // Shape of each prompt returned by the n8n list endpoint.
@@ -17,9 +17,11 @@ export function usePromptList() {
   const [allPrompts, setAllPrompts] = useState<AirtablePrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
 
-  // Fetch all prompts once when this hook is first used
+  // Fetch all prompts — re-runs whenever refetch() is called
   useEffect(() => {
+    setIsLoading(true);
     fetch('/api/list-prompts')
       .then(res => {
         if (!res.ok) throw new Error('Failed to load prompt list');
@@ -35,6 +37,11 @@ export function usePromptList() {
       .finally(() => {
         setIsLoading(false);
       });
+  }, [fetchTrigger]);
+
+  // Call this after saving a new reference to refresh the dropdown
+  const refetch = useCallback(() => {
+    setFetchTrigger(t => t + 1);
   }, []);
 
   // Returns the category value as-is from Airtable (just trimmed).
@@ -84,5 +91,5 @@ export function usePromptList() {
     return found?.id || '';
   };
 
-  return { allPrompts, isLoading, error, getReferencesForBrand, getRecordId };
+  return { allPrompts, isLoading, error, getReferencesForBrand, getRecordId, refetch };
 }

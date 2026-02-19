@@ -32,7 +32,7 @@ export function PromptForm({
   onOpenFavorites,
 }: PromptFormProps) {
   // Load all prompts from Airtable via n8n
-  const { getReferencesForBrand, getRecordId, isLoading: isLoadingList, error: listError } = usePromptList();
+  const { getReferencesForBrand, getRecordId, refetch, isLoading: isLoadingList, error: listError } = usePromptList();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +41,9 @@ export function PromptForm({
 
   // Get references for the selected brand from Airtable (dynamic, not hardcoded)
   const availableReferences = formData.brand ? getReferencesForBrand(formData.brand) : [];
+
+  // Get the category of the currently selected reference so we can pass it to the save dialog
+  const selectedCategory = availableReferences.find(r => r.id === formData.reference)?.category || '';
 
   // Reset reference when brand changes
   const handleBrandChange = (value: string) => {
@@ -137,6 +140,8 @@ export function PromptForm({
 
       <ReferencePromptDataDisplay
         brand={formData.brand}
+        category={selectedCategory}
+        onSaved={refetch}
         data={
           formData.reference
             ? {

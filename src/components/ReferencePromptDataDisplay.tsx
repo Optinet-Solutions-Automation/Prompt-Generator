@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, Loader2, RefreshCw } from 'lucide-react';
+import { ChevronDown, Loader2, RefreshCw, Save } from 'lucide-react';
 
 import type { ReferencePromptData } from '@/types/prompt';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -14,7 +16,9 @@ interface ReferencePromptDataDisplayProps {
   isLoading: boolean;
   disabled?: boolean;
   brand?: string;
+  category?: string;
   onChange?: (field: keyof ReferencePromptData, value: string) => void;
+  onSaved?: () => void;
 }
 
 // Fields that have a regenerate button
@@ -32,9 +36,55 @@ const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
   negative_prompt: 'Negative Prompt',
 };
 
-export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, onChange }: ReferencePromptDataDisplayProps) {
+export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, category, onChange, onSaved }: ReferencePromptDataDisplayProps) {
   const [open, setOpen] = useState(false);
   const [regeneratingField, setRegeneratingField] = useState<RegenerableField | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [titleInput, setTitleInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const handleSaveAsReference = async () => {
+    if (!titleInput.trim()) {
+      setSaveError('Please enter a title.');
+      return;
+    }
+    if (!data) return;
+
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+      const response = await fetch('/api/save-as-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title:           titleInput.trim(),
+          brand_name:      brand,
+          prompt_category: category,
+          format_layout:   data.format_layout,
+          primary_object:  data.primary_object,
+          subject:         data.subject,
+          lighting:        data.lighting,
+          mood:            data.mood,
+          background:      data.background,
+          positive_prompt: data.positive_prompt,
+          negative_prompt: data.negative_prompt,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to save reference');
+
+      setSaveDialogOpen(false);
+      setTitleInput('');
+      onSaved?.(); // refresh the dropdown
+    } catch (error) {
+      console.error('Error saving reference:', error);
+      setSaveError('Something went wrong. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleRegenerate = async (field: RegenerableField) => {
     if (!data || !onChange) return;
@@ -122,9 +172,9 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
         <CollapsibleContent>
           {data ? (
             <div className="grid gap-4">
-              {/* Regenerate buttons — shown once at the top, above all fields */}
+              {/* Action buttons — shown at the top of the expanded section */}
               {onChange && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {REGENERABLE_FIELDS.map((field) => (
                     <Button
                       key={field}
@@ -142,6 +192,17 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
                       Regenerate {FIELD_LABELS[field]}
                     </Button>
                   ))}
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    disabled={!!regeneratingField || !!disabled}
+                    onClick={() => { setTitleInput(''); setSaveError(''); setSaveDialogOpen(true); }}
+                    className="h-7 px-3 text-xs gap-1.5 ml-auto"
+                  >
+                    <Save className="h-3 w-3" />
+                    Save as New Reference
+                  </Button>
                 </div>
               )}
 
@@ -167,6 +228,38 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
           ) : null}
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Save as New Reference dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save as New Reference</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="reference-title">Title</Label>
+            <Input
+              id="reference-title"
+              placeholder="e.g. Neon Warrior"
+              value={titleInput}
+              onChange={(e) => { setTitleInput(e.target.value); setSaveError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveAsReference()}
+              disabled={isSaving}
+              autoFocus
+            />
+            {saveError && (
+              <p className="text-sm text-destructive">{saveError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveDialogOpen(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAsReference} disabled={isSaving}>
+              {isSaving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
