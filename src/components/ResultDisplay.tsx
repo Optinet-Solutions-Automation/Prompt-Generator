@@ -65,7 +65,11 @@ export function ResultDisplay({
   onRemoveGeneratedImage,
 }: ResultDisplayProps) {
   // Load all prompts from Airtable via n8n (same as the form page)
-  const { getReferencesForBrand, getRecordId } = usePromptList();
+  const { getReferencesForBrand, getRecordId, refetch } = usePromptList();
+
+  // Derive the category for the currently selected reference (needed for Save as New Reference)
+  const resultAvailableReferences = metadata?.brand ? getReferencesForBrand(metadata.brand) : [];
+  const resultSelectedCategory = resultAvailableReferences.find(r => r.id === metadata?.reference)?.category || '';
 
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({
@@ -331,6 +335,9 @@ export function ResultDisplay({
 
           {/* Reference Prompt Data - Collapsible & Editable */}
           <ReferencePromptDataDisplay
+            brand={metadata.brand}
+            category={resultSelectedCategory}
+            onSaved={refetch}
             data={{
               format_layout: metadata.format_layout || "",
               primary_object: metadata.primary_object || "",
