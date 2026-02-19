@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2, RefreshCw } from 'lucide-react';
 
 import type { ReferencePromptData } from '@/types/prompt';
 import { cn } from '@/lib/utils';
@@ -13,8 +13,13 @@ interface ReferencePromptDataDisplayProps {
   data: ReferencePromptData | null;
   isLoading: boolean;
   disabled?: boolean;
+  brand?: string;
   onChange?: (field: keyof ReferencePromptData, value: string) => void;
 }
+
+// Fields that have a regenerate button
+const REGENERABLE_FIELDS = ['subject', 'background'] as const;
+type RegenerableField = typeof REGENERABLE_FIELDS[number];
 
 const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
   format_layout: 'Format Layout',
@@ -27,8 +32,44 @@ const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
   negative_prompt: 'Negative Prompt',
 };
 
-export function ReferencePromptDataDisplay({ data, isLoading, disabled, onChange }: ReferencePromptDataDisplayProps) {
+export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, onChange }: ReferencePromptDataDisplayProps) {
   const [open, setOpen] = useState(false);
+  const [regeneratingField, setRegeneratingField] = useState<RegenerableField | null>(null);
+
+  const handleRegenerate = async (field: RegenerableField) => {
+    if (!data || !onChange) return;
+
+    setRegeneratingField(field);
+
+    try {
+      const response = await fetch('/api/regenerate-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field,
+          brand,
+          format_layout:   data.format_layout,
+          primary_object:  data.primary_object,
+          subject:         data.subject,
+          lighting:        data.lighting,
+          mood:            data.mood,
+          background:      data.background,
+          positive_prompt: data.positive_prompt,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to regenerate field');
+
+      const result = await response.json();
+      if (result.value) {
+        onChange(field, result.value);
+      }
+    } catch (error) {
+      console.error('Error regenerating field:', error);
+    } finally {
+      setRegeneratingField(null);
+    }
+  };
 
   useEffect(() => {
     // While loading a new reference, keep the section closed so stale data doesn't flash.
@@ -83,16 +124,36 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, onChange
             <div className="grid gap-4">
               {fieldKeys.map((key) => {
                 const value = data[key] ?? '';
+                const isRegenenable = (REGENERABLE_FIELDS as readonly string[]).includes(key);
+                const isRegenerating = regeneratingField === key;
                 return (
                   <div key={key} className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      {FIELD_LABELS[key] || key}
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        {FIELD_LABELS[key] || key}
+                      </Label>
+                      {isRegenenable && onChange && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={!!regeneratingField || !!disabled}
+                          onClick={() => handleRegenerate(key as RegenerableField)}
+                          className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                        >
+                          {isRegenerating
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <RefreshCw className="h-3 w-3" />
+                          }
+                          Regenerate
+                        </Button>
+                      )}
+                    </div>
                     <Textarea
                       value={value}
                       onChange={(e) => onChange?.(key, e.target.value)}
                       readOnly={!onChange || !!disabled}
-                      disabled={disabled}
+                      disabled={disabled || isRegenerating}
                       className="text-sm bg-muted/30 border-border/50 min-h-[60px]"
                     />
                   </div>

@@ -136,6 +136,7 @@ export function PromptForm({
       />
 
       <ReferencePromptDataDisplay
+        brand={formData.brand}
         data={
           formData.reference
             ? {
