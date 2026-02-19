@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X, Heart } from "lucide-react";
+import { Archive, Check, Copy, Loader2, Sparkles, RotateCcw, Bot, Gem, Save, X, Heart } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { FavoriteHeart } from "./FavoriteHeart";
 import type { AppState, PromptMetadata, ReferencePromptData } from "@/types/prompt";
@@ -17,6 +17,7 @@ import type { GeneratedImages } from "@/hooks/usePromptGenerator";
 import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { normalizeN8nImageResponse } from "@/lib/n8nImage";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +74,33 @@ export function ResultDisplay({
   // Derive the category for the currently selected reference (needed for Save as New Reference)
   const resultAvailableReferences = metadata?.brand ? getReferencesForBrand(metadata.brand) : [];
   const resultSelectedCategory = resultAvailableReferences.find(r => r.id === metadata?.reference)?.category || '';
+
+  // Airtable record ID for the currently selected reference (needed for archive)
+  const selectedRecordId = metadata?.reference ? getRecordId(metadata.reference, metadata?.brand || '') : '';
+
+  // Archive dialog state
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  const handleArchive = async () => {
+    if (!selectedRecordId) return;
+    setIsArchiving(true);
+    try {
+      const response = await fetch('/api/remove-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId: selectedRecordId }),
+      });
+      if (!response.ok) throw new Error('Failed to archive reference');
+      setArchiveDialogOpen(false);
+      onMetadataChange?.('reference', ''); // clear the selection
+      refetch();                            // refresh the dropdown
+    } catch (error) {
+      console.error('Error archiving reference:', error);
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState<{ chatgpt: boolean; gemini: boolean }>({
@@ -330,22 +358,39 @@ export function ResultDisplay({
               disabled={isRegeneratingPrompt}
             />
 
-            <ReferenceSelect
-              label="Reference"
-              required
-              value={metadata.reference || ""}
-              onChange={(selectedValue) => {
-                // selectedValue is the prompt_name (we use prompt_name as option id).
-                // Store prompt_name as the reference, then look up the Airtable record ID
-                // so we can fetch the full reference data.
-                onMetadataChange?.("reference", selectedValue);
-                const recordId = getRecordId(selectedValue, metadata.brand);
-                onReferenceChange(metadata.brand, recordId);
-              }}
-              placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
-              disabled={!metadata.brand || isRegeneratingPrompt}
-              references={getReferencesForBrand(metadata.brand)}
-            />
+            <div className="space-y-1.5">
+              <ReferenceSelect
+                label="Reference"
+                required
+                value={metadata.reference || ""}
+                onChange={(selectedValue) => {
+                  // selectedValue is the prompt_name (we use prompt_name as option id).
+                  // Store prompt_name as the reference, then look up the Airtable record ID
+                  // so we can fetch the full reference data.
+                  onMetadataChange?.("reference", selectedValue);
+                  const recordId = getRecordId(selectedValue, metadata.brand);
+                  onReferenceChange(metadata.brand, recordId);
+                }}
+                placeholder={metadata.brand ? "Select a reference" : "Select a brand first"}
+                disabled={!metadata.brand || isRegeneratingPrompt}
+                references={getReferencesForBrand(metadata.brand)}
+              />
+              {/* Archive button — only shown when a reference is selected */}
+              {metadata.reference && (
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setArchiveDialogOpen(true)}
+                    className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Archive className="h-3 w-3" />
+                    Archive reference
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <div className="sm:col-span-2">
               <PositionAndRatioSelector
@@ -516,6 +561,28 @@ export function ResultDisplay({
           </div>
         </div>
       </motion.div>
+
+      {/* Archive confirmation dialog */}
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive this reference?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move the reference to the Archived Prompts table. It won't be deleted — you can restore it from Airtable later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleArchive}
+              disabled={isArchiving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isArchiving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Archiving…</> : 'Archive'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Save as New Reference dialog — triggered by the 💾 toolbar button */}
       <Dialog open={saveAsRefOpen} onOpenChange={setSaveAsRefOpen}>
