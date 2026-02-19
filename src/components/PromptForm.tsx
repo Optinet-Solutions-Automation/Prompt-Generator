@@ -45,6 +45,15 @@ export function PromptForm({
   // Get the category of the currently selected reference so we can pass it to the save dialog
   const selectedCategory = availableReferences.find(r => r.id === formData.reference)?.category || '';
 
+  // Get the Airtable record ID for the currently selected reference (needed for archive)
+  const selectedRecordId = formData.reference ? getRecordId(formData.reference, formData.brand) : '';
+
+  // When a reference is archived: clear the selection and refresh the dropdown
+  const handleArchived = () => {
+    onFieldChange('reference', '');
+    refetch();
+  };
+
   // Reset reference when brand changes
   const handleBrandChange = (value: string) => {
     onFieldChange("brand", value);
@@ -141,7 +150,9 @@ export function PromptForm({
       <ReferencePromptDataDisplay
         brand={formData.brand}
         category={selectedCategory}
+        recordId={selectedRecordId}
         onSaved={refetch}
+        onArchived={handleArchived}
         data={
           formData.reference
             ? {
