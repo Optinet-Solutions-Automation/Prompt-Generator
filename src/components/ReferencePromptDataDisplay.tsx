@@ -16,6 +16,7 @@ interface ReferencePromptDataDisplayProps {
   disabled?: boolean;
   brand?: string;
   category?: string;
+  hideSaveButton?: boolean;
   onChange?: (field: keyof ReferencePromptData, value: string) => void;
   onSaved?: () => void;
 }
@@ -35,7 +36,7 @@ const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
   negative_prompt: 'Negative Prompt',
 };
 
-export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, category, onChange, onSaved }: ReferencePromptDataDisplayProps) {
+export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, category, hideSaveButton, onChange, onSaved }: ReferencePromptDataDisplayProps) {
   const [open, setOpen] = useState(false);
   const [regeneratingField, setRegeneratingField] = useState<RegenerableField | null>(null);
   const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
@@ -235,17 +236,19 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
                     }
                     Regenerate All
                   </Button>
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    disabled={anyBusy}
-                    onClick={() => { setTitleInput(''); setSaveError(''); setSaveDialogOpen(true); }}
-                    className="h-7 px-3 text-xs gap-1.5 ml-auto"
-                  >
-                    <Save className="h-3 w-3" />
-                    Save as New Reference
-                  </Button>
+                  {!hideSaveButton && (
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      disabled={anyBusy}
+                      onClick={() => { setTitleInput(''); setSaveError(''); setSaveDialogOpen(true); }}
+                      className="h-7 px-3 text-xs gap-1.5 ml-auto"
+                    >
+                      <Save className="h-3 w-3" />
+                      Save as New Reference
+                    </Button>
+                  )}
                 </div>
               )}
 

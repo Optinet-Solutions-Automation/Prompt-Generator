@@ -17,6 +17,9 @@ import type { GeneratedImages } from "@/hooks/usePromptGenerator";
 import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { normalizeN8nImageResponse } from "@/lib/n8nImage";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ResultDisplayProps {
   prompt: string;
@@ -85,7 +88,48 @@ export function ResultDisplay({
   } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState(prompt);
+
+  // Save as New Reference dialog state (triggered by the 💾 toolbar button)
+  const [saveAsRefOpen, setSaveAsRefOpen] = useState(false);
+  const [refTitle, setRefTitle] = useState('');
+  const [isRefSaving, setIsRefSaving] = useState(false);
+  const [refSaveError, setRefSaveError] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  const handleSaveAsRef = async () => {
+    if (!refTitle.trim()) { setRefSaveError('Please enter a title.'); return; }
+    if (!metadata) return;
+    setIsRefSaving(true);
+    setRefSaveError('');
+    try {
+      const response = await fetch('/api/save-as-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title:           refTitle.trim(),
+          brand_name:      metadata.brand,
+          prompt_category: resultSelectedCategory,
+          format_layout:   metadata.format_layout   || '',
+          primary_object:  metadata.primary_object  || '',
+          subject:         metadata.subject         || '',
+          lighting:        metadata.lighting        || '',
+          mood:            metadata.mood            || '',
+          background:      metadata.background      || '',
+          positive_prompt: metadata.positive_prompt || '',
+          negative_prompt: metadata.negative_prompt || '',
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to save reference');
+      setSaveAsRefOpen(false);
+      setRefTitle('');
+      refetch();
+    } catch (err) {
+      console.error('Error saving reference:', err);
+      setRefSaveError('Something went wrong. Please try again.');
+    } finally {
+      setIsRefSaving(false);
+    }
+  };
 
   // Store record_id and img_url per imageId for consistent like/unlike payloads
   const imageMetaRef = useRef<Map<string, { recordId: string; imgUrl: string }>>(new Map());
@@ -337,6 +381,7 @@ export function ResultDisplay({
           <ReferencePromptDataDisplay
             brand={metadata.brand}
             category={resultSelectedCategory}
+            hideSaveButton
             onSaved={refetch}
             data={{
               format_layout: metadata.format_layout || "",
@@ -431,14 +476,14 @@ export function ResultDisplay({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setShowSaveModal(true)}
+                      onClick={() => { setRefTitle(''); setRefSaveError(''); setSaveAsRefOpen(true); }}
                       className="h-8 w-8 text-primary hover:bg-primary/10"
                     >
                       <Save className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Save Prompt</p>
+                    <p>Save as New Reference</p>
                   </TooltipContent>
                 </Tooltip>
 
@@ -472,6 +517,36 @@ export function ResultDisplay({
           </div>
         </div>
       </motion.div>
+
+      {/* Save as New Reference dialog — triggered by the 💾 toolbar button */}
+      <Dialog open={saveAsRefOpen} onOpenChange={setSaveAsRefOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save as New Reference</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="ref-title-result">Title</Label>
+            <Input
+              id="ref-title-result"
+              placeholder="e.g. Neon Warrior"
+              value={refTitle}
+              onChange={(e) => { setRefTitle(e.target.value); setRefSaveError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveAsRef()}
+              disabled={isRefSaving}
+              autoFocus
+            />
+            {refSaveError && <p className="text-sm text-destructive">{refSaveError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveAsRefOpen(false)} disabled={isRefSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAsRef} disabled={isRefSaving}>
+              {isRefSaving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Save Prompt Modal - Only opens on icon click */}
       <SavePromptModal
