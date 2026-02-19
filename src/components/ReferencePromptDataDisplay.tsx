@@ -122,33 +122,37 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
         <CollapsibleContent>
           {data ? (
             <div className="grid gap-4">
+              {/* Regenerate buttons — shown once at the top, above all fields */}
+              {onChange && (
+                <div className="flex gap-2">
+                  {REGENERABLE_FIELDS.map((field) => (
+                    <Button
+                      key={field}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!!regeneratingField || !!disabled}
+                      onClick={() => handleRegenerate(field)}
+                      className="h-7 px-3 text-xs gap-1.5"
+                    >
+                      {regeneratingField === field
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <RefreshCw className="h-3 w-3" />
+                      }
+                      Regenerate {FIELD_LABELS[field]}
+                    </Button>
+                  ))}
+                </div>
+              )}
+
               {fieldKeys.map((key) => {
                 const value = data[key] ?? '';
-                const isRegenenable = (REGENERABLE_FIELDS as readonly string[]).includes(key);
                 const isRegenerating = regeneratingField === key;
                 return (
                   <div key={key} className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        {FIELD_LABELS[key] || key}
-                      </Label>
-                      {isRegenenable && onChange && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={!!regeneratingField || !!disabled}
-                          onClick={() => handleRegenerate(key as RegenerableField)}
-                          className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
-                        >
-                          {isRegenerating
-                            ? <Loader2 className="h-3 w-3 animate-spin" />
-                            : <RefreshCw className="h-3 w-3" />
-                          }
-                          Regenerate
-                        </Button>
-                      )}
-                    </div>
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      {FIELD_LABELS[key] || key}
+                    </Label>
                     <Textarea
                       value={value}
                       onChange={(e) => onChange?.(key, e.target.value)}
