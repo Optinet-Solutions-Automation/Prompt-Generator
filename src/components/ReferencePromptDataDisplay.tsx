@@ -20,7 +20,7 @@ interface ReferencePromptDataDisplayProps {
   onSaved?: () => void;
 }
 
-// Fields that have a regenerate button
+// Fields that have a regenerate icon next to their label
 const REGENERABLE_FIELDS = ['subject', 'background'] as const;
 type RegenerableField = typeof REGENERABLE_FIELDS[number];
 
@@ -38,6 +38,7 @@ const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
 export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, category, onChange, onSaved }: ReferencePromptDataDisplayProps) {
   const [open, setOpen] = useState(false);
   const [regeneratingField, setRegeneratingField] = useState<RegenerableField | null>(null);
+  const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [titleInput, setTitleInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -83,7 +84,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
 
       setSaveDialogOpen(false);
       setTitleInput('');
-      onSaved?.(); // refresh the dropdown
+      onSaved?.();
     } catch (error) {
       console.error('Error saving reference:', error);
       setSaveError('Something went wrong. Please try again.');
@@ -92,6 +93,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
     }
   };
 
+  // Regenerate a single field (called by the icon button next to the label)
   const handleRegenerate = async (field: RegenerableField) => {
     if (!data || !onChange) return;
 
@@ -127,6 +129,46 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
     }
   };
 
+  // Regenerate all fields — fires two parallel calls to the same webhook.
+  // n8n workflow does NOT need to change: each call has a different "field" value
+  // so the existing IF node routes them correctly (subject → Subject node, background → Background node).
+  const handleRegenerateAll = async () => {
+    if (!data || !onChange) return;
+
+    setIsRegeneratingAll(true);
+
+    try {
+      const makeCall = (field: RegenerableField) =>
+        fetch('/api/regenerate-reference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            field,
+            brand,
+            format_layout:   data.format_layout,
+            primary_object:  data.primary_object,
+            subject:         data.subject,
+            lighting:        data.lighting,
+            mood:            data.mood,
+            background:      data.background,
+            positive_prompt: data.positive_prompt,
+          }),
+        }).then(r => r.ok ? r.json() : null);
+
+      const [subjectResult, backgroundResult] = await Promise.all([
+        makeCall('subject'),
+        makeCall('background'),
+      ]);
+
+      if (subjectResult?.value)    onChange('subject',    subjectResult.value);
+      if (backgroundResult?.value) onChange('background', backgroundResult.value);
+    } catch (error) {
+      console.error('Error regenerating all:', error);
+    } finally {
+      setIsRegeneratingAll(false);
+    }
+  };
+
   useEffect(() => {
     // While loading a new reference, keep the section closed so stale data doesn't flash.
     if (isLoading) setOpen(false);
@@ -136,6 +178,8 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
     () => Object.keys(FIELD_LABELS) as Array<keyof ReferencePromptData>,
     [],
   );
+
+  const anyBusy = !!regeneratingField || isRegeneratingAll || !!disabled;
 
   const shouldRender = isLoading || !!data;
   if (!shouldRender) return null;
@@ -174,31 +218,28 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
         <CollapsibleContent>
           {data ? (
             <div className="grid gap-4">
-              {/* Action buttons — shown at the top of the expanded section */}
+              {/* Top action bar */}
               {onChange && (
-                <div className="flex flex-wrap gap-2">
-                  {REGENERABLE_FIELDS.map((field) => (
-                    <Button
-                      key={field}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={!!regeneratingField || !!disabled}
-                      onClick={() => handleRegenerate(field)}
-                      className="h-7 px-3 text-xs gap-1.5"
-                    >
-                      {regeneratingField === field
-                        ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : <RefreshCw className="h-3 w-3" />
-                      }
-                      Regenerate {FIELD_LABELS[field]}
-                    </Button>
-                  ))}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={anyBusy}
+                    onClick={handleRegenerateAll}
+                    className="h-7 px-3 text-xs gap-1.5"
+                  >
+                    {isRegeneratingAll
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <RefreshCw className="h-3 w-3" />
+                    }
+                    Regenerate All
+                  </Button>
                   <Button
                     type="button"
                     variant="default"
                     size="sm"
-                    disabled={!!regeneratingField || !!disabled}
+                    disabled={anyBusy}
                     onClick={() => { setTitleInput(''); setSaveError(''); setSaveDialogOpen(true); }}
                     className="h-7 px-3 text-xs gap-1.5 ml-auto"
                   >
@@ -210,17 +251,35 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
 
               {fieldKeys.map((key) => {
                 const value = data[key] ?? '';
-                const isRegenerating = regeneratingField === key;
+                const isRegenerableField = (REGENERABLE_FIELDS as readonly string[]).includes(key);
+                const isThisFieldRegenerating = regeneratingField === key;
                 return (
                   <div key={key} className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      {FIELD_LABELS[key] || key}
-                    </Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        {FIELD_LABELS[key] || key}
+                      </Label>
+                      {/* Small icon button — only on Subject and Background */}
+                      {isRegenerableField && onChange && (
+                        <button
+                          type="button"
+                          disabled={anyBusy}
+                          onClick={() => handleRegenerate(key as RegenerableField)}
+                          className="text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={`Regenerate ${FIELD_LABELS[key]}`}
+                        >
+                          {isThisFieldRegenerating
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <RefreshCw className="h-3 w-3" />
+                          }
+                        </button>
+                      )}
+                    </div>
                     <Textarea
                       value={value}
                       onChange={(e) => onChange?.(key, e.target.value)}
                       readOnly={!onChange || !!disabled}
-                      disabled={disabled || isRegenerating}
+                      disabled={!!disabled || isThisFieldRegenerating || isRegeneratingAll}
                       className="text-sm bg-muted/30 border-border/50 min-h-[60px]"
                     />
                   </div>
