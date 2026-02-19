@@ -381,7 +381,6 @@ export function ResultDisplay({
           <ReferencePromptDataDisplay
             brand={metadata.brand}
             category={resultSelectedCategory}
-            hideSaveButton
             onSaved={refetch}
             data={{
               format_layout: metadata.format_layout || "",
