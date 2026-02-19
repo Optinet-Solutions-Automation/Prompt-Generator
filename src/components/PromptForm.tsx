@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FormField } from "./FormField";
 import { ReferenceSelect } from "./ReferenceSelect";
 import { PositionAndRatioSelector } from "./PositionAndRatioSelector";
 import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
-import { Heart, Sparkles, Trash2 } from "lucide-react";
+import { Archive, Heart, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { FormData, BRANDS, ReferencePromptData } from "@/types/prompt";
 import { usePromptList } from "@/hooks/usePromptList";
 
@@ -34,6 +36,10 @@ export function PromptForm({
   // Load all prompts from Airtable via n8n
   const { getReferencesForBrand, getRecordId, refetch, isLoading: isLoadingList, error: listError } = usePromptList();
 
+  // Archive dialog state — lives here since the button is next to the reference dropdown
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
@@ -48,10 +54,25 @@ export function PromptForm({
   // Get the Airtable record ID for the currently selected reference (needed for archive)
   const selectedRecordId = formData.reference ? getRecordId(formData.reference, formData.brand) : '';
 
-  // When a reference is archived: clear the selection and refresh the dropdown
-  const handleArchived = () => {
-    onFieldChange('reference', '');
-    refetch();
+  // Archive the currently selected reference: move it to Archived Prompts in Airtable
+  const handleArchive = async () => {
+    if (!selectedRecordId) return;
+    setIsArchiving(true);
+    try {
+      const response = await fetch('/api/remove-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId: selectedRecordId }),
+      });
+      if (!response.ok) throw new Error('Failed to archive reference');
+      setArchiveDialogOpen(false);
+      onFieldChange('reference', ''); // clear the selection
+      refetch();                      // refresh the dropdown
+    } catch (error) {
+      console.error('Error archiving reference:', error);
+    } finally {
+      setIsArchiving(false);
+    }
   };
 
   // Reset reference when brand changes
@@ -92,24 +113,41 @@ export function PromptForm({
           error={errors.brand}
         />
 
-        <ReferenceSelect
-          label="Reference"
-          required
-          value={formData.reference}
-          onChange={handleReferenceChange}
-          placeholder={
-            !formData.brand
-              ? "Select a brand first"
-              : isLoadingList
-              ? "Loading prompts..."
-              : availableReferences.length === 0
-              ? "No prompts found for this brand"
-              : "Select a reference"
-          }
-          error={errors.reference}
-          disabled={!formData.brand || isLoadingList || availableReferences.length === 0}
-          references={availableReferences}
-        />
+        <div className="space-y-1.5">
+          <ReferenceSelect
+            label="Reference"
+            required
+            value={formData.reference}
+            onChange={handleReferenceChange}
+            placeholder={
+              !formData.brand
+                ? "Select a brand first"
+                : isLoadingList
+                ? "Loading prompts..."
+                : availableReferences.length === 0
+                ? "No prompts found for this brand"
+                : "Select a reference"
+            }
+            error={errors.reference}
+            disabled={!formData.brand || isLoadingList || availableReferences.length === 0}
+            references={availableReferences}
+          />
+          {/* Archive button — only shown when a reference is selected */}
+          {formData.reference && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setArchiveDialogOpen(true)}
+                className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Archive className="h-3 w-3" />
+                Archive reference
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Show error if the prompt list failed to load */}
@@ -150,9 +188,7 @@ export function PromptForm({
       <ReferencePromptDataDisplay
         brand={formData.brand}
         category={selectedCategory}
-        recordId={selectedRecordId}
         onSaved={refetch}
-        onArchived={handleArchived}
         data={
           formData.reference
             ? {
@@ -196,6 +232,27 @@ export function PromptForm({
           Favorites
         </Button>
       </div>
+      {/* Archive confirmation dialog */}
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive this reference?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move the reference to the Archived Prompts table. It won't be deleted — you can restore it from Airtable later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleArchive}
+              disabled={isArchiving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isArchiving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Archiving…</> : 'Archive'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.form>
   );
 }

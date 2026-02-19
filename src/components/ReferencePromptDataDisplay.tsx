@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Archive, ChevronDown, Loader2, RefreshCw, Save } from 'lucide-react';
+import { ChevronDown, Loader2, RefreshCw, Save } from 'lucide-react';
 
 import type { ReferencePromptData } from '@/types/prompt';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,10 +17,8 @@ interface ReferencePromptDataDisplayProps {
   disabled?: boolean;
   brand?: string;
   category?: string;
-  recordId?: string;
   onChange?: (field: keyof ReferencePromptData, value: string) => void;
   onSaved?: () => void;
-  onArchived?: () => void;
 }
 
 // Fields that have a regenerate button
@@ -39,15 +36,13 @@ const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
   negative_prompt: 'Negative Prompt',
 };
 
-export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, category, recordId, onChange, onSaved, onArchived }: ReferencePromptDataDisplayProps) {
+export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, category, onChange, onSaved }: ReferencePromptDataDisplayProps) {
   const [open, setOpen] = useState(false);
   const [regeneratingField, setRegeneratingField] = useState<RegenerableField | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [titleInput, setTitleInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
 
   const handleSaveAsReference = async () => {
     if (!titleInput.trim()) {
@@ -126,29 +121,6 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
     }
   };
 
-  const handleArchive = async () => {
-    if (!recordId) return;
-
-    setIsArchiving(true);
-
-    try {
-      const response = await fetch('/api/remove-reference', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId }),
-      });
-
-      if (!response.ok) throw new Error('Failed to archive reference');
-
-      setArchiveDialogOpen(false);
-      onArchived?.(); // clear selection + refresh dropdown
-    } catch (error) {
-      console.error('Error archiving reference:', error);
-    } finally {
-      setIsArchiving(false);
-    }
-  };
-
   useEffect(() => {
     // While loading a new reference, keep the section closed so stale data doesn't flash.
     if (isLoading) setOpen(false);
@@ -220,32 +192,17 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
                       Regenerate {FIELD_LABELS[field]}
                     </Button>
                   ))}
-                  <div className="flex gap-2 ml-auto">
-                    <Button
-                      type="button"
-                      variant="default"
-                      size="sm"
-                      disabled={!!regeneratingField || !!disabled}
-                      onClick={() => { setTitleInput(''); setSaveError(''); setSaveDialogOpen(true); }}
-                      className="h-7 px-3 text-xs gap-1.5"
-                    >
-                      <Save className="h-3 w-3" />
-                      Save as New Reference
-                    </Button>
-                    {recordId && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!!regeneratingField || !!disabled || isArchiving}
-                        onClick={() => setArchiveDialogOpen(true)}
-                        className="h-7 px-3 text-xs gap-1.5 text-destructive border-destructive/40 hover:bg-destructive/10"
-                      >
-                        <Archive className="h-3 w-3" />
-                        Archive
-                      </Button>
-                    )}
-                  </div>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    disabled={!!regeneratingField || !!disabled}
+                    onClick={() => { setTitleInput(''); setSaveError(''); setSaveDialogOpen(true); }}
+                    className="h-7 px-3 text-xs gap-1.5 ml-auto"
+                  >
+                    <Save className="h-3 w-3" />
+                    Save as New Reference
+                  </Button>
                 </div>
               )}
 
@@ -303,27 +260,6 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Archive confirmation dialog */}
-      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archive this reference?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will move the reference to the Archived Prompts table. It won't be deleted — you can restore it from Airtable later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleArchive}
-              disabled={isArchiving}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isArchiving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Archiving…</> : 'Archive'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </motion.div>
   );
 }
