@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { ChevronDown, Loader2, RefreshCw, Save } from 'lucide-react';
 
 import type { ReferencePromptData } from '@/types/prompt';
@@ -44,6 +43,13 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  // Keep the last known non-empty brand and category so they survive temporary
+  // parent re-renders (e.g. prompt list reloading after returning from RESULT view).
+  const [stableBrand, setStableBrand] = useState(brand || '');
+  const [stableCategory, setStableCategory] = useState(category || '');
+  useEffect(() => { if (brand) setStableBrand(brand); }, [brand]);
+  useEffect(() => { if (category) setStableCategory(category); }, [category]);
+
   const handleSaveAsReference = async () => {
     if (!titleInput.trim()) {
       setSaveError('Please enter a title.');
@@ -60,8 +66,8 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title:           titleInput.trim(),
-          brand_name:      brand,
-          prompt_category: category,
+          brand_name:      stableBrand,
+          prompt_category: stableCategory,
           format_layout:   data.format_layout,
           primary_object:  data.primary_object,
           subject:         data.subject,
@@ -135,11 +141,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
   if (!shouldRender) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-4 mt-6 pt-6 border-t border-border"
-    >
+    <div className="space-y-4 mt-6 pt-6 border-t border-border">
       <Collapsible open={open} onOpenChange={setOpen} className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -260,6 +262,6 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 }
