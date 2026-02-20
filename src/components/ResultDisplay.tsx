@@ -12,6 +12,7 @@ import { FormField } from "./FormField";
 import { ReferenceSelect } from "./ReferenceSelect";
 import { PositionAndRatioSelector } from "./PositionAndRatioSelector";
 import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
+import { CreateBlendedPromptDialog } from "./CreateBlendedPromptDialog";
 import type { GeneratedImages } from "@/hooks/usePromptGenerator";
 import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { normalizeN8nImageResponse } from "@/lib/n8nImage";
@@ -77,6 +78,9 @@ export function ResultDisplay({
 
   // Airtable record ID for the currently selected reference (needed for archive)
   const selectedRecordId = metadata?.reference ? getRecordId(metadata.reference, metadata?.brand || '') : '';
+
+  // Create blended prompt dialog state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Archive dialog state
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -406,36 +410,49 @@ export function ResultDisplay({
                 disabled={!metadata.brand || isRegeneratingPrompt}
                 references={getReferencesForBrand(metadata.brand)}
               />
-              {/* Rename + Archive buttons — only shown when a reference is selected */}
-              {metadata.reference && (
+              {/* Action buttons — shown when a brand is selected */}
+              {metadata.brand && (
                 <div className="flex justify-end gap-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      // Pre-fill with just the short name (before " — ") so the user
-                      // only edits the name, not the description.
-                      const shortName = metadata.reference.split(' — ')[0].trim();
-                      setRenameInput(shortName);
-                      setRenameError('');
-                      setRenameDialogOpen(true);
-                    }}
+                    onClick={() => setCreateDialogOpen(true)}
                     className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
                   >
-                    <Pencil className="h-3 w-3" />
-                    Rename
+                    <Sparkles className="h-3 w-3" />
+                    Create New
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setArchiveDialogOpen(true)}
-                    className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Archive className="h-3 w-3" />
-                    Archive
-                  </Button>
+                  {/* Rename + Archive — only shown when a reference is selected */}
+                  {metadata.reference && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const shortName = metadata.reference.split(' — ')[0].trim();
+                          setRenameInput(shortName);
+                          setRenameError('');
+                          setRenameDialogOpen(true);
+                        }}
+                        className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        Rename
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setArchiveDialogOpen(true)}
+                        className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Archive className="h-3 w-3" />
+                        Archive
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -696,6 +713,16 @@ export function ResultDisplay({
           setShowSaveModal(false);
           onDontSave();
         }}
+      />
+
+      {/* Create blended prompt dialog */}
+      <CreateBlendedPromptDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        brand={metadata?.brand || ""}
+        references={metadata?.brand ? getReferencesForBrand(metadata.brand) : []}
+        getRecordId={getRecordId}
+        onSaved={refetch}
       />
 
       {/* Saving State */}

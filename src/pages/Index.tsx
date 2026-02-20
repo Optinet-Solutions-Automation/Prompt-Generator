@@ -111,7 +111,7 @@ const Index = () => {
           <p className="text-muted-foreground text-base sm:text-lg max-w-lg mx-auto px-2">
             Create stunning AI image prompts tailored for your brand and campaign needs
           </p>
-        </motion.div>
+        </div>
 
         {/* Main Card */}
         <div className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden">
@@ -163,7 +163,7 @@ const Index = () => {
         {/* Footer */}
         <p className="text-center text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8">
           Powered by AI • Generate professional prompts in seconds
-        </motion.p>
+        </p>
       </div>
 
       {/* Liked Images Panel */}
