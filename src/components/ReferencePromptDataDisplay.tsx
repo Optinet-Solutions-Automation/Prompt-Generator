@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 
 interface ReferencePromptDataDisplayProps {
@@ -18,8 +19,9 @@ interface ReferencePromptDataDisplayProps {
   onSaved?: () => void;
 }
 
-// Fields that have a regenerate icon next to their label
-const REGENERABLE_FIELDS = ['subject', 'background'] as const;
+// Fields that have a regenerate icon next to their label.
+// These four are also what "Regenerate All" refreshes.
+const REGENERABLE_FIELDS = ['subject', 'lighting', 'mood', 'background'] as const;
 type RegenerableField = typeof REGENERABLE_FIELDS[number];
 
 const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
@@ -38,6 +40,10 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
   const [regeneratingField, setRegeneratingField] = useState<RegenerableField | null>(null);
   const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
 
+  // Temperature controls how creative/random the GPT output is.
+  // 0 = very predictable, 1 = default balanced, 2 = very creative/random.
+  const [temperature, setTemperature] = useState(1.0);
+
   // Regenerate a single field (called by the icon button next to the label)
   const handleRegenerate = async (field: RegenerableField) => {
     if (!data || !onChange) return;
@@ -51,6 +57,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
         body: JSON.stringify({
           field,
           brand,
+          temperature,
           format_layout:   data.format_layout,
           primary_object:  data.primary_object,
           subject:         data.subject,
@@ -90,6 +97,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
           body: JSON.stringify({
             field,
             brand,
+            temperature,
             format_layout:   data.format_layout,
             primary_object:  data.primary_object,
             subject:         data.subject,
@@ -100,12 +108,17 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
           }),
         }).then(r => r.ok ? r.json() : null);
 
-      const [subjectResult, backgroundResult] = await Promise.all([
+      // Fire all four fields in parallel
+      const [subjectResult, lightingResult, moodResult, backgroundResult] = await Promise.all([
         makeCall('subject'),
+        makeCall('lighting'),
+        makeCall('mood'),
         makeCall('background'),
       ]);
 
       if (subjectResult?.value)    onChange('subject',    subjectResult.value);
+      if (lightingResult?.value)   onChange('lighting',   lightingResult.value);
+      if (moodResult?.value)       onChange('mood',       moodResult.value);
       if (backgroundResult?.value) onChange('background', backgroundResult.value);
     } catch (error) {
       console.error('Error regenerating all:', error);
@@ -165,7 +178,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
             <div className="grid gap-4">
               {/* Top action bar */}
               {onChange && (
-                <div className="flex gap-2">
+                <div className="space-y-3">
                   <Button
                     type="button"
                     variant="outline"
@@ -180,6 +193,27 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
                     }
                     Regenerate All
                   </Button>
+
+                  {/* Temperature slider — controls GPT creativity for regeneration */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-muted-foreground">Creativity</Label>
+                      <span className="text-xs font-mono text-muted-foreground">{temperature.toFixed(1)}</span>
+                    </div>
+                    <Slider
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      value={[temperature]}
+                      onValueChange={([val]) => setTemperature(val)}
+                      disabled={anyBusy}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground/60">
+                      <span>Predictable</span>
+                      <span>Creative</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
