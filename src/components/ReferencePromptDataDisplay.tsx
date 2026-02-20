@@ -20,8 +20,9 @@ interface ReferencePromptDataDisplayProps {
 }
 
 // Fields that have a regenerate icon next to their label.
-// These four are also what "Regenerate All" refreshes.
-const REGENERABLE_FIELDS = ['subject', 'lighting', 'mood', 'background'] as const;
+// Subject/lighting/mood/background regenerate their own descriptions.
+// positive_prompt regenerates the full prompt using all current field values.
+const REGENERABLE_FIELDS = ['subject', 'lighting', 'mood', 'background', 'positive_prompt'] as const;
 type RegenerableField = typeof REGENERABLE_FIELDS[number];
 
 const FIELD_LABELS: Record<keyof ReferencePromptData, string> = {
@@ -81,9 +82,8 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
     }
   };
 
-  // Regenerate all fields — fires two parallel calls to the same webhook.
-  // n8n workflow does NOT need to change: each call has a different "field" value
-  // so the existing IF node routes them correctly (subject → Subject node, background → Background node).
+  // Regenerate all fields — fires 4 parallel calls for descriptions, then 1 final call
+  // to rebuild positive_prompt using the fresh description values.
   const handleRegenerateAll = async () => {
     if (!data || !onChange) return;
 
@@ -108,7 +108,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
           }),
         }).then(r => r.ok ? r.json() : null);
 
-      // Fire all four fields in parallel
+      // Step 1: Fire all four description fields in parallel
       const [subjectResult, lightingResult, moodResult, backgroundResult] = await Promise.all([
         makeCall('subject'),
         makeCall('lighting'),
@@ -116,10 +116,32 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, o
         makeCall('background'),
       ]);
 
+      // Apply the new description values
       if (subjectResult?.value)    onChange('subject',    subjectResult.value);
       if (lightingResult?.value)   onChange('lighting',   lightingResult.value);
       if (moodResult?.value)       onChange('mood',       moodResult.value);
       if (backgroundResult?.value) onChange('background', backgroundResult.value);
+
+      // Step 2: Regenerate positive_prompt using the freshly updated field values
+      // so the final prompt reflects all the new descriptions above.
+      const positivePromptResult = await fetch('/api/regenerate-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field: 'positive_prompt',
+          brand,
+          temperature,
+          format_layout:   data.format_layout,
+          primary_object:  data.primary_object,
+          subject:         subjectResult?.value    ?? data.subject,
+          lighting:        lightingResult?.value   ?? data.lighting,
+          mood:            moodResult?.value       ?? data.mood,
+          background:      backgroundResult?.value ?? data.background,
+          positive_prompt: data.positive_prompt,
+        }),
+      }).then(r => r.ok ? r.json() : null);
+
+      if (positivePromptResult?.value) onChange('positive_prompt', positivePromptResult.value);
     } catch (error) {
       console.error('Error regenerating all:', error);
     } finally {
