@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 
@@ -9,12 +8,7 @@ interface ErrorDisplayProps {
 
 export function ErrorDisplay({ message, onGoBack }: ErrorDisplayProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="flex flex-col items-center justify-center py-16"
-    >
+    <div className="flex flex-col items-center justify-center py-16">
       <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
         <AlertCircle className="w-8 h-8 text-destructive" />
       </div>
@@ -30,6 +24,6 @@ export function ErrorDisplay({ message, onGoBack }: ErrorDisplayProps) {
         <ArrowLeft className="w-4 h-4" />
         Go Back
       </Button>
-    </motion.div>
+    </div>
   );
 }

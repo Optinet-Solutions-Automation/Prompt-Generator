@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PromptForm } from "@/components/PromptForm";
@@ -102,11 +101,7 @@ const Index = () => {
 
       <div className="relative container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-16">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6 sm:mb-10"
-        >
+        <div className="text-center mb-6 sm:mb-10">
           <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl gradient-primary shadow-glow mb-4 sm:mb-6">
             <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
           </div>
@@ -119,14 +114,12 @@ const Index = () => {
         </motion.div>
 
         {/* Main Card */}
-        <motion.div layout className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden">
+        <div className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden">
           <div className="p-4 sm:p-6 md:p-8">
-            <AnimatePresence mode="wait">
-              {showError && <ErrorDisplay key="error" message={errorMessage} onGoBack={handleGoBack} />}
+              {showError && <ErrorDisplay message={errorMessage} onGoBack={handleGoBack} />}
 
               {showForm && !showError && (
                 <PromptForm
-                  key="form"
                   formData={formData}
                   errors={errors}
                   referencePromptData={referencePromptData}
@@ -139,11 +132,10 @@ const Index = () => {
                 />
               )}
 
-              {showProcessing && <ProcessingState key="processing" elapsedTime={elapsedTime} />}
+              {showProcessing && <ProcessingState elapsedTime={elapsedTime} />}
 
               {showResult && (
                 <ResultDisplay
-                  key="result"
                   prompt={generatedPrompt}
                   metadata={promptMetadata}
                   processingTime={processingTime}
@@ -165,17 +157,11 @@ const Index = () => {
                   onOpenFavorites={() => setShowLikedPanel(true)}
                 />
               )}
-            </AnimatePresence>
           </div>
-        </motion.div>
+        </div>
 
         {/* Footer */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8"
-        >
+        <p className="text-center text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8">
           Powered by AI • Generate professional prompts in seconds
         </motion.p>
       </div>

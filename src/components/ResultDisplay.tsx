@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Archive, Check, Copy, Loader2, Pencil, Sparkles, RotateCcw, Bot, Gem, Save, X, Heart } from "lucide-react";
@@ -369,20 +368,10 @@ export function ResultDisplay({
   const isSaved = appState === "SAVED";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Editable Request Data Form */}
       {metadata && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-xl border border-border p-5 shadow-sm"
-        >
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Request Details</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
@@ -525,16 +514,11 @@ export function ResultDisplay({
               )}
             </Button>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Editable Prompt Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="relative"
-      >
+      <div className="relative">
         <div className="absolute -inset-1 gradient-primary rounded-2xl opacity-20 blur-sm" />
         <div className="relative bg-card rounded-xl border-2 border-primary/30 shadow-lg shadow-primary/10 overflow-hidden">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
@@ -619,7 +603,7 @@ export function ResultDisplay({
             />
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Rename dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
@@ -716,35 +700,22 @@ export function ResultDisplay({
 
       {/* Saving State */}
       {isSaving && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center justify-center gap-2 py-4"
-        >
+        <div className="flex items-center justify-center gap-2 py-4">
           <Loader2 className="w-5 h-5 text-primary animate-spin" />
           <span className="text-muted-foreground">Saving...</span>
-        </motion.div>
+        </div>
       )}
 
       {/* Saved State */}
       {isSaved && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center justify-center gap-2 py-4 text-success"
-        >
+        <div className="flex items-center justify-center gap-2 py-4 text-success">
           <Check className="w-5 h-5" />
           <span className="font-medium">Saved successfully!</span>
-        </motion.div>
+        </div>
       )}
 
       {/* Image Generation Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-card rounded-xl border border-border p-4 sm:p-6 shadow-md"
-      >
+      <div className="bg-card rounded-xl border border-border p-4 sm:p-6 shadow-md">
         <p className="text-center text-muted-foreground text-xs sm:text-sm mb-4">Generate images using this prompt</p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
           <Button
@@ -917,7 +888,7 @@ export function ResultDisplay({
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Image Modal */}
       {modalImage && (
@@ -935,6 +906,6 @@ export function ResultDisplay({
           }}
         />
       )}
-    </motion.div>
+    </div>
   );
 }

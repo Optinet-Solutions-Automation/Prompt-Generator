@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -142,10 +141,7 @@ export function PromptForm({
   };
 
   return (
-    <motion.form
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <form
       onSubmit={handleSubmit}
       className="space-y-6"
     >
@@ -370,6 +366,6 @@ export function PromptForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </motion.form>
+    </form>
   );
 }

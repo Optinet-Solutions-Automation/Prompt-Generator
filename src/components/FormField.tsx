@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { motion } from 'framer-motion';
 
 interface BaseFieldProps {
   label: string;
@@ -50,11 +49,7 @@ export function FormField(props: FormFieldProps) {
   const { label, required, error } = props;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-2"
-    >
+    <div className="space-y-2">
       <Label className="text-sm font-medium text-foreground">
         {label}
         {required && <span className="text-destructive ml-1">*</span>}
@@ -114,14 +109,8 @@ export function FormField(props: FormFieldProps) {
       )}
 
       {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-destructive"
-        >
-          {error}
-        </motion.p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
-    </motion.div>
+    </div>
   );
 }

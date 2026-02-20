@@ -83,25 +83,23 @@ export function CreateBlendedPromptDialog({
     setError('');
 
     try {
-      // Fetch each selected reference's full data in parallel using the existing
-      // get-prompt-by-id API. We only need positive_prompt from each one.
-      const fetchedReferences = await Promise.all(
-        selectedNames.map(async (name) => {
-          const recordId = getRecordId(name, brand);
-          const res = await fetch('/api/get-prompt-by-id', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recordId }),
-          });
-          if (!res.ok) throw new Error(`Failed to fetch data for "${name}"`);
-          const data = await res.json();
-          return {
-            name,
-            // n8n returns positive_prompt inside a fields object or at the top level
-            positive_prompt: data.positive_prompt ?? data.fields?.positive_prompt ?? '',
-          };
-        }),
-      );
+      // Fetch each reference's positive_prompt one at a time (sequential, not parallel).
+      // Parallel calls can hit Airtable's rate limit when many references are selected.
+      const fetchedReferences: { name: string; positive_prompt: string }[] = [];
+      for (const name of selectedNames) {
+        const recordId = getRecordId(name, brand);
+        const res = await fetch('/api/get-prompt-by-id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recordId }),
+        });
+        if (!res.ok) throw new Error(`Failed to fetch data for "${name}"`);
+        const data = await res.json();
+        fetchedReferences.push({
+          name,
+          positive_prompt: data.positive_prompt ?? '',
+        });
+      }
 
       // Send the positive_prompts directly to n8n — no Airtable lookup needed there
       const response = await fetch('/api/create-blended-prompt', {
