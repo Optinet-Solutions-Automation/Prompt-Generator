@@ -2,10 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Maps the URL segment (e.g. "list-prompts") → the n8n webhook URL env var.
 // Specific API files with custom logic (generate-prompt, show-prompt-data,
-// generate-image, edit-image) take priority over this dynamic route automatically.
+// generate-image, edit-image, get-prompt-by-id) take priority over this dynamic
+// route automatically — those are NOT listed here.
 const WEBHOOK_MAP: Record<string, string | undefined> = {
   'list-prompts':          process.env.N8N_WEBHOOK_LIST_PROMPTS,
-  'get-prompt-by-id':      process.env.N8N_WEBHOOK_GET_PROMPT_BY_ID,
   'save-prompt':           process.env.N8N_WEBHOOK_SAVE_PROMPT,
   'save-as-reference':     process.env.N8N_WEBHOOK_SAVE_AS_REFERENCE,
   'remove-reference':      process.env.N8N_WEBHOOK_REMOVE_REFERENCE,
