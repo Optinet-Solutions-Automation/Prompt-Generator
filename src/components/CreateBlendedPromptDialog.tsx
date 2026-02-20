@@ -88,12 +88,18 @@ export function CreateBlendedPromptDialog({
       const fetchedReferences: { name: string; positive_prompt: string }[] = [];
       for (const name of selectedNames) {
         const recordId = getRecordId(name, brand);
+        if (!recordId) {
+          throw new Error(`Could not find record ID for "${name}". Try refreshing the page.`);
+        }
         const res = await fetch('/api/get-prompt-by-id', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recordId }),
         });
-        if (!res.ok) throw new Error(`Failed to fetch data for "${name}"`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(`Failed to load "${name}": ${errData.details || res.status}`);
+        }
         const data = await res.json();
         fetchedReferences.push({
           name,
@@ -108,26 +114,32 @@ export function CreateBlendedPromptDialog({
         body: JSON.stringify({ brand, references: fetchedReferences }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate blended prompt');
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.details || errData.error || `Server error ${response.status}`);
+      }
 
       const result = await response.json();
 
+      // n8n may return an array — extract the first element
+      const data = Array.isArray(result) ? result[0] : result;
+
       // n8n returns the full set of fields directly
       setGeneratedData({
-        format_layout:   result.format_layout   ?? '',
-        primary_object:  result.primary_object  ?? '',
-        subject:         result.subject         ?? '',
-        lighting:        result.lighting        ?? '',
-        mood:            result.mood            ?? '',
-        background:      result.background      ?? '',
-        positive_prompt: result.positive_prompt ?? '',
-        negative_prompt: result.negative_prompt ?? '',
+        format_layout:   data.format_layout   ?? '',
+        primary_object:  data.primary_object  ?? '',
+        subject:         data.subject         ?? '',
+        lighting:        data.lighting        ?? '',
+        mood:            data.mood            ?? '',
+        background:      data.background      ?? '',
+        positive_prompt: data.positive_prompt ?? '',
+        negative_prompt: data.negative_prompt ?? '',
       });
 
       setStep('result');
     } catch (err) {
       console.error('Error generating blended prompt:', err);
-      setError('Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsGenerating(false);
     }
