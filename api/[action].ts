@@ -1,9 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Maps URL path → n8n webhook env var.
-// All of these are simple pass-through proxies with no custom logic.
-// Routes with custom logic (generate-prompt, show-prompt-data, generate-image, edit-image)
-// stay as their own individual files and take priority over this catch-all.
+// Maps the URL segment (e.g. "list-prompts") → the n8n webhook URL env var.
+// Specific API files with custom logic (generate-prompt, show-prompt-data,
+// generate-image, edit-image) take priority over this dynamic route automatically.
 const WEBHOOK_MAP: Record<string, string | undefined> = {
   'list-prompts':          process.env.N8N_WEBHOOK_LIST_PROMPTS,
   'get-prompt-by-id':      process.env.N8N_WEBHOOK_GET_PROMPT_BY_ID,
@@ -17,14 +16,13 @@ const WEBHOOK_MAP: Record<string, string | undefined> = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Extract the last segment of the path (e.g. "list-prompts" from /api/list-prompts)
-  const pathParts = Array.isArray(req.query.path) ? req.query.path : [req.query.path ?? ''];
-  const action = pathParts[pathParts.length - 1];
+  // req.query.action is the URL segment, e.g. "list-prompts"
+  const action = req.query.action as string;
 
   const webhookUrl = WEBHOOK_MAP[action];
 
   if (!webhookUrl) {
-    console.error(`Unknown or unconfigured API route: ${action}`);
+    console.error(`Unknown or unconfigured API route: "${action}"`);
     return res.status(404).json({ error: `Unknown API route: ${action}` });
   }
 
@@ -34,13 +32,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await fetch(webhookUrl, {
       method: isGet ? 'GET' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Don't send a body for GET requests
       body: isGet ? undefined : JSON.stringify(req.body),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`n8n webhook error for ${action}:`, response.status, errorText);
+      console.error(`n8n webhook error for "${action}":`, response.status, errorText);
       return res.status(500).json({
         error: `Webhook failed for ${action}`,
         details: errorText,
@@ -51,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error(`Error in API route ${action}:`, error);
+    console.error(`Error in API route "${action}":`, error);
     return res.status(500).json({
       error: `Failed to call ${action}`,
       details: error instanceof Error ? error.message : 'Unknown error',
