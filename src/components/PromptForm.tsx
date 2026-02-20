@@ -12,6 +12,7 @@ import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
 import { Archive, Heart, Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { FormData, BRANDS, ReferencePromptData } from "@/types/prompt";
 import { usePromptList } from "@/hooks/usePromptList";
+import { toast } from "sonner";
 
 interface PromptFormProps {
   formData: FormData;
@@ -72,6 +73,7 @@ export function PromptForm({
       setRenameInput('');
       onFieldChange('reference', fullNewName); // keep the renamed reference selected
       refetch();                               // reload dropdown with new name
+      toast.success('Reference renamed successfully');
     } catch (error) {
       console.error('Error renaming reference:', error);
       setRenameError('Something went wrong. Please try again.');
@@ -108,8 +110,10 @@ export function PromptForm({
       setArchiveDialogOpen(false);
       onFieldChange('reference', ''); // clear the selection
       refetch();                      // refresh the dropdown
+      toast.success('Reference archived');
     } catch (error) {
       console.error('Error archiving reference:', error);
+      toast.error('Failed to archive. Please try again.');
     } finally {
       setIsArchiving(false);
     }

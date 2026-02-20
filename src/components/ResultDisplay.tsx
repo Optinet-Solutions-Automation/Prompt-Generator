@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface ResultDisplayProps {
   prompt: string;
@@ -111,6 +112,7 @@ export function ResultDisplay({
       setRenameInput('');
       onMetadataChange?.('reference', fullNewName); // keep the renamed reference selected
       refetch();                                     // reload dropdown with new name
+      toast.success('Reference renamed successfully');
     } catch (error) {
       console.error('Error renaming reference:', error);
       setRenameError('Something went wrong. Please try again.');
@@ -132,8 +134,10 @@ export function ResultDisplay({
       setArchiveDialogOpen(false);
       onMetadataChange?.('reference', ''); // clear the selection
       refetch();                            // refresh the dropdown
+      toast.success('Reference archived');
     } catch (error) {
       console.error('Error archiving reference:', error);
+      toast.error('Failed to archive. Please try again.');
     } finally {
       setIsArchiving(false);
     }
@@ -188,6 +192,7 @@ export function ResultDisplay({
       setSaveAsRefOpen(false);
       setRefTitle('');
       refetch();
+      toast.success('Saved as new reference');
     } catch (err) {
       console.error('Error saving reference:', err);
       setRefSaveError('Something went wrong. Please try again.');
