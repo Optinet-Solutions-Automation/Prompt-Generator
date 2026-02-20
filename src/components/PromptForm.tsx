@@ -9,6 +9,7 @@ import { FormField } from "./FormField";
 import { ReferenceSelect } from "./ReferenceSelect";
 import { PositionAndRatioSelector } from "./PositionAndRatioSelector";
 import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
+import { CreateBlendedPromptDialog } from "./CreateBlendedPromptDialog";
 import { Archive, Heart, Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { FormData, BRANDS, ReferencePromptData } from "@/types/prompt";
 import { usePromptList } from "@/hooks/usePromptList";
@@ -39,6 +40,9 @@ export function PromptForm({
 }: PromptFormProps) {
   // Load all prompts from Airtable via n8n
   const { getReferencesForBrand, getRecordId, refetch, isLoading: isLoadingList, error: listError } = usePromptList();
+
+  // Create blended prompt dialog state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Archive dialog state
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -176,36 +180,51 @@ export function PromptForm({
             disabled={!formData.brand || isLoadingList || availableReferences.length === 0}
             references={availableReferences}
           />
-          {/* Rename + Archive buttons — only shown when a reference is selected */}
-          {formData.reference && (
+          {/* Action buttons row — always visible when a brand is selected */}
+          {formData.brand && (
             <div className="flex justify-end gap-1">
+              {/* Create New Prompt — lets user blend multiple references into a new one */}
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  // Pre-fill with just the short name (before " — ") so the user
-                  // only edits the name, not the description.
-                  const shortName = formData.reference.split(' — ')[0].trim();
-                  setRenameInput(shortName);
-                  setRenameError('');
-                  setRenameDialogOpen(true);
-                }}
+                onClick={() => setCreateDialogOpen(true)}
                 className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
               >
-                <Pencil className="h-3 w-3" />
-                Rename
+                <Sparkles className="h-3 w-3" />
+                Create New Prompt
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setArchiveDialogOpen(true)}
-                className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Archive className="h-3 w-3" />
-                Archive
-              </Button>
+
+              {/* Rename + Archive — only shown when a reference is selected */}
+              {formData.reference && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const shortName = formData.reference.split(' — ')[0].trim();
+                      setRenameInput(shortName);
+                      setRenameError('');
+                      setRenameDialogOpen(true);
+                    }}
+                    className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Rename
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setArchiveDialogOpen(true)}
+                    className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Archive className="h-3 w-3" />
+                    Archive
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -319,6 +338,16 @@ export function PromptForm({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create blended prompt dialog */}
+      <CreateBlendedPromptDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        brand={formData.brand}
+        references={availableReferences}
+        getRecordId={getRecordId}
+        onSaved={refetch}
+      />
 
       {/* Archive confirmation dialog */}
       <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
