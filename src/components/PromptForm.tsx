@@ -2,11 +2,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FormField } from "./FormField";
 import { ReferenceSelect } from "./ReferenceSelect";
 import { PositionAndRatioSelector } from "./PositionAndRatioSelector";
 import { ReferencePromptDataDisplay } from "./ReferencePromptDataDisplay";
-import { Archive, Heart, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { Archive, Heart, Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { FormData, BRANDS, ReferencePromptData } from "@/types/prompt";
 import { usePromptList } from "@/hooks/usePromptList";
 
@@ -36,9 +39,46 @@ export function PromptForm({
   // Load all prompts from Airtable via n8n
   const { getReferencesForBrand, getRecordId, refetch, isLoading: isLoadingList, error: listError } = usePromptList();
 
-  // Archive dialog state — lives here since the button is next to the reference dropdown
+  // Archive dialog state
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameInput, setRenameInput] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameError, setRenameError] = useState('');
+
+  const handleRename = async () => {
+    if (!renameInput.trim()) { setRenameError('Please enter a name.'); return; }
+    if (!selectedRecordId) return;
+    setIsRenaming(true);
+    setRenameError('');
+    try {
+      // Preserve the description part (everything after " — ") so only the
+      // short name changes. e.g. "Royal Casino — A right-aligned..." becomes
+      // "New Name — A right-aligned..." in Airtable.
+      const parts = formData.reference.split(' — ');
+      const existingDescription = parts.length > 1 ? parts.slice(1).join(' — ').trim() : '';
+      const fullNewName = renameInput.trim() + (existingDescription ? ' — ' + existingDescription : '');
+
+      const response = await fetch('/api/rename-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId: selectedRecordId, newName: fullNewName }),
+      });
+      if (!response.ok) throw new Error('Failed to rename reference');
+      setRenameDialogOpen(false);
+      setRenameInput('');
+      onFieldChange('reference', fullNewName); // keep the renamed reference selected
+      refetch();                               // reload dropdown with new name
+    } catch (error) {
+      console.error('Error renaming reference:', error);
+      setRenameError('Something went wrong. Please try again.');
+    } finally {
+      setIsRenaming(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,9 +172,26 @@ export function PromptForm({
             disabled={!formData.brand || isLoadingList || availableReferences.length === 0}
             references={availableReferences}
           />
-          {/* Archive button — only shown when a reference is selected */}
+          {/* Rename + Archive buttons — only shown when a reference is selected */}
           {formData.reference && (
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // Pre-fill with just the short name (before " — ") so the user
+                  // only edits the name, not the description.
+                  const shortName = formData.reference.split(' — ')[0].trim();
+                  setRenameInput(shortName);
+                  setRenameError('');
+                  setRenameDialogOpen(true);
+                }}
+                className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <Pencil className="h-3 w-3" />
+                Rename
+              </Button>
               <Button
                 type="button"
                 variant="ghost"
@@ -143,7 +200,7 @@ export function PromptForm({
                 className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
               >
                 <Archive className="h-3 w-3" />
-                Archive reference
+                Archive
               </Button>
             </div>
           )}
@@ -232,6 +289,33 @@ export function PromptForm({
           Favorites
         </Button>
       </div>
+      {/* Rename dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename Reference</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="rename-input-form">New name</Label>
+            <Input
+              id="rename-input-form"
+              value={renameInput}
+              onChange={(e) => { setRenameInput(e.target.value); setRenameError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+              disabled={isRenaming}
+              autoFocus
+            />
+            {renameError && <p className="text-sm text-destructive">{renameError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)} disabled={isRenaming}>Cancel</Button>
+            <Button onClick={handleRename} disabled={isRenaming}>
+              {isRenaming ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Renaming…</> : 'Rename'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Archive confirmation dialog */}
       <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
         <AlertDialogContent>
