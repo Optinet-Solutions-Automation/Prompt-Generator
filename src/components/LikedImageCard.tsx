@@ -15,8 +15,9 @@ export function LikedImageCard({ imgUrl, recordId, onView, onDownload, onUnlike 
       <img
         src={imgUrl}
         alt={recordId}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover cursor-pointer"
         loading="lazy"
+        onClick={onView}
       />
       {/* Overlay buttons - always visible */}
       <div className="absolute top-2 left-2 flex gap-1.5 z-10">
