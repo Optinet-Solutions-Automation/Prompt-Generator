@@ -80,10 +80,8 @@ export function ResultDisplay({
   const selectedRecordId = metadata?.reference ? getRecordId(metadata.reference, metadata?.brand || '') : '';
 
   // Resolution and backend selection for image generation
-  type Resolution = "1K" | "2K" | "4K";
-  type BackendSource = "n8n" | "cloud-run";
+  type Resolution = "1K" | "2K" | "3K" | "4K";
   const [resolution, setResolution] = useState<Resolution>("1K");
-  const [backendSource, setBackendSource] = useState<BackendSource>("n8n");
 
   // Create blended prompt dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -330,10 +328,8 @@ export function ResultDisplay({
           prompt: editablePrompt,
           provider,
           aspectRatio: metadata?.aspectRatio || "1:1",
-          backend: backendSource,
+          backend: "cloud-run",
           resolution,
-          // also send imageSize for n8n backward compat
-          imageSize: backendSource === "n8n" ? "default" : resolution,
         }),
       });
 
@@ -753,10 +749,10 @@ export function ResultDisplay({
         <p className="text-center text-muted-foreground text-xs sm:text-sm mb-4">Generate images using this prompt</p>
 
         {/* Resolution toggle */}
-        <div className="mb-3">
+        <div className="mb-4">
           <p className="text-center text-xs text-muted-foreground mb-2">Resolution</p>
           <div className="flex justify-center gap-2">
-            {(["1K", "2K", "4K"] as const).map((r) => (
+            {(["1K", "2K", "3K", "4K"] as const).map((r) => (
               <Button
                 key={r}
                 type="button"
@@ -769,36 +765,6 @@ export function ResultDisplay({
               </Button>
             ))}
           </div>
-        </div>
-
-        {/* Backend selector */}
-        <div className="mb-4">
-          <p className="text-center text-xs text-muted-foreground mb-2">Image Generator</p>
-          <div className="flex justify-center gap-2">
-            <Button
-              type="button"
-              variant={backendSource === "n8n" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setBackendSource("n8n")}
-              className={`min-w-[80px] ${backendSource === "n8n" ? "gradient-primary" : ""}`}
-            >
-              n8n
-            </Button>
-            <Button
-              type="button"
-              variant={backendSource === "cloud-run" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setBackendSource("cloud-run")}
-              className={`min-w-[100px] ${backendSource === "cloud-run" ? "gradient-primary" : ""}`}
-            >
-              Cloud Run
-            </Button>
-          </div>
-          {backendSource === "cloud-run" && (
-            <p className="text-center text-[11px] text-muted-foreground/60 mt-1.5">
-              High-res via Cloud Run · {resolution} output
-            </p>
-          )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">

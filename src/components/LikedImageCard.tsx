@@ -1,4 +1,4 @@
-import { Heart, Download, Eye } from 'lucide-react';
+import { Heart, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LikedImageCardProps {
@@ -43,15 +43,6 @@ export function LikedImageCard({ imgUrl, recordId, onView, onDownload, onUnlike 
           <Download className="w-4 h-4 text-primary-foreground" />
         </button>
         
-        {/* View */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onView(); }}
-          className="w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-primary hover:scale-110 transition-transform cursor-pointer"
-          aria-label="View full size"
-          title="View full size"
-        >
-          <Eye className="w-4 h-4 text-primary-foreground" />
-        </button>
       </div>
     </div>
   );
