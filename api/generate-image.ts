@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log('Sending to Cloud Run backend:', { prompt, provider, aspectRatio, resolution });
 
-      const response = await fetch(cloudRunUrl, {
+      const response = await fetch(`${cloudRunUrl}/generate-image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
