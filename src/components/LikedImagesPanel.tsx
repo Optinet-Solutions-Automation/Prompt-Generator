@@ -157,11 +157,15 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
         - Favorites panel:    z-1001 (always on top — clicks always go through to the grid)
       */}
 
-      {/* Dim backdrop — visual only, does NOT block clicks */}
+      {/* Dim backdrop — extends beyond viewport so no edges show */}
       <div
-        className="fixed inset-0 bg-black/70 animate-fade-in"
-        style={{ zIndex: 998, pointerEvents: 'none' }}
         aria-hidden="true"
+        style={{
+          position: 'fixed', top: -100, left: -100, right: -100, bottom: -100,
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          zIndex: 998,
+          pointerEvents: 'none',
+        }}
       />
 
       {/* Clickable area behind panel — closes panel when clicked outside */}
