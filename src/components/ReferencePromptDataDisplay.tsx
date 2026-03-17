@@ -83,6 +83,39 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
       const result = await response.json();
       if (result.value) {
         onChange(field, result.value);
+
+        // Re-sync positive_prompt so generate-prompt workflow always has an accurate base.
+        // That workflow only reads positive_prompt — not individual fields — so it must stay current.
+        if (field !== 'positive_prompt') {
+          const updatedFields = {
+            subject:    field === 'subject'    ? result.value : data.subject,
+            lighting:   field === 'lighting'   ? result.value : data.lighting,
+            mood:       field === 'mood'        ? result.value : data.mood,
+            background: field === 'background' ? result.value : data.background,
+          };
+
+          const ppResponse = await fetch('/api/regenerate-reference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              field: 'positive_prompt',
+              brand,
+              category,
+              temperature,
+              instruction:       fieldInstructions['positive_prompt'] || '',
+              globalInstruction: globalInstruction.trim(),
+              format_layout:     data.format_layout,
+              primary_object:    data.primary_object,
+              ...updatedFields,
+              positive_prompt:   data.positive_prompt,
+            }),
+          });
+
+          if (ppResponse.ok) {
+            const ppResult = await ppResponse.json();
+            if (ppResult.value) onChange('positive_prompt', ppResult.value);
+          }
+        }
       }
     } catch (error) {
       console.error('Error regenerating field:', error);
