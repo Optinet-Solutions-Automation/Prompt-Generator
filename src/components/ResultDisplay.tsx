@@ -327,7 +327,7 @@ export function ResultDisplay({
         body: JSON.stringify({
           prompt: editablePrompt,
           provider,
-          aspectRatio: metadata?.aspectRatio || "1:1",
+          aspectRatio: metadata?.aspectRatio || "16:9",
           backend: "cloud-run",
           resolution,
         }),
