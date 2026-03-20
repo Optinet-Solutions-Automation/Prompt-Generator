@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCloudRunIdToken } from './_cloudrun-auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -14,7 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const cloudRunUrl = 'https://image-generator-933050179388.us-central1.run.app/edit-image';
+  const baseUrl = process.env.CLOUD_RUN_URL || 'https://image-generator-933050179388.us-central1.run.app';
+  const cloudRunUrl = `${baseUrl}/edit-image`;
 
   try {
     const { imageUrl, editInstructions, resolution = '1K' } = req.body;
@@ -23,12 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Image URL and edit instructions are required' });
     }
 
+    const idToken = await getCloudRunIdToken();
+
     console.log('Sending image edit request to Cloud Run:', { imageUrl, editInstructions, resolution });
 
     const response = await fetch(cloudRunUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
       },
       body: JSON.stringify({
         imageUrl,

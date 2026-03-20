@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCloudRunIdToken } from './_cloudrun-auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -23,16 +24,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Cloud Run backend (high-res 1K/2K/4K) ──────────────────────────────
     if (backend === 'cloud-run') {
-      const cloudRunUrl = process.env.NEXT_PUBLIC_IMAGE_API_URL;
+      const cloudRunUrl = process.env.CLOUD_RUN_URL || process.env.NEXT_PUBLIC_IMAGE_API_URL;
       if (!cloudRunUrl) {
-        return res.status(500).json({ error: 'NEXT_PUBLIC_IMAGE_API_URL is not configured' });
+        return res.status(500).json({ error: 'CLOUD_RUN_URL is not configured' });
       }
+
+      const idToken = await getCloudRunIdToken();
 
       console.log('Sending to Cloud Run backend:', { prompt, provider, aspectRatio, resolution });
 
       const response = await fetch(`${cloudRunUrl}/generate-image`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           prompt,
           provider,
