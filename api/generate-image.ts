@@ -6,8 +6,20 @@ async function getCloudRunIdToken(): Promise<string> {
   const clientSecret = process.env.CLOUD_RUN_CLIENT_SECRET;
 
   if (!refreshToken || !clientId || !clientSecret) {
-    throw new Error('Missing Cloud Run auth env vars');
+    const missing = [
+      !refreshToken && 'CLOUD_RUN_REFRESH_TOKEN',
+      !clientId     && 'CLOUD_RUN_CLIENT_ID',
+      !clientSecret && 'CLOUD_RUN_CLIENT_SECRET',
+    ].filter(Boolean).join(', ');
+    throw new Error(`Missing Cloud Run auth env vars: ${missing}`);
   }
+
+  // Log token lengths to help diagnose truncation issues
+  console.log('Cloud Run auth: token lengths —', {
+    refreshToken: refreshToken.length,
+    clientId: clientId.length,
+    clientSecret: clientSecret.length,
+  });
 
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -21,8 +33,9 @@ async function getCloudRunIdToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to refresh Cloud Run token: ${error}`);
+    const errorBody = await response.text();
+    console.error('Google token endpoint error:', response.status, errorBody);
+    throw new Error(`Failed to refresh Cloud Run token (${response.status}): ${errorBody}`);
   }
 
   const data = await response.json();
