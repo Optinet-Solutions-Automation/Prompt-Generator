@@ -1,55 +1,79 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createSign } from 'crypto';
 
-// Uses a Google Service Account JSON key to get a short-lived ID token for Cloud Run.
-// The service account JSON is stored as a single env var — no refresh tokens needed.
-async function getCloudRunIdToken(cloudRunUrl: string): Promise<string> {
-  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!saJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON env var is not set');
+/**
+ * Authenticates to Cloud Run using Vercel Workload Identity Federation (WIF).
+ *
+ * Flow:
+ *  1. Vercel injects a short-lived OIDC token into each function invocation
+ *  2. We swap it with Google STS for a federated access token
+ *  3. We use that access token to impersonate the service account and get a
+ *     Cloud Run ID token (the thing Cloud Run actually accepts)
+ *
+ * No keys, no refresh tokens — everything is automatic.
+ */
+async function getCloudRunIdToken(cloudRunUrl: string, req: VercelRequest): Promise<string> {
+  const workloadProvider = process.env.GCP_WORKLOAD_PROVIDER;
+  const serviceAccount   = process.env.GCP_SERVICE_ACCOUNT;
 
-  let sa: { client_email: string; private_key: string };
-  try {
-    sa = JSON.parse(saJson);
-  } catch {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON');
+  if (!workloadProvider || !serviceAccount) {
+    const missing = [
+      !workloadProvider && 'GCP_WORKLOAD_PROVIDER',
+      !serviceAccount   && 'GCP_SERVICE_ACCOUNT',
+    ].filter(Boolean).join(', ');
+    throw new Error(`Missing env vars: ${missing}`);
   }
 
-  // Build a JWT that asks Google to issue an ID token scoped to our Cloud Run URL
-  const now = Math.floor(Date.now() / 1000);
-  const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-  const payload = Buffer.from(JSON.stringify({
-    iss: sa.client_email,
-    sub: sa.client_email,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-    target_audience: cloudRunUrl, // tells Google which service we want to call
-  })).toString('base64url');
+  // Vercel injects the OIDC token into the request header for each invocation
+  const oidcToken =
+    (req.headers['x-vercel-oidc-token'] as string | undefined) ||
+    process.env.VERCEL_OIDC_TOKEN;
 
-  const sign = createSign('RSA-SHA256');
-  sign.update(`${header}.${payload}`);
-  const signature = sign.sign(sa.private_key, 'base64url');
-  const jwt = `${header}.${payload}.${signature}`;
+  if (!oidcToken) {
+    throw new Error(
+      'No Vercel OIDC token found. Make sure OIDC is enabled in Vercel project settings ' +
+      '(Settings → Security → Enable Vercel Authentication).'
+    );
+  }
 
-  // Exchange the signed JWT for a Google-issued ID token
-  const response = await fetch('https://oauth2.googleapis.com/token', {
+  // ── Step 1: Exchange Vercel OIDC token → Google federated access token ──
+  const stsRes = await fetch('https://sts.googleapis.com/v1/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
+      grant_type:           'urn:ietf:params:oauth:grant-type:token-exchange',
+      audience:             `//iam.googleapis.com/${workloadProvider}`,
+      scope:                'https://www.googleapis.com/auth/cloud-platform',
+      requested_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+      subject_token_type:   'urn:ietf:params:oauth:token-type:jwt',
+      subject_token:        oidcToken,
     }),
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error('Google token endpoint error:', response.status, errorBody);
-    throw new Error(`Failed to get Cloud Run ID token (${response.status}): ${errorBody}`);
+  if (!stsRes.ok) {
+    const err = await stsRes.text();
+    throw new Error(`Google STS token exchange failed (${stsRes.status}): ${err}`);
   }
+  const { access_token: federatedToken } = await stsRes.json();
 
-  const data = await response.json();
-  if (data.id_token) return data.id_token;
-  throw new Error('No id_token returned from Google token endpoint');
+  // ── Step 2: Use federated token to generate a Cloud Run ID token ─────────
+  const idTokenRes = await fetch(
+    `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccount}:generateIdToken`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${federatedToken}`,
+      },
+      body: JSON.stringify({ audience: cloudRunUrl, includeEmail: true }),
+    }
+  );
+
+  if (!idTokenRes.ok) {
+    const err = await idTokenRes.text();
+    throw new Error(`generateIdToken failed (${idTokenRes.status}): ${err}`);
+  }
+  const { token } = await idTokenRes.json();
+  return token;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -69,26 +93,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Cloud Run backend (high-res 1K/2K/3K/4K) ───────────────────────────
     if (backend === 'cloud-run') {
-      const cloudRunUrl = process.env.CLOUD_RUN_URL || process.env.NEXT_PUBLIC_IMAGE_API_URL;
+      const cloudRunUrl =
+        process.env.GCP_CLOUD_RUN_URL ||
+        process.env.CLOUD_RUN_URL ||
+        process.env.NEXT_PUBLIC_IMAGE_API_URL;
+
       if (!cloudRunUrl) {
-        return res.status(500).json({ error: 'CLOUD_RUN_URL is not configured' });
+        return res.status(500).json({ error: 'GCP_CLOUD_RUN_URL is not configured' });
       }
 
-      const idToken = await getCloudRunIdToken(cloudRunUrl);
+      const idToken = await getCloudRunIdToken(cloudRunUrl, req);
 
-      console.log('Sending to Cloud Run backend:', { prompt, provider, aspectRatio, resolution });
+      console.log('Sending to Cloud Run:', { provider, aspectRatio, resolution });
 
       const response = await fetch(`${cloudRunUrl}/generate-image`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type':  'application/json',
           'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           prompt,
           provider,
           aspectRatio: aspectRatio || '1:1',
-          resolution: resolution || '1K',
+          resolution:  resolution  || '1K',
         }),
       });
 
@@ -101,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const data = await response.json();
-      console.log('Cloud Run RAW response:', JSON.stringify(data));
+      console.log('Cloud Run response:', JSON.stringify(data));
       const result = Array.isArray(data) ? data[0] : data;
       return res.status(200).json(result);
     }
@@ -112,8 +140,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Image generation webhook URL is not configured' });
     }
 
-    console.log('Sending image generation request to n8n:', { prompt, provider, aspectRatio, imageSize });
-
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -121,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         prompt,
         provider,
         aspectRatio: aspectRatio || '1:1',
-        imageSize: imageSize || 'default',
+        imageSize:   imageSize   || 'default',
       }),
     });
 
@@ -131,7 +157,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await response.json();
-    console.log('n8n RAW response:', JSON.stringify(data));
     const result = Array.isArray(data) ? data[0] : data;
     return res.status(200).json(result);
 
