@@ -5,30 +5,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { LikedImageCard } from './LikedImageCard';
 import { HtmlConversionModal } from './HtmlConversionModal';
 
-const airtableConfig = {
-  pat: import.meta.env.VITE_AIRTABLE_PAT as string,
-  baseId: import.meta.env.VITE_AIRTABLE_BASE_ID as string,
-  tableName: import.meta.env.VITE_AIRTABLE_TABLE_NAME as string,
-};
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-interface AirtableRecord {
+// Shape of a row coming from Supabase liked_images table
+interface LikedImageRow {
   id: string;
-  fields: Record<string, unknown>;
-}
-
-function getField(fields: Record<string, unknown>, ...keys: string[]): string | undefined {
-  for (const key of keys) {
-    if (fields[key] && typeof fields[key] === 'string') return fields[key] as string;
-  }
-  return undefined;
-}
-
-function getImgUrl(record: AirtableRecord): string | undefined {
-  return getField(record.fields, 'image_from_url', 'Direct Link', 'img_url', 'Image URL', 'url');
-}
-
-function getRecordId(record: AirtableRecord): string {
-  return (getField(record.fields, 'record_id', 'Record_ID', 'name') || record.id);
+  record_id: string;
+  img_url: string;
+  brand_name: string;
+  created_at: string;
 }
 
 interface LikedImagesPanelProps {
@@ -38,7 +24,7 @@ interface LikedImagesPanelProps {
 }
 
 export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelProps) {
-  const [records, setRecords] = useState<AirtableRecord[]>([]);
+  const [records, setRecords] = useState<LikedImageRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
@@ -54,11 +40,11 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
 
   const hasBrand = !!brand && brand !== 'Select a brand';
   const headerLabel = hasBrand ? `FAVORITES — ${brand.toUpperCase()}` : 'FAVORITES';
-  const validRecords = records.filter(r => getImgUrl(r));
+  const validRecords = records.filter(r => !!r.img_url);
 
   const activeRecord = activeIdx !== null ? validRecords[activeIdx] : null;
-  const activeImgUrl = activeRecord ? getImgUrl(activeRecord) : undefined;
-  const activeRecordId = activeRecord ? getRecordId(activeRecord) : undefined;
+  const activeImgUrl = activeRecord?.img_url;
+  const activeRecordId = activeRecord?.record_id;
   const previewOpen = activeIdx !== null && !!activeImgUrl;
 
   const fetchLikedImages = useCallback(async () => {
@@ -66,16 +52,19 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
     setLoading(true);
     setError(null);
     try {
-      if (!airtableConfig.pat || !airtableConfig.baseId || !airtableConfig.tableName)
-        throw new Error('Missing Airtable configuration.');
-      const filterFormula = encodeURIComponent(`{brand_name}="${brand}"`);
-      const url = `https://api.airtable.com/v0/${airtableConfig.baseId}/${encodeURIComponent(airtableConfig.tableName)}?filterByFormula=${filterFormula}`;
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY)
+        throw new Error('Missing Supabase configuration.');
+      // Supabase REST API: filter by brand_name, ordered newest first
+      const url = `${SUPABASE_URL}/rest/v1/liked_images?brand_name=eq.${encodeURIComponent(brand)}&order=created_at.desc`;
       const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${airtableConfig.pat}`, 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
       });
-      if (!response.ok) throw new Error(`Airtable API error: ${response.status}`);
-      const data = await response.json();
-      setRecords(data.records || []);
+      if (!response.ok) throw new Error(`Supabase error: ${response.status}`);
+      const data: LikedImageRow[] = await response.json();
+      setRecords(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load liked images');
     } finally {
@@ -149,7 +138,7 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
   };
 
   const handleUnlike = async (recordId: string, imgUrl: string) => {
-    setRecords(prev => prev.filter(r => getRecordId(r) !== recordId));
+    setRecords(prev => prev.filter(r => r.record_id !== recordId));
     if (activeIdx !== null) {
       const newLen = validRecords.length - 1;
       setActiveIdx(newLen === 0 ? null : Math.min(activeIdx, newLen - 1));
@@ -165,11 +154,8 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
 
   const handleDownloadAll = async () => {
     for (const record of validRecords) {
-      const imgUrl = getImgUrl(record);
-      if (imgUrl) {
-        handleDownload(imgUrl, getRecordId(record));
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      handleDownload(record.img_url, record.record_id);
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
   };
 
@@ -312,20 +298,16 @@ export function LikedImagesPanel({ isOpen, onClose, brand }: LikedImagesPanelPro
             )}
             {hasBrand && !loading && !error && validRecords.length > 0 && (
               <div className="grid grid-cols-3 gap-3">
-                {validRecords.map((record, i) => {
-                  const imgUrl = getImgUrl(record)!;
-                  const recordId = getRecordId(record);
-                  return (
-                    <LikedImageCard
-                      key={record.id}
-                      imgUrl={imgUrl}
-                      recordId={recordId}
-                      onView={() => setActiveIdx(i)}
-                      onDownload={() => handleDownload(imgUrl, recordId)}
-                      onUnlike={() => handleUnlike(recordId, imgUrl)}
-                    />
-                  );
-                })}
+                {validRecords.map((record, i) => (
+                  <LikedImageCard
+                    key={record.id}
+                    imgUrl={record.img_url}
+                    recordId={record.record_id}
+                    onView={() => setActiveIdx(i)}
+                    onDownload={() => handleDownload(record.img_url, record.record_id)}
+                    onUnlike={() => handleUnlike(record.record_id, record.img_url)}
+                  />
+                ))}
               </div>
             )}
           </div>
