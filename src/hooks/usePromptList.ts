@@ -23,8 +23,11 @@ export function usePromptList() {
   useEffect(() => {
     setIsLoading(true);
     fetch('/api/list-prompts')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load prompt list');
+      .then(async res => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.details || body.error || `API error ${res.status}`);
+        }
         return res.json();
       })
       .then((data: AirtablePrompt[]) => {
