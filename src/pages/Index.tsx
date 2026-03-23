@@ -112,7 +112,10 @@ const Index = () => {
           <p className="text-muted-foreground text-base sm:text-lg max-w-lg mx-auto px-2">
             Create stunning AI image prompts tailored for your brand and campaign needs
           </p>
-          <Link to="/library" className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-muted hover:bg-muted/70 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/library"
+            className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/25 hover:border-primary/50 text-primary font-medium text-sm transition-all duration-150 shadow-sm hover:shadow"
+          >
             <Images className="w-4 h-4" />
             Image Library
           </Link>
