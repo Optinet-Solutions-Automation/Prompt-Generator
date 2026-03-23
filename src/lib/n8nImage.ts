@@ -63,7 +63,7 @@ export function normalizeN8nImageResponse(payload: unknown): {
   // Get fileId first - this is the most reliable
   const fileIdRaw = getString(item, 'fileId', 'file_id');
   
-  const imageUrl = getString(item, 'imageUrl', 'image_url', 'image', 'url');
+  const imageUrl = getString(item, 'public_url', 'imageUrl', 'image_url', 'image', 'url');
   const thumbnailUrlRaw = getString(
     item,
     'thumbnailUrl',
