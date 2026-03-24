@@ -94,15 +94,22 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
             background: field === 'background' ? result.value : data.background,
           };
 
+          // Tell GPT which field changed so it preserves everything else exactly
+          const changedFieldHint =
+            `CRITICAL: Only the "${field}" was just changed. ` +
+            `The subject MUST remain EXACTLY as described — same number of characters, same poses, same equipment, same clothing, same species. ` +
+            `Do NOT add, remove, or modify any characters. Only incorporate the updated ${field} into the scene.`;
+
           const ppResponse = await fetch('/api/regenerate-reference', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               field: 'positive_prompt',
+              changedField: field,
               brand,
               category,
               temperature,
-              instruction:       fieldInstructions['positive_prompt'] || '',
+              instruction:       changedFieldHint,
               globalInstruction: globalInstruction.trim(),
               format_layout:     data.format_layout,
               primary_object:    data.primary_object,
