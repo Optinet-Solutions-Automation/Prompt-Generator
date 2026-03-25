@@ -19,6 +19,17 @@ interface ReferencePromptDataDisplayProps {
   onSaved?: () => void;
 }
 
+// Brand color palettes — sent to n8n so GPT knows which colors are on-brand.
+// Fill in each brand's approved palette. GPT will enforce these in all outputs.
+const BRAND_PALETTES: Record<string, string> = {
+  FortunePlay:
+    'Yellow, orange, gold, warm amber, warm casino lighting. NEVER use blue, purple, cyan, neon, or cold tones.',
+  SpinJo:     '',
+  Roosterbet: '',
+  LuckyVibe:  '',
+  SpinsUp:    '',
+};
+
 // Fields that have a regenerate icon next to their label.
 // Subject/lighting/mood/background regenerate their own descriptions.
 // positive_prompt regenerates the full prompt using all current field values.
@@ -58,6 +69,8 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
     setRegeneratingField(field);
 
     try {
+      const brandColors = (brand && BRAND_PALETTES[brand]) || '';
+
       const response = await fetch('/api/regenerate-reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,6 +81,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
           temperature,
           instruction:        fieldInstructions[field] || '',
           globalInstruction:  globalInstruction.trim(),
+          brandColors,
           format_layout:   data.format_layout,
           primary_object:  data.primary_object,
           subject:         data.subject,
@@ -111,6 +125,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
               temperature,
               instruction:       changedFieldHint,
               globalInstruction: globalInstruction.trim(),
+              brandColors,
               format_layout:     data.format_layout,
               primary_object:    data.primary_object,
               ...updatedFields,
@@ -139,6 +154,8 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
     setIsRegeneratingAll(true);
 
     try {
+      const brandColors = (brand && BRAND_PALETTES[brand]) || '';
+
       const makeCall = (field: RegenerableField) =>
         fetch('/api/regenerate-reference', {
           method: 'POST',
@@ -150,6 +167,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
             temperature,
             instruction:        fieldInstructions[field] || '',
             globalInstruction:  globalInstruction.trim(),
+            brandColors,
             format_layout:   data.format_layout,
             primary_object:  data.primary_object,
             subject:         data.subject,
@@ -186,6 +204,7 @@ export function ReferencePromptDataDisplay({ data, isLoading, disabled, brand, c
           temperature,
           instruction:        fieldInstructions['positive_prompt'] || '',
           globalInstruction:  globalInstruction.trim(),
+          brandColors,
           format_layout:   data.format_layout,
           primary_object:  data.primary_object,
           subject:         subjectResult?.value    ?? data.subject,
