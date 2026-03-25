@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Download, FileCode, Images, RefreshCw, Trash2, X,
-  ChevronLeft, ChevronRight, Sparkles, Wand2, Bot, Cpu, Loader2, Plus, Save,
+  ChevronLeft, ChevronRight, Sparkles, Wand2, Bot, Cpu, Loader2, Plus, Save, Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +19,22 @@ interface GeneratedImage {
   resolution: string;
   storage_path: string;
   public_url: string;
+  // Optional — only set for favorites
+  brand_name?: string;
+  record_id?: string;
+  _isFavorite?: boolean;
 }
+
+// Brand colors for badges
+const BRAND_BADGE: Record<string, string> = {
+  FortunePlay: 'bg-amber-500 text-white',
+  SpinJo:      'bg-purple-500 text-white',
+  Roosterbet:  'bg-red-500 text-white',
+  LuckyVibe:   'bg-emerald-500 text-white',
+  SpinsUp:     'bg-sky-500 text-white',
+};
+
+const BRANDS = ['FortunePlay', 'SpinJo', 'Roosterbet', 'LuckyVibe', 'SpinsUp'];
 
 // ── Supabase helpers ────────────────────────────────────────────────────────────
 
@@ -41,6 +56,39 @@ async function fetchImages(page: number, filter: string): Promise<{ data: Genera
   if (!res.ok) throw new Error(`Failed to load images (${res.status})`);
   const data: GeneratedImage[] = await res.json();
   return { data, hasMore: data.length === PAGE_SIZE };
+}
+
+async function fetchFavorites(brandFilter: string): Promise<{ data: GeneratedImage[]; hasMore: boolean }> {
+  let query = `liked_images?select=*&order=created_at.desc`;
+  if (brandFilter !== 'all') query += `&brand_name=eq.${encodeURIComponent(brandFilter)}`;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${query}`, { headers: SB_HEADERS });
+  if (!res.ok) throw new Error(`Failed to load favorites (${res.status})`);
+  const raw = await res.json();
+  const data: GeneratedImage[] = raw
+    .filter((f: any) => !!f.img_url)
+    .map((f: any) => ({
+      id:           f.id,
+      created_at:   f.created_at,
+      filename:     f.record_id || '',
+      provider:     'favorite',
+      aspect_ratio: '',
+      resolution:   '',
+      storage_path: '',
+      public_url:   f.img_url,
+      brand_name:   f.brand_name || '',
+      record_id:    f.record_id  || '',
+      _isFavorite:  true,
+    }));
+  return { data, hasMore: false };
+}
+
+async function unlikeImage(recordId: string, imgUrl: string): Promise<void> {
+  const res = await fetch('/api/unlike-img', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ record_id: recordId, img_url: imgUrl }),
+  });
+  if (!res.ok) throw new Error('Failed to remove favorite');
 }
 
 async function deleteImage(id: string): Promise<void> {
@@ -375,7 +423,11 @@ function Lightbox({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await deleteImage(image.id);
+      if (image._isFavorite) {
+        await unlikeImage(image.record_id || '', image.public_url);
+      } else {
+        await deleteImage(image.id);
+      }
       onDeleted(image.id);
       onClose();
     } catch {
@@ -486,21 +538,30 @@ function Lightbox({
         {/* Right panel */}
         <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 bg-zinc-900 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col max-h-[50vh] lg:max-h-none">
 
-          {/* Provider badge */}
-          {showBadge && (
+          {/* Provider / Brand badge */}
+          {(showBadge || image._isFavorite) && (
             <div className="px-5 pt-5 pb-4 border-b border-white/10 flex-shrink-0">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
-                isEdited
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                  : image.provider === 'gemini'
-                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              }`}>
-                {isEdited ? <Wand2 className="w-3.5 h-3.5" />
-                  : image.provider === 'gemini' ? <Cpu className="w-3.5 h-3.5" />
-                  : <Bot className="w-3.5 h-3.5" />}
-                {providerLabel(image.provider)}
-              </span>
+              {image._isFavorite && image.brand_name ? (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                  BRAND_BADGE[image.brand_name] || 'bg-white/20 text-white'
+                }`}>
+                  <Heart className="w-3.5 h-3.5" />
+                  {image.brand_name}
+                </span>
+              ) : showBadge ? (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                  isEdited
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : image.provider === 'gemini'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                }`}>
+                  {isEdited ? <Wand2 className="w-3.5 h-3.5" />
+                    : image.provider === 'gemini' ? <Cpu className="w-3.5 h-3.5" />
+                    : <Bot className="w-3.5 h-3.5" />}
+                  {providerLabel(image.provider)}
+                </span>
+              ) : null}
             </div>
           )}
 
@@ -529,8 +590,8 @@ function Lightbox({
               </div>
             </div>
 
-            {/* ── Edit Image section ── */}
-            <div className="px-5 py-5 space-y-3">
+            {/* ── Edit Image section (hidden for favorites) ── */}
+            {!image._isFavorite && <div className="px-5 py-5 space-y-3">
               {/* Section header */}
               <div className="flex items-center gap-2">
                 <Wand2 className="w-3.5 h-3.5 text-amber-400" />
@@ -596,7 +657,7 @@ function Lightbox({
               )}
 
               <p className="text-white/25 text-[10px] text-center">Ctrl+Enter to apply</p>
-            </div>
+            </div>}
           </div>
 
           {/* Fixed bottom actions */}
@@ -623,12 +684,12 @@ function Lightbox({
                 onClick={() => setConfirmDelete(true)}
                 className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-white/40 hover:text-destructive hover:bg-destructive/10 text-sm transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                Remove from library
+                {image._isFavorite ? <Heart className="w-3.5 h-3.5" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {image._isFavorite ? 'Remove from favorites' : 'Remove from library'}
               </button>
             ) : (
               <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 space-y-2">
-                <p className="text-xs text-white/70 text-center">Remove permanently?</p>
+                <p className="text-xs text-white/70 text-center">{image._isFavorite ? 'Remove from favorites?' : 'Remove permanently?'}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setConfirmDelete(false)} disabled={isDeleting}
                     className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors">
@@ -686,7 +747,11 @@ function ImageCard({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await deleteImage(image.id);
+      if (image._isFavorite) {
+        await unlikeImage(image.record_id || '', image.public_url);
+      } else {
+        await deleteImage(image.id);
+      }
       onDeleted(image.id);
     } catch {
       setIsDeleting(false);
@@ -713,8 +778,19 @@ function ImageCard({
         onError={() => setLoaded(true)}
       />
 
-      {/* Provider badge — only for Supabase images */}
-      {loaded && showBadge && !confirmDelete && (
+      {/* Brand badge for favorites */}
+      {loaded && image._isFavorite && image.brand_name && !confirmDelete && (
+        <div className="absolute top-2 left-2">
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shadow-sm ${
+            BRAND_BADGE[image.brand_name] || 'bg-black/60 text-white'
+          }`}>
+            {image.brand_name}
+          </span>
+        </div>
+      )}
+
+      {/* Provider badge — only for non-favorite Supabase images */}
+      {loaded && !image._isFavorite && showBadge && !confirmDelete && (
         <div className="absolute top-2 left-2">
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shadow-sm ${providerColors(image.provider)}`}>
             {image.provider === 'edit' && <Wand2 className="w-2.5 h-2.5" />}
@@ -768,28 +844,34 @@ function ImageCard({
 // ── Filters ────────────────────────────────────────────────────────────────────
 
 const FILTERS = [
-  { value: 'all',     label: 'All',     icon: Images },
-  { value: 'gemini',  label: 'Gemini',  icon: Cpu },
-  { value: 'chatgpt', label: 'ChatGPT', icon: Bot },
-  { value: 'edit',    label: 'Edited',  icon: Wand2 },
+  { value: 'all',       label: 'All',       icon: Images },
+  { value: 'gemini',    label: 'Gemini',    icon: Cpu },
+  { value: 'chatgpt',   label: 'ChatGPT',   icon: Bot },
+  { value: 'edit',      label: 'Edited',    icon: Wand2 },
+  { value: 'favorites', label: 'Favorites', icon: Heart },
 ];
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function ImageLibrary() {
-  const [images,    setImages]    = useState<GeneratedImage[]>([]);
-  const [page,      setPage]      = useState(0);
-  const [hasMore,   setHasMore]   = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error,     setError]     = useState<string | null>(null);
-  const [filter,    setFilter]    = useState('all');
-  const [lightbox,  setLightbox]  = useState<GeneratedImage | null>(null);
+  const [images,      setImages]      = useState<GeneratedImage[]>([]);
+  const [page,        setPage]        = useState(0);
+  const [hasMore,     setHasMore]     = useState(true);
+  const [isLoading,   setIsLoading]   = useState(false);
+  const [error,       setError]       = useState<string | null>(null);
+  const [filter,      setFilter]      = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all');
+  const [lightbox,    setLightbox]    = useState<GeneratedImage | null>(null);
 
-  const load = useCallback(async (pageNum: number, activeFilter: string, reset = false) => {
+  const isFavoritesMode = filter === 'favorites';
+
+  const load = useCallback(async (pageNum: number, activeFilter: string, activeBrand: string, reset = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, hasMore: more } = await fetchImages(pageNum, activeFilter);
+      const { data, hasMore: more } = activeFilter === 'favorites'
+        ? await fetchFavorites(activeBrand)
+        : await fetchImages(pageNum, activeFilter);
       setImages(prev => reset ? data : [...prev, ...data]);
       setHasMore(more);
       setPage(pageNum);
@@ -800,13 +882,20 @@ export default function ImageLibrary() {
     }
   }, []);
 
-  useEffect(() => { load(0, filter, true); }, [filter, load]);
+  useEffect(() => { load(0, filter, brandFilter, true); }, [filter, brandFilter, load]);
 
   const handleFilter = (f: string) => {
     if (f === filter) return;
     setFilter(f);
+    setBrandFilter('all');
     setImages([]);
     setPage(0);
+  };
+
+  const handleBrandFilter = (b: string) => {
+    if (b === brandFilter) return;
+    setBrandFilter(b);
+    setImages([]);
   };
 
   const handleDeleted = (id: string) => {
@@ -871,7 +960,7 @@ export default function ImageLibrary() {
                       active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${f.value === 'edit' && active ? 'text-amber-500' : ''}`} />
+                    <Icon className={`w-3.5 h-3.5 ${f.value === 'edit' && active ? 'text-amber-500' : ''} ${f.value === 'favorites' && active ? 'text-rose-500 fill-rose-500' : ''}`} />
                     <span className="hidden sm:inline">{f.label}</span>
                   </button>
                 );
@@ -879,7 +968,7 @@ export default function ImageLibrary() {
             </div>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={() => load(0, filter, true)} disabled={isLoading}
+          <Button variant="ghost" size="sm" onClick={() => load(0, filter, brandFilter, true)} disabled={isLoading}
             className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading && images.length > 0 ? 'animate-spin' : ''}`} />
@@ -887,6 +976,34 @@ export default function ImageLibrary() {
           </Button>
         </div>
       </div>
+
+      {/* Brand sub-filter — only shown in Favorites mode */}
+      {isFavoritesMode && (
+        <div className="sticky top-16 z-30 bg-background/80 backdrop-blur-md border-b border-border/50">
+          <div className="max-w-[1600px] mx-auto px-6 h-11 flex items-center gap-2 overflow-x-auto">
+            <span className="text-xs text-muted-foreground font-medium shrink-0 mr-1">Brand:</span>
+            <button
+              onClick={() => handleBrandFilter('all')}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                brandFilter === 'all' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+              }`}
+            >
+              All Brands
+            </button>
+            {BRANDS.map(b => (
+              <button
+                key={b}
+                onClick={() => handleBrandFilter(b)}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  brandFilter === b ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                }`}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="max-w-[1600px] mx-auto px-6 py-8">
@@ -899,7 +1016,7 @@ export default function ImageLibrary() {
             </div>
             <p className="text-foreground font-medium mb-1">Failed to load images</p>
             <p className="text-muted-foreground text-sm mb-6">{error}</p>
-            <Button variant="outline" onClick={() => load(0, filter, true)}>Try again</Button>
+            <Button variant="outline" onClick={() => load(0, filter, brandFilter, true)}>Try again</Button>
           </div>
         )}
 
@@ -949,7 +1066,7 @@ export default function ImageLibrary() {
         {/* Load more */}
         {hasMore && !isLoading && images.length > 0 && (
           <div className="flex justify-center mt-10">
-            <Button variant="outline" size="lg" onClick={() => load(page + 1, filter)} className="gap-2 px-8 rounded-xl">
+            <Button variant="outline" size="lg" onClick={() => load(page + 1, filter, brandFilter)} className="gap-2 px-8 rounded-xl">
               Load more images
             </Button>
           </div>
