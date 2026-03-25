@@ -134,31 +134,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(result);
     }
 
-    // ── n8n backend (default) ──────────────────────────────────────────────
-    const webhookUrl = process.env.N8N_WEBHOOK_GENERATE_IMAGE;
-    if (!webhookUrl) {
-      return res.status(500).json({ error: 'Image generation webhook URL is not configured' });
-    }
-
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt,
-        provider,
-        aspectRatio: aspectRatio || '1:1',
-        imageSize:   imageSize   || 'default',
-      }),
+    // Cloud Run is the only supported backend
+    return res.status(400).json({
+      error: 'Only cloud-run backend is supported. Set backend: "cloud-run" in the request.',
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status).json({ error: 'Failed to generate image', details: errorText });
-    }
-
-    const data = await response.json();
-    const result = Array.isArray(data) ? data[0] : data;
-    return res.status(200).json(result);
 
   } catch (error) {
     console.error('Image generation error:', error);

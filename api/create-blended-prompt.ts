@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { chatCompletion } from './_openai';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -6,27 +7,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const n8nWebhookUrl = process.env.N8N_WEBHOOK_CREATE_BLENDED_PROMPT;
+    const { brand, references } = req.body;
 
-    if (!n8nWebhookUrl) {
-      console.error('N8N_WEBHOOK_CREATE_BLENDED_PROMPT environment variable not set');
-      throw new Error('Webhook URL not configured');
+    if (!brand || !references || !Array.isArray(references) || references.length === 0) {
+      return res.status(400).json({ error: 'brand and references array are required' });
     }
 
-    const response = await fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body),
+    const systemPrompt = `You are a creative director for casino and gambling brand imagery. You will receive multiple existing image prompts from a brand's reference library. Your task is to create a COMPLETELY NEW and UNIQUE prompt that takes creative inspiration from the references but is visually DISTINCT from all of them.
+
+Each field must be written with the SAME level of detail and length as a professional image brief — multiple sentences, specific visual details, camera angles, composition notes, colors, textures. DO NOT write short summaries.
+
+Return ONLY valid JSON with exactly these keys, no extra text, no markdown:
+{
+  "format_layout": "Describe the frame, aspect ratio, composition layout, and how elements are positioned in detail. Multiple sentences.",
+  "primary_object": "Describe the hero/main object in rich visual detail — material, size, style, decorative elements, proportions. Multiple sentences.",
+  "subject": "Describe the subject/character in full detail — pose, clothing, accessories, expression, placement in frame. Multiple sentences.",
+  "lighting": "Describe all light sources, colors, direction, shadows, highlights, glow effects, and mood they create. Multiple sentences.",
+  "mood": "Describe the emotional atmosphere, feeling, energy, and visual tone in detail. Multiple sentences.",
+  "background": "Describe the environment, depth, textures, colors, and background elements in detail. Multiple sentences.",
+  "positive_prompt": "Write a complete, detailed image generation prompt — several sentences covering all visual elements, style, colors, composition, and quality descriptors.",
+  "negative_prompt": "List everything to exclude — bad anatomy, text, watermarks, logos, blurry, dark areas, etc."
+}`;
+
+    const refList = references
+      .map((r: { name: string; positive_prompt: string }, i: number) =>
+        `${i + 1}. ${r.name}:\n${r.positive_prompt}`)
+      .join('\n\n');
+
+    const userPrompt = `Brand: ${brand}\n\nReference prompts to blend:\n${refList}\n\nCreate a new unique prompt that takes creative inspiration from these but produces a completely different image.`;
+
+    const raw = await chatCompletion({
+      systemPrompt,
+      userPrompt,
+      model: 'gpt-4o-mini',
+      temperature: 1.0,
+      responseFormat: 'json',
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('n8n create-blended-prompt webhook error:', response.status, errorText);
-      throw new Error(`n8n webhook failed with status ${response.status}`);
-    }
+    // Parse the JSON response, strip any markdown fences
+    const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const result = JSON.parse(cleaned);
 
-    const data = await response.json();
-    return res.status(200).json(data);
+    return res.status(200).json(result);
 
   } catch (error) {
     console.error('Error in create-blended-prompt API:', error);

@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { chatCompletion } from './_openai';
 
 const SUPABASE_URL             = process.env.SUPABASE_URL             || '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -49,36 +50,259 @@ async function sbDelete(path: string) {
   return true;
 }
 
-// Routes that still go through n8n (they involve GPT calls we want to keep there)
-const N8N_ROUTES: Record<string, string | undefined> = {
-  'regenerate-reference': process.env.N8N_WEBHOOK_REGENERATE_REFERENCE,
-  'convert-to-html':      process.env.N8N_WEBHOOK_CONVERT_HTML,
-};
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const action = req.query.action as string;
 
   try {
-    // ── Routes that still use n8n ──────────────────────────────────────────
-    if (N8N_ROUTES[action] !== undefined) {
-      const webhookUrl = N8N_ROUTES[action];
-      if (!webhookUrl) {
-        return res.status(500).json({ error: `n8n webhook not configured for: ${action}` });
+    // ── REGENERATE REFERENCE — direct OpenAI (was n8n) ─────────────────────
+    if (action === 'regenerate-reference') {
+      const { field, brand, temperature, instruction, globalInstruction, brandColors,
+              format_layout, primary_object, subject, lighting, mood, background, positive_prompt } = req.body;
+
+      const t = typeof temperature === 'number' ? temperature : 1.0;
+      const brandColorRule = brandColors ? `\nBRAND COLOR RULE: ${brandColors}` : '';
+
+      let systemPrompt = '';
+      let userPrompt = '';
+
+      if (field === 'subject') {
+        systemPrompt = `You are a costume designer for casino brand imagery.
+
+Your job is to give the existing character a COMPLETELY NEW LOOK that fits the theme —
+but the character must still be instantly recognizable as a ${brand} branded image.
+
+LOCKED — never change these:
+- The character's face, build, and body proportions
+- The species (rooster stays rooster)
+- The number of characters (1 stays 1, 2 stays 2 — never add or remove)
+- The framing/composition (close-up stays close-up)
+- Core brand identity — the character must still feel like it belongs to ${brand}
+
+MUST CHANGE — make these dramatically different:
+- Full outfit/costume (not just adding one small item — replace the whole look)
+- Multiple accessories (hat, glasses, jewelry, props — go all in)
+- Color palette of the clothing
+- Props they are holding or interacting with
+- Decorative elements around them
+
+Think: same face, same build, completely different outfit.
+
+Preserve ALL stylistic and rendering descriptors: if the original says "anthropomorphic", "3D rendered", "stylized", "ultra-detailed" — these MUST appear in your output.
+
+If an OVERALL CREATIVE DIRECTION is provided, apply it as the full costume theme while keeping brand identity.
+If a field-level INSTRUCTION is provided, it overrides everything else.
+
+IMPORTANT: Return ONLY the restyled subject description as plain text. No labels, no prefixes.
+${brandColorRule}`;
+
+        if (instruction) {
+          userPrompt = `Brand: ${brand}\n\nINSTRUCTION (follow this precisely): ${instruction}\nRestyle the subject's clothing based on this instruction. Keep everything else identical.\n\nOriginal Subject:\n${subject}`;
+        } else if (globalInstruction) {
+          userPrompt = `Brand: ${brand}\n\nTHEME TO APPLY TO OUTFIT ONLY: ${globalInstruction}\n\nOriginal Subject — change ONLY outfit/costume elements to match the theme, keep everything else word-for-word:\n${subject}`;
+        } else {
+          userPrompt = `Brand: ${brand}\n\nReturn this subject description exactly as written, no changes:\n${subject}`;
+        }
+
+      } else if (field === 'background') {
+        systemPrompt = `You are a visionary AI image prompt specialist for premium sports and betting brands.
+Your ONLY job is to write a single-paragraph "Background" description based on the user's instructions.
+
+CRITICAL RULES:
+1. EMBRACE SURREALISM & IMAGINATION: You are NOT bound by real-world physics or logic.
+2. NO REALITY CONSTRAINTS: It is 100% acceptable for subjects to be in impossible environments.
+3. BRAND VIBE: Even if the environment is wild or fantasy-based, it must feel high-budget, epic, and aligned with the ${brand} identity.
+4. ATMOSPHERE & LIGHTING: Describe the specific atmospheric effects of this imaginative world.
+5. NO TEXT: Zero readable text, signs, logos, or words in the background description.
+
+OUTPUT: Write ONLY the background description. No labels, no chat, no intro.
+${brandColorRule}`;
+
+        let bgInstruction = '';
+        if (instruction) {
+          bgInstruction = `SPECIFIC INSTRUCTION — follow this precisely:\n${instruction}\nBuild the background around this instruction while staying consistent with the scene above.`;
+        } else if (globalInstruction) {
+          bgInstruction = `Generate a background that CLEARLY reflects this theme: ${globalInstruction}\nThe theme must be the dominant visual concept of the background — not a subtle hint.`;
+        } else {
+          bgInstruction = `Generate a dramatically different background that fits naturally behind this subject.\nPick ONE clear environment. Make it specific and detailed — not generic.`;
+        }
+
+        userPrompt = `${globalInstruction ? `OVERALL CREATIVE DIRECTION: ${globalInstruction}\n\n` : ''}Brand: ${brand}\n\nCurrent scene — background MUST be consistent with all of these:\n- Format Layout: ${format_layout}\n- Primary Object: ${primary_object}\n- Subject: ${subject}\n\n${bgInstruction}\n\nWrite ONLY the new background description.`;
+
+      } else if (field === 'lighting') {
+        systemPrompt = `You are a cinematographer for casino brand imagery.
+
+Your job is to create a different lighting setup that transforms the scene.
+
+LOCKED — never change:
+- Physical consistency with the subject (character must still be lit, not obscured)
+- Brand energy (${brand} = dramatic, high-contrast, premium)
+
+MUST CHANGE — make these dramatically different:
+- Primary light source color, direction, and intensity
+- Accent and rim lighting
+- Atmospheric glow and effects
+- Shadow depth and contrast style
+- Overall color temperature
+
+Create a different lighting setup but ALWAYS stay within the brand's color palette.
+Different direction, different intensity, different shadow style — but on-brand colors only.
+
+If an OVERALL CREATIVE DIRECTION is provided, apply it as the lighting theme while keeping brand identity.
+If a field-level INSTRUCTION is provided, it overrides everything else.
+
+IMPORTANT: Return ONLY the lighting description as plain text. No labels, no prefixes.
+${brandColorRule}`;
+
+        if (instruction) {
+          userPrompt = `Brand: ${brand}\n\n${globalInstruction ? `OVERALL CREATIVE DIRECTION (apply to the lighting): ${globalInstruction}\n\n` : ''}INSTRUCTION (follow this precisely): ${instruction}\nGenerate the lighting description based on that instruction.`;
+        } else {
+          userPrompt = `Brand: ${brand}\n\n${globalInstruction ? `OVERALL CREATIVE DIRECTION (apply to the lighting): ${globalInstruction}\n\n` : ''}Current Lighting:\n${lighting}\nCreate a dramatically different lighting setup. Different color palette, different direction, different atmosphere.`;
+        }
+
+      } else if (field === 'mood') {
+        systemPrompt = `You are a creative director for casino brand imagery.
+
+Your job is to create a COMPLETELY DIFFERENT emotional atmosphere — but it must still feel like a ${brand} image.
+
+LOCKED — never change:
+- Brand identity
+- Premium casino/betting energy — never go cheap, flat, or generic
+
+MUST CHANGE — make these dramatically different:
+- Primary emotion
+- Atmospheric feeling
+- Color emotion and energy level
+
+If an OVERALL CREATIVE DIRECTION is provided, apply it as the emotional theme while keeping brand identity.
+If a field-level INSTRUCTION is provided, it overrides everything else.
+
+IMPORTANT: Return ONLY the mood description as plain text. No labels, no prefixes.
+${brandColorRule}`;
+
+        if (instruction) {
+          userPrompt = `Brand: ${brand}\n\n${globalInstruction ? `OVERALL CREATIVE DIRECTION (apply to the mood): ${globalInstruction}\n\n` : ''}INSTRUCTION (follow this precisely): ${instruction}\nGenerate the mood description based on that instruction.`;
+        } else {
+          userPrompt = `Brand: ${brand}\n\n${globalInstruction ? `OVERALL CREATIVE DIRECTION (apply to the mood): ${globalInstruction}\n\n` : ''}Current Mood:\n${mood}\nCreate a completely different emotional atmosphere. Different primary emotion, different energy, different feel.`;
+        }
+
+      } else if (field === 'positive_prompt') {
+        systemPrompt = `You are a precise AI image prompt ASSEMBLER for premium casino/betting brand imagery.
+
+Your ONLY output is a single complete image generation prompt as one flowing paragraph.
+
+ABSOLUTE RULES — VIOLATING ANY OF THESE IS A FAILURE:
+1. NEVER add, remove, or change characters. If the subject describes 4 athletes with specific sports, the output must have EXACTLY 4 athletes with those same sports, poses, and equipment.
+2. NEVER reinterpret the subject — preserve every detail: character count, species, clothing, poses, props, body type.
+3. NEVER reinterpret the background — include it as described.
+4. Preserve the exact rendering style from the STYLE REFERENCE (3D render, photorealistic, cinematic, anthropomorphic).
+5. The output must feel like a ${brand} branded image — premium, high-energy.
+6. NEVER include readable text, signs, words, or logos.
+7. If the instruction says a specific field was changed, give EXTRA attention to preserving ALL OTHER fields exactly.
+
+You are an ASSEMBLER — stitch the components together faithfully. Do NOT reimagine them.
+${brandColorRule ? `\nBRAND COLOR ENFORCEMENT:\n${brandColors}\nEvery color in the output MUST comply with this palette.` : ''}`;
+
+        userPrompt = `${globalInstruction ? `THEME / CREATIVE DIRECTION: ${globalInstruction}\n\n` : ''}${instruction ? `${instruction}\n\n` : ''}Assemble these components into ONE image prompt paragraph.
+CRITICAL: Preserve EVERY detail from the subject — exact character count, poses, equipment, clothing, species.
+
+1. BACKGROUND: ${background}
+2. SUBJECT (PRESERVE EXACTLY): ${subject}
+3. STYLE & COLOR REFERENCE (copy the rendering technique AND the color palette): ${positive_prompt}`;
+
+      } else {
+        return res.status(400).json({ error: `Unknown regenerable field: ${field}` });
       }
-      const isGet = req.method === 'GET';
-      const upstream = await fetch(webhookUrl, {
-        method: isGet ? 'GET' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: isGet ? undefined : JSON.stringify(req.body),
-      });
-      if (!upstream.ok) {
-        const errorText = await upstream.text();
-        return res.status(500).json({ error: `n8n webhook failed for ${action}`, details: errorText });
-      }
-      return res.status(200).json(await upstream.json());
+
+      const value = await chatCompletion({ systemPrompt, userPrompt, temperature: t, model: 'gpt-4o-mini' });
+      return res.status(200).json({ field, value });
     }
 
-    // ── Routes now handled directly via Supabase ───────────────────────────
+    // ── CONVERT TO HTML — direct OpenAI with vision (was n8n) ──────────────
+    if (action === 'convert-to-html') {
+      const data = req.body;
+      let imageUrl = data.imageUrl || '';
+
+      // Convert Google Drive "view" links to image CDN
+      if (imageUrl.includes('drive.google.com/file/d/')) {
+        const match = imageUrl.match(/\/d\/([^/]+)/);
+        if (match?.[1]) imageUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+      if (!imageUrl || !/^https:\/\//i.test(imageUrl)) {
+        imageUrl = 'https://lh3.googleusercontent.com/d/1huOiLrd1hyUyWALZ1OkhTNr3WPE4Y0gE';
+      }
+
+      const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const welcomeBonus    = esc(data.welcomeBonus    || '20 free spins');
+      const amountToUnlock  = esc(data.amountToUnlock  || '30');
+      const bonusPercentage = esc(data.bonusPercentage || '500');
+      const extraSpins      = esc(data.extraSpins      || '100');
+      const bonusCode       = esc(data.bonusCode       || 'WIN500');
+
+      const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<meta name="x-apple-disable-message-reformatting">
+<title>Bonus Offer</title>
+</head>
+<body style="margin:0; padding:0; background:#f2f2f2;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2f2f2;">
+<tr>
+<td align="center" style="padding:24px 12px;">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+         style="background:#ffffff; border-radius:18px; overflow:hidden; max-width:600px;">
+    <tr>
+      <td align="center" style="padding:0;">
+        <img src="${imageUrl}" alt="Promo"
+             width="600"
+             style="display:block; width:100%; max-width:600px; border-radius:18px 18px 0 0; margin:0; padding:0; line-height:0; font-size:0;">
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:22px 26px; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:14px; line-height:20px;">
+        <div style="margin-bottom:10px;">Hey there,</div>
+        <div style="margin-bottom:14px;">
+          Ready for your next mission? Start with ${welcomeBonus} on us — no deposit needed.
+        </div>
+        <div style="margin-bottom:8px;">
+          Deposit ${amountToUnlock} or more to unlock:
+        </div>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+          <tr><td width="22" style="padding:0 8px 8px 0;">&#128301;</td><td style="padding:0 0 8px 0;">A special ${bonusPercentage}% boost</td></tr>
+          <tr><td width="22" style="padding:0 8px 8px 0;">&#127756;</td><td style="padding:0 0 8px 0;"> +${extraSpins} extra spins</td></tr>
+          <tr><td width="22" style="padding:0 8px 0 0;">&#10145;&#65039;</td><td style="padding:0;">Use bonus code: <span style="color:#1a4dff; font-weight:700;">${bonusCode}</span></td></tr>
+        </table>
+        <div style="margin-bottom:18px;">
+          New worlds, new wins. Begin your journey now &#128640;
+        </div>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td bgcolor="#1a4dff" style="border-radius:999px;">
+              <a href="#"
+                 style="display:inline-block; padding:14px 40px; color:#ffffff; text-decoration:none; font-weight:700; font-size:14px;">
+                JOIN NOW
+              </a>
+            </td>
+          </tr>
+        </table>
+        <div style="text-align:center; font-size:10px; color:#8a8a8a; margin-top:22px;">
+          Casino accepts players only over 18 years of age.
+        </div>
+      </td>
+    </tr>
+  </table>
+</td>
+</tr>
+</table>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
+
+    // ── Supabase routes ────────────────────────────────────────────────────
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return res.status(500).json({ error: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured' });
     }

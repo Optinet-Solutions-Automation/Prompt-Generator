@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { chatCompletion } from './_openai';
 
 interface FormData {
   brand: string;
@@ -17,136 +18,118 @@ interface FormData {
   negative_prompt?: string;
 }
 
-// Transform frontend field names to match n8n expected format
-function transformFormData(formData: FormData) {
-  return {
-    brand: formData.brand,
-    reference: formData.reference,
-    subjectPosition: formData.subjectPosition,
-    aspectRatio: formData.aspectRatio,
-    theme: formData.theme,
-    description: formData.description,
-    format_layout: formData.format_layout || '',
-    primary_object: formData.primary_object || '',
-    subject: formData.subject || '',
-    lighting: formData.lighting || '',
-    mood: formData.mood || '',
-    background: formData.background || '',
-    positive_prompt: formData.positive_prompt || '',
-    negative_prompt: formData.negative_prompt || '',
-  };
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const n8nWebhookUrl = process.env.N8N_WEBHOOK_GENERATE_PROMPT;
-    
-    if (!n8nWebhookUrl) {
-      console.error('N8N_WEBHOOK_GENERATE_PROMPT environment variable not set');
-      return res.status(500).json({ error: 'Webhook URL not configured' });
-    }
+    const body: FormData = req.body;
 
-    console.log('=== Starting request to n8n ===');
-    console.log('Webhook URL:', n8nWebhookUrl);
-    
-    // Transform the data to match n8n's expected format
-    const transformedData = transformFormData(req.body);
-    console.log('Transformed data:', JSON.stringify(transformedData, null, 2));
+    const systemPrompt = `You are an editing engine for image generation prompts.
 
-    // Call n8n webhook
-    console.log('Sending fetch request...');
-    const response = await fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(transformedData),
+Your job: Edit the Base prompt (final_ready) to comply with the provided Theme, Description, Main Subject Position, and Aspect Ratio.
+
+INPUTS
+Base prompt (final_ready):
+${(body.positive_prompt || '') + ' ' + (body.negative_prompt || '')}
+
+Theme:
+${body.theme || ''}
+
+Description:
+${body.description || ''}
+
+Main Subject Position:
+${body.subjectPosition || ''}
+
+Aspect Ratio:
+${body.aspectRatio || ''}
+
+RULES (follow in order)
+
+1) MAIN SUBJECT POSITION
+If Main Subject Position is not "default", do ALL of the following:
+- DELETE every composition/placement/negative-space instruction from the Base prompt (examples: "positioned on the right/left", "left 55–60% negative space", "right third", "center-left", "rule of thirds", "empty space on the left", etc.).
+- REPLACE it with ONE clear, explicit placement instruction that matches Main Subject Position EXACTLY.
+- Do NOT keep, paraphrase, or blend any previous placement instructions from the Base prompt.
+
+If Main Subject Position is "default", keep the Base prompt's placement instructions unchanged.
+
+2) NEGATIVE SPACE (only when Main Subject Position is left-aligned or right-aligned, and not default)
+- left-aligned → ensure clear negative space on the right
+- right-aligned → ensure clear negative space on the left
+Remove any conflicting negative-space wording from the Base prompt.
+
+3) ASPECT RATIO OVERRIDE
+If Aspect Ratio is not "default":
+- DELETE any existing aspect ratio flags or aspect instructions from the Base prompt (including any --ar and any wording implying a specific banner/wide/square framing if it conflicts).
+- Adjust framing/cropping language so the composition suits the requested Aspect Ratio.
+If Aspect Ratio is "default", do not add any new --ar flag.
+
+4) THEME + DESCRIPTION APPLICATION (background only)
+Apply Theme and Description ONLY to background, environment, lighting, atmosphere, mood, and secondary elements.
+They must NOT change the main subject's identity, expression, clothing, accessories/props, or realism level.
+
+5) MIDJOURNEY FLAG
+Append exactly ONE --ar flag at the very end ONLY if Aspect Ratio is not "default", using this mapping:
+1:2 -> --ar 1:2
+6:11 -> --ar 6:11
+9:16 -> --ar 9:16
+2:3 -> --ar 2:3
+3:4 -> --ar 3:4
+4:5 -> --ar 4:5
+5:6 -> --ar 5:6
+1:1 -> --ar 1:1
+6:5 -> --ar 6:5
+5:4 -> --ar 5:4
+4:3 -> --ar 4:3
+3:2 -> --ar 3:2
+16:9 -> --ar 16:9
+2:1 -> --ar 2:1
+21:9 -> --ar 21:9
+
+OUTPUT
+Return ONLY the final edited prompt text (and optional --ar flag). No explanations.`;
+
+    const userPrompt = systemPrompt; // The n8n workflow sends everything as the user message
+
+    const prompt = await chatCompletion({
+      systemPrompt: 'You are an editing engine for image generation prompts. Follow the instructions precisely.',
+      userPrompt,
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
     });
 
-    console.log('Response received:', response.status, response.statusText);
-    console.log('Response headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('n8n webhook error response:', errorText);
-      return res.status(500).json({ 
-        error: `n8n webhook failed with status ${response.status}`,
-        details: errorText,
-        statusText: response.statusText
-      });
-    }
-
-    // Log the raw response text first
-    const responseText = await response.text();
-    console.log('Raw response text length:', responseText.length);
-    console.log('Raw response preview:', responseText.substring(0, 500));
-
-    // Try to parse as JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-      console.log('Successfully parsed JSON');
-      console.log('Data type:', Array.isArray(data) ? 'array' : typeof data);
-      console.log('Data keys:', Object.keys(Array.isArray(data) ? data[0] || {} : data));
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      console.error('Failed to parse response:', responseText);
-      return res.status(500).json({
-        error: 'Failed to parse n8n response',
-        details: parseError instanceof Error ? parseError.message : 'Unknown parse error',
-        responsePreview: responseText.substring(0, 1000)
-      });
-    }
-    
-    // Handle array response from n8n
-    const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
-    console.log('Final result:', JSON.stringify(result, null, 2));
-    
-    // Extract prompt from n8n response - new format has prompt inside data object
-    const prompt = result.data?.prompt || result.prompt || result.text || "No prompt generated";
-    
-    // Transform response into expected format with form data from API response
-    const transformedResult = {
-      success: result.success || true,
-      message: result.message || "AI prompt generated successfully",
-      prompt: prompt,
+    const result = {
+      success: true,
+      message: 'AI prompt generated successfully',
+      prompt: prompt.trim(),
       metadata: {
-        brand: result.data?.brand || req.body.brand,
-        reference: result.data?.reference || req.body.reference,
-        subjectPosition: result.data?.subjectPosition || req.body.subjectPosition,
-        aspectRatio: result.data?.aspectRatio || req.body.aspectRatio,
-        theme: result.data?.theme || req.body.theme,
-        description: result.data?.description || req.body.description,
-        format_layout: result.data?.format_layout || req.body.format_layout || '',
-        primary_object: result.data?.primary_object || req.body.primary_object || '',
-        subject: result.data?.subject || req.body.subject || '',
-        lighting: result.data?.lighting || req.body.lighting || '',
-        mood: result.data?.mood || req.body.mood || '',
-        background: result.data?.background || req.body.background || '',
-        positive_prompt: result.data?.positive_prompt || req.body.positive_prompt || '',
-        negative_prompt: result.data?.negative_prompt || req.body.negative_prompt || '',
-      }
+        brand: body.brand,
+        reference: body.reference,
+        subjectPosition: body.subjectPosition,
+        aspectRatio: body.aspectRatio,
+        theme: body.theme,
+        description: body.description,
+        format_layout: body.format_layout || '',
+        primary_object: body.primary_object || '',
+        subject: body.subject || '',
+        lighting: body.lighting || '',
+        mood: body.mood || '',
+        background: body.background || '',
+        positive_prompt: body.positive_prompt || '',
+        negative_prompt: body.negative_prompt || '',
+      },
     };
-    
-    // Return the response from n8n
-    console.log('=== Sending response to client ===');
-    return res.status(200).json(transformedResult);
-    
+
+    return res.status(200).json(result);
+
   } catch (error) {
-    console.error('=== CAUGHT ERROR ===');
-    console.error('Error type:', error?.constructor?.name);
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
-    return res.status(500).json({ 
+    console.error('Generate prompt error:', error);
+    return res.status(500).json({
       error: 'Failed to generate prompt',
       details: error instanceof Error ? error.message : String(error),
-      errorType: error?.constructor?.name || 'Unknown'
     });
   }
 }
