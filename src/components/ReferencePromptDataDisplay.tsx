@@ -24,10 +24,14 @@ interface ReferencePromptDataDisplayProps {
 const BRAND_PALETTES: Record<string, string> = {
   FortunePlay:
     'Yellow, orange, gold, warm amber, warm casino lighting. NEVER use blue, purple, cyan, neon, or cold tones.',
-  SpinJo:     '',
-  Roosterbet: '',
-  LuckyVibe:  '',
-  SpinsUp:    '',
+  SpinJo:
+    'Purple, violet, magenta, neon-blue, electric cyan, deep space black. Sci-fi/futuristic palette. NEVER use gold, warm amber, orange, or earthy warm tones.',
+  Roosterbet:
+    'Red, crimson, fiery orange, black, bold white. High-energy sports palette. NEVER use pastel, soft pink, or muted tones.',
+  LuckyVibe:
+    'Golden hour warm tones, sunset orange, tropical coral, soft amber, warm backlight. NEVER use cold blue, purple, or neon tones.',
+  SpinsUp:
+    'Neon purple, electric magenta, showman gold accents, deep black, circus-bright. Magical/mystical palette. NEVER use muted earthy tones or pastels.',
 };
 
 // Fields that have a regenerate icon next to their label.

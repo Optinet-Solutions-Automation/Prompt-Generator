@@ -17,6 +17,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const body = req.body;
 
+    // Brand color palettes — enforce brand-appropriate colors in generated prompts
+    const BRAND_PALETTES: Record<string, string> = {
+      FortunePlay: 'Yellow, orange, gold, warm amber, warm casino lighting. NEVER use blue, purple, cyan, neon, or cold tones.',
+      SpinJo: 'Purple, violet, magenta, neon-blue, electric cyan, deep space black. Sci-fi/futuristic palette. NEVER use gold, warm amber, orange, or earthy warm tones.',
+      Roosterbet: 'Red, crimson, fiery orange, black, bold white. High-energy sports palette. NEVER use pastel, soft pink, or muted tones.',
+      LuckyVibe: 'Golden hour warm tones, sunset orange, tropical coral, soft amber, warm backlight. NEVER use cold blue, purple, or neon tones.',
+      SpinsUp: 'Neon purple, electric magenta, showman gold accents, deep black, circus-bright. Magical/mystical palette. NEVER use muted earthy tones or pastels.',
+    };
+    const brandColorRule = (body.brand && BRAND_PALETTES[body.brand])
+      ? `\n6) BRAND COLOR ENFORCEMENT\nThis is a ${body.brand} branded image. Approved color palette: ${BRAND_PALETTES[body.brand]}\nAll lighting, mood, atmosphere, and background colors in the output MUST comply with this palette. Replace any off-brand colors with on-brand alternatives.\n`
+      : '';
+
     // Build the EXACT same user message as the n8n "Message a model" node.
     // In n8n this is the only message sent (no separate system prompt).
     const userMessage = `You are an editing engine for image generation prompts.
@@ -64,7 +76,7 @@ If Aspect Ratio is "default", do not add any new --ar flag.
 Apply Theme and Description ONLY to background, environment, lighting, atmosphere, mood, and secondary elements.
 They must NOT change the main subject\u2019s identity, expression, clothing, accessories/props, or realism level.
 
-5) MIDJOURNEY FLAG
+${brandColorRule}5) MIDJOURNEY FLAG
 Append exactly ONE --ar flag at the very end ONLY if Aspect Ratio is not "default", using this mapping:
 1:2 -> --ar 1:2
 6:11 -> --ar 6:11
