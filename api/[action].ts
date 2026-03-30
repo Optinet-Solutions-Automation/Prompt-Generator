@@ -107,6 +107,8 @@ async function sbDelete(path: string) {
   return true;
 }
 
+export const config = { maxDuration: 300 };
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const action = req.query.action as string;
 
