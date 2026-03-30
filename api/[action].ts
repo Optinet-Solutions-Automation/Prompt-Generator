@@ -479,53 +479,57 @@ ${globalInstruction ? `COLOR OVERRIDE: Adapt ALL colors in lighting and mood to 
       return res.status(200).json({ success: true });
     }
 
-    // ── GENERATE VARIATIONS — calls /edit-image twice in parallel ────────────
-    // Uses the existing Cloud Run /edit-image endpoint (no dedicated /generate-variations needed)
+    // ── GENERATE VARIATIONS — uses OpenAI gpt-image-1 image edit API ────────
+    // Note: the dedicated api/generate-variations.ts takes priority over this route.
+    // This acts as a fallback in case of routing issues.
     if (action === 'generate-variations') {
-      const { imageUrl, mode = 'subtle', guidance = '', resolution = '1K' } = req.body;
+      const { imageUrl, mode = 'subtle', guidance = '' } = req.body;
       if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
 
-      // Build the edit instruction from the mode + optional user guidance
-      const baseInstruction = mode === 'subtle'
-        ? 'Create a subtle variation: keep the exact same composition, subject, outfit, and overall structure. Make slight adjustments only to lighting warmth, color tones, and minor atmospheric details. Stay very close to the original.'
-        : 'Create a strong creative variation: keep the same main subject and outfit but dramatically reimagine the background environment, lighting color, overall palette, and mood. Make it feel distinctly different while preserving the core subject identity.';
-      const editInstructions = guidance
-        ? `${baseInstruction} Additional guidance: ${guidance}`
-        : baseInstruction;
+      const openAiKey = process.env.OPENAI_API_KEY;
+      if (!openAiKey) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
 
-      const baseUrl = process.env.GCP_CLOUD_RUN_URL || process.env.CLOUD_RUN_URL || 'https://image-generator-69452143295.us-central1.run.app';
-      const idToken = await getCloudRunIdToken(baseUrl, req);
+      // Fetch the source image
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) return res.status(400).json({ error: `Failed to fetch source image (${imgRes.status})` });
+      const contentType = imgRes.headers.get('content-type') || 'image/png';
+      const baseMime = contentType.split(';')[0].trim();
+      const extMap: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+      const ext = extMap[baseMime] || 'png';
+      const imgBuffer = await imgRes.arrayBuffer();
 
-      // Fire both requests simultaneously
-      const [r1, r2] = await Promise.allSettled([
-        fetch(`${baseUrl}/edit-image`, {
+      const basePrompt = mode === 'subtle'
+        ? 'Create a subtle variation of this image. Preserve the exact composition, subject, pose, outfit, and structure. Change only lighting warmth, color temperature, and minor atmospheric mood. Stay very close to the original.'
+        : 'Create a creative variation of this image. Keep the same main subject and outfit but dramatically reimagine the background, lighting colors, overall palette, and mood. Preserve the core subject identity.';
+      const prompt = guidance ? `${basePrompt} Additional guidance: ${guidance}` : basePrompt;
+
+      const makeReq = () => {
+        const form = new FormData();
+        form.append('model', 'gpt-image-1');
+        form.append('image', new File([imgBuffer], `source.${ext}`, { type: baseMime }));
+        form.append('prompt', prompt);
+        form.append('n', '1');
+        form.append('quality', 'medium');
+        return fetch('https://api.openai.com/v1/images/edits', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-          body: JSON.stringify({ imageUrl, editInstructions, resolution }),
-        }),
-        fetch(`${baseUrl}/edit-image`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-          body: JSON.stringify({ imageUrl, editInstructions, resolution }),
-        }),
-      ]);
+          headers: { 'Authorization': `Bearer ${openAiKey}` },
+          body: form,
+        });
+      };
 
+      const [r1, r2] = await Promise.allSettled([makeReq(), makeReq()]);
       const variations: { imageUrl: string }[] = [];
       for (const r of [r1, r2]) {
-        if (r.status === 'fulfilled' && r.value.ok) {
-          const d = await r.value.json();
-          const rd = Array.isArray(d) ? d[0] : d;
-          // edit-image Cloud Run returns public_url (Supabase) or thumbnailUrl/imageUrl (Drive)
-          const url = rd.public_url || rd.thumbnailUrl || rd.imageUrl || rd.thumbnailLink || rd.webContentLink;
-          if (url) variations.push({ imageUrl: url });
-        } else if (r.status === 'fulfilled') {
-          const errText = await r.value.text();
-          console.error('Variation request failed:', r.value.status, errText);
-        }
+        if (r.status === 'rejected') { console.error('Variation error:', r.reason); continue; }
+        if (!r.value.ok) { console.error('Variation failed:', r.value.status, await r.value.text()); continue; }
+        const d = await r.value.json() as { data?: Array<{ b64_json?: string; url?: string }> };
+        const item = d.data?.[0];
+        if (item?.url) variations.push({ imageUrl: item.url });
+        else if (item?.b64_json) variations.push({ imageUrl: `data:image/png;base64,${item.b64_json}` });
       }
 
       if (variations.length === 0) {
-        return res.status(500).json({ error: 'Failed to generate variations — both attempts failed' });
+        return res.status(500).json({ error: 'Failed to generate any variations. Please try again.' });
       }
       return res.status(200).json({ variations });
     }
