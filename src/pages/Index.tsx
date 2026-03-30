@@ -130,8 +130,8 @@ const Index = () => {
           </Link>
         </div>
 
-        {/* Mode tabs — only show when on the form/wizard, not during processing/result */}
-        {(appState === "FORM") && (
+        {/* Mode tabs — always visible so user can switch between Custom Prompt and Sports Banner */}
+        {(appState !== "PROCESSING") && (
           <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border mb-4">
             <button
               type="button"
