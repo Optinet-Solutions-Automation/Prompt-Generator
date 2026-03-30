@@ -394,6 +394,10 @@ function Lightbox({
   const [variationElapsed,    setVariationElapsed]    = useState(0);
   const variationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Variation viewer — full-screen lightbox for individual variations
+  const [variationViewerUrl, setVariationViewerUrl]   = useState<string | null>(null);
+  const [variationViewerIdx, setVariationViewerIdx]   = useState(-1);
+
   // Reset edit + variation state on image change
   useEffect(() => {
     setEditInstructions('');
@@ -421,13 +425,18 @@ function Lightbox({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (showHtmlModal || confirmDelete || showSaveModal) return;
-      if (e.key === 'Escape')                onClose();
+      if (e.key === 'Escape') {
+        // Close variation viewer first if open, then close main lightbox
+        if (variationViewerUrl) { setVariationViewerUrl(null); setVariationViewerIdx(-1); return; }
+        onClose();
+      }
+      if (variationViewerUrl) return; // Don't navigate when viewing a variation
       if (e.key === 'ArrowLeft'  && hasPrev) onPrev();
       if (e.key === 'ArrowRight' && hasNext) onNext();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, onPrev, onNext, hasPrev, hasNext, showHtmlModal, confirmDelete, showSaveModal]);
+  }, [onClose, onPrev, onNext, hasPrev, hasNext, showHtmlModal, confirmDelete, showSaveModal, variationViewerUrl]);
 
   const displayUrl = editedImgUrl || image.public_url;
 
@@ -766,27 +775,44 @@ function Lightbox({
                       <p className="text-destructive text-xs bg-destructive/10 rounded-lg px-3 py-2">{variationError}</p>
                     )}
 
-                    {/* Variation results */}
+                    {/* Variation results — click thumbnail to view full-size */}
                     {generatedVariations.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {generatedVariations.map((url, i) => (
-                          <div key={i} className="relative group rounded-xl overflow-hidden border border-white/10 aspect-square bg-zinc-800">
-                            <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => window.open(url, '_blank')}
-                                className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
-                                title="View full size"
-                              ><Expand className="w-3 h-3" /></button>
-                              <button
-                                onClick={async () => { try { const res = await fetch(url); const blob = await res.blob(); const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `variation-${i + 1}-${Date.now()}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a); } catch { window.open(url, '_blank'); } }}
-                                className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
-                                title="Download"
-                              ><Download className="w-3 h-3" /></button>
-                            </div>
-                            <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white rounded px-1 py-0.5 leading-none">V{i + 1}</span>
-                          </div>
-                        ))}
+                      <div className="space-y-1.5">
+                        <p className="text-white/40 text-[10px]">Click a thumbnail to view full-size</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {generatedVariations.map((url, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => { setVariationViewerUrl(url); setVariationViewerIdx(i); }}
+                              className="relative group rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 aspect-square bg-zinc-800 transition-all hover:scale-[0.97] cursor-pointer"
+                              title={`View Variation ${i + 1} full-size`}
+                            >
+                              <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" />
+                              {/* Hover overlay */}
+                              <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                                <span className="p-1.5 rounded-lg bg-white/20 text-white">
+                                  <Expand className="w-3 h-3" />
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try { const res = await fetch(url); const blob = await res.blob(); const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `variation-${i + 1}-${Date.now()}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+                                    catch { window.open(url, '_blank'); }
+                                  }}
+                                  className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                                  title="Download"
+                                ><Download className="w-3 h-3" /></button>
+                              </div>
+                              <span className="absolute bottom-1 left-1 text-[9px] bg-primary/80 text-white rounded px-1 py-0.5 leading-none">V{i + 1}</span>
+                              {/* Mode badge */}
+                              <span className={`absolute top-1 right-1 text-[8px] rounded px-1 py-0.5 leading-none font-semibold ${variationType === 'subtle' ? 'bg-sky-500/80 text-white' : 'bg-violet-500/80 text-white'}`}>
+                                {variationType === 'subtle' ? 'SUB' : 'STR'}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -855,6 +881,88 @@ function Lightbox({
           </div>
         </div>
       </div>
+
+      {/* ── Variation Viewer — full-screen overlay for viewing individual variation images ── */}
+      {variationViewerUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+          onClick={() => { setVariationViewerUrl(null); setVariationViewerIdx(-1); }}
+        >
+          <div
+            className="relative flex flex-col items-center max-w-5xl max-h-[95vh] px-4"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Top bar — mode info + close */}
+            <div className="flex items-center justify-between w-full mb-3">
+              <div className="flex items-center gap-2">
+                <Shuffle className="w-4 h-4 text-primary" />
+                <span className="text-white font-semibold text-sm">
+                  Variation {variationViewerIdx + 1}
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  variationType === 'subtle' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                }`}>
+                  {variationType === 'subtle' ? 'Subtle' : 'Strong'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Download button */}
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(variationViewerUrl);
+                      const blob = await res.blob();
+                      const a = document.createElement('a');
+                      a.href = window.URL.createObjectURL(blob);
+                      a.download = `variation-${variationViewerIdx + 1}-${Date.now()}.png`;
+                      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    } catch { window.open(variationViewerUrl, '_blank'); }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download
+                </button>
+                <button
+                  onClick={() => { setVariationViewerUrl(null); setVariationViewerIdx(-1); }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Image */}
+            <img
+              src={variationViewerUrl}
+              alt={`Variation ${variationViewerIdx + 1}`}
+              className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
+            />
+
+            {/* What changed info bar */}
+            <div className="mt-3 w-full max-w-xl bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+              <p className="text-white/50 text-[10px] uppercase tracking-wider font-semibold mb-1">What the AI changed in this variation</p>
+              {variationType === 'subtle' ? (
+                <div className="space-y-0.5">
+                  <p className="text-white/70 text-xs">✦ Lighting warmth &amp; color temperature</p>
+                  <p className="text-white/70 text-xs">✦ Atmospheric mood &amp; minor environmental details</p>
+                  <p className="text-white/40 text-[10px] mt-1">Kept unchanged: subject, pose, outfit, composition, background structure</p>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  <p className="text-white/70 text-xs">✦ Background environment &amp; setting</p>
+                  <p className="text-white/70 text-xs">✦ Overall color palette &amp; lighting color</p>
+                  <p className="text-white/70 text-xs">✦ Mood &amp; atmosphere</p>
+                  <p className="text-white/40 text-[10px] mt-1">Kept unchanged: main subject, face, outfit &amp; identity</p>
+                </div>
+              )}
+            </div>
+
+            {/* Hint */}
+            <p className="text-white/25 text-xs mt-2">Click anywhere outside or press Esc to close</p>
+          </div>
+        </div>
+      )}
 
       {/* HTML Conversion Modal */}
       <HtmlConversionModal

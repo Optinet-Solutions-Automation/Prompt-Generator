@@ -10,6 +10,10 @@ export interface GalleryImage {
   editUrl: string;
   provider: 'chatgpt' | 'gemini';
   imageId: string;
+  // Optional fields for variation images
+  isVariation?: boolean;
+  variationMode?: 'subtle' | 'strong';
+  variationIndex?: number;
 }
 
 interface ImageModalProps {
@@ -48,7 +52,6 @@ export function ImageModal({
   brand,
 }: ImageModalProps) {
   const isGallery = allImages && allImages.length > 0;
-  const showStrip = isGallery && allImages.length > 1;
 
   const [activeIdx, setActiveIdx] = useState(initialIndex);
   const [editInstructions, setEditInstructions] = useState('');
@@ -58,7 +61,6 @@ export function ImageModal({
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const updatedUrlsRef = useRef<Map<string, { displayUrl: string; editUrl: string }>>(new Map());
-  // Tracks the latest edited URL for the current image (so we can offer "Save Edited to Favorites")
   const [lastEditedUrl, setLastEditedUrl] = useState<string | null>(null);
 
   // Variations state
@@ -71,15 +73,52 @@ export function ImageModal({
   const [variationElapsed, setVariationElapsed] = useState(0);
   const variationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => { if (isOpen) setActiveIdx(initialIndex); }, [isOpen, initialIndex]);
-  // Reset edit + variation state when switching images
+  // Extra variation images appended to gallery strip
+  const [localVariations, setLocalVariations] = useState<GalleryImage[]>([]);
+  // Index in galleryImages where the current batch of variations starts
+  const [varGalleryStartIdx, setVarGalleryStartIdx] = useState(-1);
+
+  // Combined gallery: original images + any variations generated
+  const galleryImages: GalleryImage[] = isGallery ? [...allImages, ...localVariations] : [];
+
+  // Ref to track gallery images for stale-closure avoidance in effects
+  const galleryImagesRef = useRef<GalleryImage[]>(galleryImages);
+  galleryImagesRef.current = galleryImages;
+
+  const showStrip = isGallery && galleryImages.length > 1;
+
+  // Reset everything when modal opens/closes
   useEffect(() => {
-    setLastEditedUrl(null); setEditInstructions(''); setEditError(null);
-    setGeneratedVariations([]); setVariationError(null); setVariationInstructions('');
+    if (isOpen) {
+      setActiveIdx(initialIndex);
+      setLocalVariations([]);
+      setVarGalleryStartIdx(-1);
+      setGeneratedVariations([]);
+      setVariationError(null);
+      setVariationInstructions('');
+      updatedUrlsRef.current.clear();
+    }
+  }, [isOpen, initialIndex]);
+
+  // Reset edit + variation state when navigating to a different BASE image (not a variation)
+  useEffect(() => {
+    const img = galleryImagesRef.current[activeIdx];
+    if (img?.isVariation) return; // Navigating to a variation — keep variation state
+    setLastEditedUrl(null);
+    setEditInstructions('');
+    setEditError(null);
+    setGeneratedVariations([]);
+    setVariationError(null);
+    setVariationInstructions('');
+    setLocalVariations([]);
+    setVarGalleryStartIdx(-1);
   }, [activeIdx]);
 
   const current: GalleryImage = isGallery
-    ? { ...allImages[activeIdx], ...(updatedUrlsRef.current.get(allImages[activeIdx].imageId) ?? {}) }
+    ? {
+        ...(galleryImages[activeIdx] ?? { displayUrl: '', editUrl: '', provider: 'gemini', imageId: '' }),
+        ...(updatedUrlsRef.current.get(galleryImages[activeIdx]?.imageId ?? '') ?? {}),
+      }
     : { displayUrl: displayUrl || '', editUrl: editUrl || '', provider: provider || 'gemini', imageId: imageId || '' };
 
   const currentLiked = isGallery ? (likedImages?.has(current.imageId) ?? false) : (liked ?? false);
@@ -97,9 +136,9 @@ export function ImageModal({
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') { onClose(); return; }
     if (!showStrip) return;
-    if (e.key === 'ArrowRight') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, allImages.length - 1)); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, galleryImagesRef.current.length - 1)); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)); }
-  }, [onClose, showStrip, allImages?.length]);
+  }, [onClose, showStrip]);
 
   useEffect(() => {
     if (isOpen) { document.addEventListener('keydown', handleKeyDown); return () => document.removeEventListener('keydown', handleKeyDown); }
@@ -149,6 +188,8 @@ export function ImageModal({
     setVariationError(null);
     setGeneratedVariations([]);
     setVariationElapsed(0);
+    // Capture start index BEFORE state updates
+    const startIdx = allImages!.length + localVariations.length;
     variationIntervalRef.current = setInterval(() => setVariationElapsed(p => p + 1), 1000);
     try {
       const resp = await fetch('/api/generate-variations', {
@@ -171,7 +212,23 @@ export function ImageModal({
         .map((v: { imageUrl?: string }) => v.imageUrl)
         .filter(Boolean);
       if (urls.length === 0) throw new Error('No variations were generated. Please try again.');
+
+      // Build gallery objects for each variation
+      const newVarImages: GalleryImage[] = urls.map((url, i) => ({
+        displayUrl: url,
+        editUrl: url,
+        provider: current.provider,
+        imageId: `var-${activeIdx}-${Date.now()}-${i}`,
+        isVariation: true,
+        variationMode: variationType,
+        variationIndex: i + 1,
+      }));
+
       setGeneratedVariations(urls);
+      setLocalVariations(prev => [...prev, ...newVarImages]);
+      setVarGalleryStartIdx(startIdx);
+      // Navigate to first variation in gallery strip
+      setActiveIdx(startIdx);
     } catch (err) {
       setVariationError(err instanceof Error ? err.message : 'Failed to generate variations');
     } finally {
@@ -183,14 +240,21 @@ export function ImageModal({
   const handleClose = () => {
     setEditInstructions(''); setEditError(null);
     setGeneratedVariations([]); setVariationError(null); setVariationInstructions('');
+    setLocalVariations([]); setVarGalleryStartIdx(-1);
     updatedUrlsRef.current.clear(); onClose();
   };
 
   if (!isOpen) return null;
 
+  // Human-readable description of what the AI changes for each mode
+  const variationModeDescription = {
+    subtle: 'Kept: subject, pose, composition. Changed: lighting warmth, color temperature, atmospheric mood.',
+    strong: 'Kept: main subject & outfit. Changed: background environment, lighting color, overall palette & mood.',
+  };
+
   return (
     <>
-      {/* Backdrop — extends beyond viewport edges to cover absolutely everything */}
+      {/* Backdrop */}
       <div
         onClick={handleClose}
         style={{
@@ -216,20 +280,32 @@ export function ImageModal({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border/50 shrink-0">
             <div className="flex items-center gap-2">
-              {current.provider === 'chatgpt'
-                ? <Bot className="w-4 h-4 text-muted-foreground" />
-                : <Gem className="w-4 h-4 text-muted-foreground" />}
+              {current.isVariation ? (
+                <Shuffle className="w-4 h-4 text-primary" />
+              ) : current.provider === 'chatgpt' ? (
+                <Bot className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <Gem className="w-4 h-4 text-muted-foreground" />
+              )}
               <span className="font-semibold text-sm">
-                Generated Image ({current.provider === 'chatgpt' ? 'ChatGPT' : 'Gemini'})
+                {current.isVariation
+                  ? `Variation ${current.variationIndex} · ${current.variationMode === 'subtle' ? 'Subtle' : 'Strong'}`
+                  : `Generated Image (${current.provider === 'chatgpt' ? 'ChatGPT' : 'Gemini'})`}
               </span>
               {showStrip && (
                 <span className="text-xs text-muted-foreground ml-1">
-                  {activeIdx + 1} / {allImages.length}
+                  {activeIdx + 1} / {galleryImages.length}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-1">
-              {current.imageId && onToggleFavorite && (
+              {/* Show what changed badge when viewing a variation */}
+              {current.isVariation && current.variationMode && (
+                <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-2 py-0.5 mr-1">
+                  {current.variationMode === 'subtle' ? 'Lighting & colors adjusted' : 'Background & palette reimagined'}
+                </span>
+              )}
+              {current.imageId && onToggleFavorite && !current.isVariation && (
                 <FavoriteHeart
                   imageId={current.imageId}
                   liked={currentLiked}
@@ -282,44 +358,93 @@ export function ImageModal({
                     >Strong</button>
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  {variationType === 'subtle'
-                    ? 'Keeps the same composition, subject & structure — slight adjustments to lighting, colors & mood.'
-                    : 'Reimagines background, lighting & palette dramatically while keeping the core subject.'}
-                </p>
+
+                {/* What the AI changes — clear description */}
+                <div className="rounded-lg bg-background/60 border border-border/50 px-2.5 py-2 space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">What changes:</p>
+                  <p className="text-[10px] text-foreground/70 leading-relaxed">
+                    {variationType === 'subtle'
+                      ? '✦ Lighting warmth · color temperature · atmospheric mood'
+                      : '✦ Background environment · color palette · lighting color · overall mood'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    {variationType === 'subtle'
+                      ? 'Composition, subject, pose & structure stay identical.'
+                      : 'Main subject & outfit are preserved exactly.'}
+                  </p>
+                </div>
+
                 <Textarea
-                  placeholder="Optional: add extra guidance for the variation… e.g. 'Make it feel like night time'"
+                  placeholder="Optional: add extra guidance… e.g. 'Make it feel like night time'"
                   value={variationInstructions}
                   onChange={e => setVariationInstructions(e.target.value)}
                   className="min-h-[60px] resize-none text-xs"
                   disabled={isGeneratingVariations}
                 />
                 {variationError && <p className="text-destructive text-xs">{variationError}</p>}
-                {/* Results */}
+
+                {/* Variation thumbnails — clickable to navigate in gallery strip */}
                 {generatedVariations.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {generatedVariations.map((url, i) => (
-                      <div key={i} className="relative group rounded-lg overflow-hidden border border-border aspect-square bg-muted/30">
-                        <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      Click a variation below or in the strip →
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {generatedVariations.map((url, i) => {
+                        const galleryIdx = varGalleryStartIdx + i;
+                        const isActive = activeIdx === galleryIdx;
+                        return (
                           <button
-                            onClick={async () => { try { const res = await fetch(url); const blob = await res.blob(); const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `variation-${i + 1}-${Date.now()}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a); } catch { window.open(url, '_blank'); } }}
-                            className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
-                            title="Download"
-                          ><Download className="w-3 h-3" /></button>
-                          {brand && (
-                            <button
-                              onClick={async () => { try { await fetch('/api/like-img', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ record_id: `var-${Date.now()}-${i}`, img_url: url, brand_name: brand }) }); } catch { /* non-fatal */ } }}
-                              className="p-1.5 rounded-lg bg-white/20 hover:bg-rose-500/80 text-white transition-colors"
-                              title="Save to Favorites"
-                            ><Heart className="w-3 h-3" /></button>
-                          )}
-                        </div>
-                        <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white rounded px-1 py-0.5 leading-none">V{i + 1}</span>
-                      </div>
-                    ))}
+                            key={i}
+                            type="button"
+                            onClick={() => setActiveIdx(galleryIdx)}
+                            className={`relative group rounded-lg overflow-hidden border-2 aspect-square bg-muted/30 transition-all ${
+                              isActive
+                                ? 'border-primary shadow-lg shadow-primary/30 scale-95'
+                                : 'border-border hover:border-primary/50 hover:scale-[0.97]'
+                            }`}
+                            title={`View Variation ${i + 1} in main viewer`}
+                          >
+                            <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" />
+                            {/* Hover overlay with download */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try { const res = await fetch(url); const blob = await res.blob(); const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `variation-${i + 1}-${Date.now()}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+                                  catch { window.open(url, '_blank'); }
+                                }}
+                                className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                                title="Download"
+                              ><Download className="w-3 h-3" /></button>
+                              {brand && (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try { await fetch('/api/like-img', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ record_id: `var-${Date.now()}-${i}`, img_url: url, brand_name: brand }) }); }
+                                    catch { /* non-fatal */ }
+                                  }}
+                                  className="p-1.5 rounded-lg bg-white/20 hover:bg-rose-500/80 text-white transition-colors"
+                                  title="Save to Favorites"
+                                ><Heart className="w-3 h-3" /></button>
+                              )}
+                            </div>
+                            <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white rounded px-1 py-0.5 leading-none">V{i + 1}</span>
+                            {/* Mode badge */}
+                            <span className={`absolute top-1 right-1 text-[8px] rounded px-1 py-0.5 leading-none font-semibold ${variationType === 'subtle' ? 'bg-sky-500/80 text-white' : 'bg-violet-500/80 text-white'}`}>
+                              {variationType === 'subtle' ? 'SUB' : 'STR'}
+                            </span>
+                            {/* Active ring */}
+                            {isActive && <span className="absolute inset-0 ring-2 ring-primary ring-inset rounded-lg pointer-events-none" />}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
+
                 <button
                   type="button"
                   onClick={handleGenerateVariations}
@@ -342,7 +467,7 @@ export function ImageModal({
             />
             {editError && <p className="text-destructive text-sm">{editError}</p>}
             <div className="flex items-center gap-2">
-              {/* Variations toggle button — left side */}
+              {/* Variations toggle button */}
               <Button
                 type="button"
                 variant="outline"
@@ -353,6 +478,11 @@ export function ImageModal({
               >
                 <Shuffle className="w-3.5 h-3.5" />
                 Variations
+                {generatedVariations.length > 0 && (
+                  <span className="ml-0.5 bg-primary text-primary-foreground rounded-full text-[9px] w-4 h-4 flex items-center justify-center font-bold">
+                    {generatedVariations.length}
+                  </span>
+                )}
               </Button>
               <div className="flex-1" />
               <Button
@@ -411,32 +541,48 @@ export function ImageModal({
             {/* Header */}
             <div className="px-3 py-2.5 border-b border-border/40 text-center shrink-0">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                {activeIdx + 1} / {allImages.length} images
+                {activeIdx + 1} / {galleryImages.length} images
               </span>
             </div>
             {/* 3-column scrollable grid */}
             <div className="overflow-y-auto flex-1 p-3">
               <div className="grid grid-cols-3 gap-2">
-                {allImages.map((img, i) => {
+                {galleryImages.map((img, i) => {
                   const display = { ...img, ...(updatedUrlsRef.current.get(img.imageId) ?? {}) };
                   const isActive = activeIdx === i;
                   return (
                     <button
                       key={img.imageId}
-                      onClick={() => { setActiveIdx(i); setEditInstructions(''); setEditError(null); }}
-                      title={img.provider === 'chatgpt' ? 'ChatGPT' : 'Gemini'}
+                      onClick={() => { setActiveIdx(i); if (!img.isVariation) { setEditInstructions(''); setEditError(null); } }}
+                      title={img.isVariation
+                        ? `Variation ${img.variationIndex} (${img.variationMode === 'subtle' ? 'Subtle — lighting & colors' : 'Strong — background & palette'})`
+                        : img.provider === 'chatgpt' ? 'ChatGPT' : 'Gemini'}
                       className={`relative w-full rounded-xl overflow-hidden border-2 block transition-all duration-150 ${
                         isActive
                           ? 'border-primary shadow-lg shadow-primary/40 scale-95'
-                          : 'border-transparent hover:border-border/60 hover:scale-[0.97]'
+                          : img.isVariation
+                            ? 'border-primary/20 hover:border-primary/50 hover:scale-[0.97]'
+                            : 'border-transparent hover:border-border/60 hover:scale-[0.97]'
                       }`}
                       style={{ aspectRatio: '1' }}
                     >
                       <img src={display.displayUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      {/* Provider badge */}
-                      <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white rounded px-1 py-0.5 leading-none">
-                        {img.provider === 'chatgpt' ? 'GPT' : 'GEM'}
+                      {/* Badge — provider or variation index */}
+                      <span className={`absolute bottom-1 left-1 text-[9px] rounded px-1 py-0.5 leading-none ${
+                        img.isVariation ? 'bg-primary/80 text-white' : 'bg-black/60 text-white'
+                      }`}>
+                        {img.isVariation
+                          ? `V${img.variationIndex}`
+                          : img.provider === 'chatgpt' ? 'GPT' : 'GEM'}
                       </span>
+                      {/* Variation mode badge (top-right) */}
+                      {img.isVariation && img.variationMode && (
+                        <span className={`absolute top-1 right-1 text-[8px] rounded px-1 py-0.5 leading-none font-semibold ${
+                          img.variationMode === 'subtle' ? 'bg-sky-500/80 text-white' : 'bg-violet-500/80 text-white'
+                        }`}>
+                          {img.variationMode === 'subtle' ? 'SUB' : 'STR'}
+                        </span>
+                      )}
                       {isActive && (
                         <span className="absolute inset-0 ring-2 ring-primary ring-inset rounded-xl pointer-events-none" />
                       )}
@@ -444,6 +590,25 @@ export function ImageModal({
                   );
                 })}
               </div>
+
+              {/* Legend for variation badges */}
+              {localVariations.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-border/30 space-y-1">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Variation legend</p>
+                  <div className="flex gap-2">
+                    <span className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                      <span className="bg-sky-500/80 text-white rounded px-1 py-0.5 text-[8px] leading-none font-semibold">SUB</span>
+                      Lighting &amp; colors adjusted
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                      <span className="bg-violet-500/80 text-white rounded px-1 py-0.5 text-[8px] leading-none font-semibold">STR</span>
+                      Background &amp; palette reimagined
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
