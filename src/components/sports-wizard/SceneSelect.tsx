@@ -1,6 +1,6 @@
 /**
  * SceneSelect — Q2: Who's in the banner?
- * Collects: player count, action (chips adapt to sport + count), kit colors, gender.
+ * Collects: player role, count, action (chips adapt to sport + count), kit colors, gender, team nationality.
  */
 import { SPORTS, PlayerCount } from './scene-presets';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,16 @@ import { SportsBannerData } from '@/types/prompt';
 
 type Props = {
   sport: string;
+  playerRole: string;
   playerCount: PlayerCount;
   action: string;
   kitColors: string;
   gender: SportsBannerData['gender'];
-  onChange: (field: keyof Pick<SportsBannerData, 'playerCount' | 'action' | 'kitColors' | 'gender'>, value: string) => void;
+  teamNationality: string;
+  onChange: (
+    field: keyof Pick<SportsBannerData, 'playerRole' | 'playerCount' | 'action' | 'kitColors' | 'gender' | 'teamNationality'>,
+    value: string
+  ) => void;
 };
 
 const PLAYER_COUNT_OPTIONS: { value: PlayerCount; label: string; emoji: string }[] = [
@@ -28,14 +33,45 @@ const GENDER_OPTIONS: { value: SportsBannerData['gender']; label: string }[] = [
   { value: 'Mixed', label: 'Mixed' },
 ];
 
-export function SceneSelect({ sport, playerCount, action, kitColors, gender, onChange }: Props) {
-  // Find the action chips for the current sport + count
+export function SceneSelect({ sport, playerRole, playerCount, action, kitColors, gender, teamNationality, onChange }: Props) {
   const sportPreset = SPORTS.find((s) => s.id === sport);
+  const roleChips: string[] = sportPreset?.playerRoles ?? [];
   const actionChips: string[] = sportPreset?.actions[playerCount] ?? [];
 
   return (
     <div className="space-y-5">
-      {/* Player count */}
+
+      {/* ── Player role ── */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold text-foreground">Player type / role</Label>
+        <div className="flex flex-wrap gap-2">
+          {roleChips.map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => onChange('playerRole', role)}
+              className={[
+                'px-3 py-1.5 rounded-full border text-sm transition-all duration-150',
+                'hover:border-primary/60 hover:bg-primary/5',
+                playerRole === role
+                  ? 'border-primary bg-primary/10 text-primary font-medium'
+                  : 'border-border bg-card text-muted-foreground',
+              ].join(' ')}
+            >
+              {role}
+            </button>
+          ))}
+        </div>
+        {/* Free text override */}
+        <Input
+          placeholder="Or type a custom role…"
+          value={roleChips.includes(playerRole) ? '' : playerRole}
+          onChange={(e) => onChange('playerRole', e.target.value)}
+          className="max-w-sm text-sm"
+        />
+      </div>
+
+      {/* ── Player count ── */}
       <div className="space-y-2">
         <Label className="text-sm font-semibold text-foreground">How many players?</Label>
         <div className="flex gap-2">
@@ -45,8 +81,7 @@ export function SceneSelect({ sport, playerCount, action, kitColors, gender, onC
               type="button"
               onClick={() => {
                 onChange('playerCount', opt.value);
-                // Clear the action when count changes — chips will differ
-                onChange('action', '');
+                onChange('action', ''); // reset action — chips change with count
               }}
               className={[
                 'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-medium text-sm transition-all duration-150',
@@ -63,7 +98,7 @@ export function SceneSelect({ sport, playerCount, action, kitColors, gender, onC
         </div>
       </div>
 
-      {/* Action chips */}
+      {/* ── Action chips ── */}
       <div className="space-y-2">
         <Label className="text-sm font-semibold text-foreground">What are they doing?</Label>
         <div className="flex flex-wrap gap-2">
@@ -84,8 +119,6 @@ export function SceneSelect({ sport, playerCount, action, kitColors, gender, onC
             </button>
           ))}
         </div>
-
-        {/* Free text override */}
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Or describe the action yourself:</p>
           <Input
@@ -97,7 +130,25 @@ export function SceneSelect({ sport, playerCount, action, kitColors, gender, onC
         </div>
       </div>
 
-      {/* Kit colors */}
+      {/* ── Team / nationality ── */}
+      <div className="space-y-2">
+        <Label htmlFor="team-nationality" className="text-sm font-semibold text-foreground">
+          Team / nationality{' '}
+          <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
+          id="team-nationality"
+          placeholder="e.g. national team of Brazil, Real Madrid, Australian team…"
+          value={teamNationality}
+          onChange={(e) => onChange('teamNationality', e.target.value)}
+          className="max-w-sm text-sm"
+        />
+        <p className="text-xs text-muted-foreground">
+          This helps match the kit colors and identity of the team in the banner.
+        </p>
+      </div>
+
+      {/* ── Kit colors ── */}
       <div className="space-y-2">
         <Label htmlFor="kit-colors" className="text-sm font-semibold text-foreground">
           Kit / outfit colors{' '}
@@ -112,7 +163,7 @@ export function SceneSelect({ sport, playerCount, action, kitColors, gender, onC
         />
       </div>
 
-      {/* Gender */}
+      {/* ── Gender ── */}
       <div className="space-y-2">
         <Label className="text-sm font-semibold text-foreground">Gender</Label>
         <div className="flex gap-2">
@@ -134,6 +185,7 @@ export function SceneSelect({ sport, playerCount, action, kitColors, gender, onC
           ))}
         </div>
       </div>
+
     </div>
   );
 }

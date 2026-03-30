@@ -237,17 +237,24 @@ export const BRAND_REFERENCES: Record<string, ReferenceOption[]> = {
 export interface SportsBannerData {
   // Q1
   sport: string;
-  // Q2
+  // Q2 — players
+  playerRole: string;       // e.g. "Goalkeeper", "Striker", "Running player"
   playerCount: '1' | '2' | '3+';
   action: string;           // selected chip or free text
   kitColors: string;        // e.g. "red and white striped"
   gender: 'Male' | 'Female' | 'Mixed';
+  teamNationality: string;  // e.g. "Brazil", "Germany national team"
   // Q3
   subjectPosition: string;  // one of SUBJECT_POSITIONS values
   negativeSpaceRule: string; // auto-derived from position cell
-  // Q4
+  // Q4 — background
   backgroundCategory: string;
   backgroundDetail: string;
+  matchCountry: string;     // country/city where the match takes place
+  flagInBackground: boolean;
+  flagCountry: string;      // which flag to show (defaults to matchCountry)
+  lightingTone: string;     // lighting tone ID from LIGHTING_TONES
+  lightingToneDetail: string; // prompt text for the lighting tone
   hasTrophy: boolean;
   hasScoreboard: boolean;
   scoreboardText: string;

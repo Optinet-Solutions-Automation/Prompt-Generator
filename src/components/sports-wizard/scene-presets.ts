@@ -1,12 +1,6 @@
 /**
  * scene-presets.ts
- * Static data for the Sports Banner Wizard:
- *  - Sports list with icons and per-sport action chips
- *  - Background categories and detail chips
- *  - Banner size presets
- *  - Occasion-to-mood mapping
- *  - Position-to-negative-space mapping
- *  - Wizard position grid definition
+ * All static data for the Sports Banner Wizard.
  */
 
 // ─────────────────────────────────────────────
@@ -18,10 +12,10 @@ export type PlayerCount = '1' | '2' | '3+';
 export type SportPreset = {
   id: string;
   label: string;
-  /** Emoji used as the icon in the sport grid */
   emoji: string;
-  /** Default background venue for this sport */
   defaultVenue: string;
+  /** Role/type chips — shown as the first question in Q2 */
+  playerRoles: string[];
   /** Action chips per player count */
   actions: Record<PlayerCount, string[]>;
 };
@@ -32,19 +26,32 @@ export const SPORTS: SportPreset[] = [
     label: 'Soccer / Football',
     emoji: '⚽',
     defaultVenue: 'dramatic stadium under floodlights with green pitch below',
+    playerRoles: [
+      'Striker',
+      'Goalkeeper',
+      'Midfielder',
+      'Defender',
+      'Running player',
+      'Dribbler',
+      'Header specialist',
+      'Celebrating player',
+      'Presenter / host',
+    ],
     actions: {
       '1': [
         'striking ball mid-air with explosive force',
         'dribbling past a defender at full sprint',
-        'goalkeeper making a diving save',
+        'making a diving save — arms outstretched',
         'celebrating a goal with fist raised',
         'controlling ball with chest mid-jump',
+        'sprinting at full pace',
       ],
       '2': [
         'contesting a fierce header duel',
         'shoulder-to-shoulder sprint battle for the ball',
         'tackle duel — one player sliding in',
         'two players celebrating a goal together',
+        'face-off before a penalty kick',
       ],
       '3+': [
         'team lifting the championship trophy together',
@@ -59,12 +66,21 @@ export const SPORTS: SportPreset[] = [
     label: 'Basketball',
     emoji: '🏀',
     defaultVenue: 'indoor basketball arena with bright court lighting',
+    playerRoles: [
+      'Point guard',
+      'Center / dunker',
+      'Shooter',
+      'Dribbler',
+      'Defender',
+      'Champion',
+    ],
     actions: {
       '1': [
         'dunking over the rim with both hands',
         'mid-air three-pointer release',
         'explosive fast-break layup',
         'crossover dribble low to the ground',
+        'jumping for a tip-off',
       ],
       '2': [
         'one-on-one drive to the basket',
@@ -83,6 +99,13 @@ export const SPORTS: SportPreset[] = [
     label: 'Tennis',
     emoji: '🎾',
     defaultVenue: 'centre court with stadium crowd in background',
+    playerRoles: [
+      'Server',
+      'Forehand hitter',
+      'Backhand hitter',
+      'Net player',
+      'Celebrating player',
+    ],
     actions: {
       '1': [
         'explosive overhead serve at peak toss',
@@ -105,6 +128,14 @@ export const SPORTS: SportPreset[] = [
     label: 'Cricket',
     emoji: '🏏',
     defaultVenue: 'cricket ground with pavilion and crowd in stands',
+    playerRoles: [
+      'Batsman',
+      'Fast bowler',
+      'Spin bowler',
+      'Wicket-keeper',
+      'Fielder',
+      'Captain',
+    ],
     actions: {
       '1': [
         'smashing a six — bat at full swing',
@@ -127,6 +158,13 @@ export const SPORTS: SportPreset[] = [
     label: 'Rugby',
     emoji: '🏉',
     defaultVenue: 'rugby stadium with floodlights and turf pitch',
+    playerRoles: [
+      'Ball carrier',
+      'Try scorer',
+      'Line-out jumper',
+      'Scrum forward',
+      'Captain',
+    ],
     actions: {
       '1': [
         'charging through the defense ball in hand',
@@ -149,6 +187,13 @@ export const SPORTS: SportPreset[] = [
     label: 'Boxing / MMA',
     emoji: '🥊',
     defaultVenue: 'dark fight arena with ring ropes and overhead spotlight',
+    playerRoles: [
+      'Champion',
+      'Challenger',
+      'Knockout puncher',
+      'Defensive boxer',
+      'Celebrating fighter',
+    ],
     actions: {
       '1': [
         'champion pose — gloves raised in victory',
@@ -171,6 +216,14 @@ export const SPORTS: SportPreset[] = [
     label: 'Ice Hockey',
     emoji: '🏒',
     defaultVenue: 'ice rink arena with frozen surface and arena lighting',
+    playerRoles: [
+      'Goaltender',
+      'Forward',
+      'Defenseman',
+      'Power forward',
+      'Goal scorer',
+      'Champion',
+    ],
     actions: {
       '1': [
         'slap shot with explosive ice spray',
@@ -194,6 +247,12 @@ export const SPORTS: SportPreset[] = [
     label: 'Esports',
     emoji: '🎮',
     defaultVenue: 'esports arena stage with LED screens and crowd',
+    playerRoles: [
+      'Champion',
+      'Pro gamer',
+      'Team captain',
+      'Trophy holder',
+    ],
     actions: {
       '1': [
         'champion raising a trophy on stage',
@@ -215,6 +274,11 @@ export const SPORTS: SportPreset[] = [
     label: 'Horse Racing',
     emoji: '🐎',
     defaultVenue: 'horse racing track with grandstand and turf',
+    playerRoles: [
+      'Jockey',
+      'Winning jockey',
+      'Champion jockey',
+    ],
     actions: {
       '1': [
         'horse and jockey at full gallop — race moment',
@@ -229,6 +293,91 @@ export const SPORTS: SportPreset[] = [
         'winner in enclosure — horse and crowd',
       ],
     },
+  },
+];
+
+// ─────────────────────────────────────────────
+// Countries & flags
+// ─────────────────────────────────────────────
+
+export type CountryOption = {
+  name: string;
+  flag: string;
+};
+
+/**
+ * Top match/tournament countries — shown as quick-pick chips.
+ * User can also type any country manually.
+ */
+export const TOP_MATCH_COUNTRIES: CountryOption[] = [
+  { name: 'Italy', flag: '🇮🇹' },
+  { name: 'Germany', flag: '🇩🇪' },
+  { name: 'Spain', flag: '🇪🇸' },
+  { name: 'France', flag: '🇫🇷' },
+  { name: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+  { name: 'Brazil', flag: '🇧🇷' },
+  { name: 'Argentina', flag: '🇦🇷' },
+  { name: 'USA', flag: '🇺🇸' },
+  { name: 'Australia', flag: '🇦🇺' },
+  { name: 'UAE', flag: '🇦🇪' },
+  { name: 'Saudi Arabia', flag: '🇸🇦' },
+  { name: 'Japan', flag: '🇯🇵' },
+  { name: 'Netherlands', flag: '🇳🇱' },
+  { name: 'Portugal', flag: '🇵🇹' },
+  { name: 'Mexico', flag: '🇲🇽' },
+  { name: 'Turkey', flag: '🇹🇷' },
+  { name: 'Morocco', flag: '🇲🇦' },
+  { name: 'Nigeria', flag: '🇳🇬' },
+  { name: 'Colombia', flag: '🇨🇴' },
+  { name: 'South Korea', flag: '🇰🇷' },
+];
+
+// ─────────────────────────────────────────────
+// Lighting tones
+// ─────────────────────────────────────────────
+
+export type LightingTone = {
+  id: string;
+  label: string;
+  /** Injected into the prompt's lighting/atmosphere description */
+  promptDetail: string;
+};
+
+export const LIGHTING_TONES: LightingTone[] = [
+  {
+    id: 'blue',
+    label: 'Blue / cool',
+    promptDetail: 'cold blue stadium lights, icy blue atmosphere, cool tones throughout',
+  },
+  {
+    id: 'orange',
+    label: 'Orange / warm',
+    promptDetail: 'warm amber-orange lighting, glowing warm atmosphere, rich orange tones',
+  },
+  {
+    id: 'red',
+    label: 'Red / crimson',
+    promptDetail: 'intense red and crimson lighting, fiery red atmosphere, bold crimson tones',
+  },
+  {
+    id: 'golden',
+    label: 'Golden hour',
+    promptDetail: 'golden sunset lighting, warm golden glow, late afternoon amber light',
+  },
+  {
+    id: 'night',
+    label: 'Night / dark',
+    promptDetail: 'dark dramatic night lighting, deep shadows, highlights cutting through darkness',
+  },
+  {
+    id: 'purple',
+    label: 'Purple / neon',
+    promptDetail: 'vibrant purple neon lighting, electric magenta accents, neon atmosphere',
+  },
+  {
+    id: 'white',
+    label: 'Stadium white',
+    promptDetail: 'bright white stadium floodlights, clean sharp shadows, crisp professional lighting',
   },
 ];
 
@@ -300,7 +449,6 @@ export type BannerSizePreset = {
   subtitle: string;
   dimensions: string;
   aspectRatio: string;
-  /** width:height ratio as a number for the visual preview */
   previewRatio: number;
 };
 
@@ -399,17 +547,11 @@ export const OCCASIONS: Occasion[] = [
 // Subject position grid
 // ─────────────────────────────────────────────
 
-/**
- * The 3x3 visual grid maps to the existing SUBJECT_POSITIONS values.
- * Each cell has a display label and the exact value used in the API.
- */
 export type PositionCell = {
   gridRow: 1 | 2 | 3;
   gridCol: 1 | 2 | 3;
   displayLabel: string;
-  /** Matches exactly one of the SUBJECT_POSITIONS values */
   value: string;
-  /** Rule for negative space — which side is left clear for text */
   negativeSpaceRule: string;
 };
 

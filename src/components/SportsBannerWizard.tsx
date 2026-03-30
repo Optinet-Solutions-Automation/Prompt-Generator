@@ -119,10 +119,12 @@ export function SportsBannerWizard({ onSubmit }: Props) {
         {step === 1 && (
           <SceneSelect
             sport={wizardData.sport}
+            playerRole={wizardData.playerRole}
             playerCount={wizardData.playerCount}
             action={wizardData.action}
             kitColors={wizardData.kitColors}
             gender={wizardData.gender}
+            teamNationality={wizardData.teamNationality}
             onChange={(field, value) =>
               updateField(field as keyof typeof wizardData, value as never)
             }
@@ -141,6 +143,10 @@ export function SportsBannerWizard({ onSubmit }: Props) {
             sport={wizardData.sport}
             backgroundCategory={wizardData.backgroundCategory}
             backgroundDetail={wizardData.backgroundDetail}
+            matchCountry={wizardData.matchCountry}
+            flagInBackground={wizardData.flagInBackground}
+            flagCountry={wizardData.flagCountry}
+            lightingTone={wizardData.lightingTone}
             hasTrophy={wizardData.hasTrophy}
             hasScoreboard={wizardData.hasScoreboard}
             scoreboardText={wizardData.scoreboardText}
