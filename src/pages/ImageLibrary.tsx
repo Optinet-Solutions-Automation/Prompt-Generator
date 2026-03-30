@@ -1189,7 +1189,7 @@ const FILTERS = [
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
-export default function ImageLibrary() {
+export default function ImageLibrary({ embedded, onBack }: { embedded?: boolean; onBack?: () => void } = {}) {
   const [images,      setImages]      = useState<GeneratedImage[]>([]);
   const [page,        setPage]        = useState(0);
   const [hasMore,     setHasMore]     = useState(true);
@@ -1255,18 +1255,25 @@ export default function ImageLibrary() {
   const nextImage   = () => lightboxIdx < images.length - 1 && setLightbox(images[lightboxIdx + 1]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={embedded ? '' : 'min-h-screen bg-background'}>
 
       {/* Top bar */}
-      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
+      <div className={`${embedded ? 'sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border' : 'sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border'}`}>
         <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center gap-6">
           <div className="flex items-center gap-3 shrink-0">
-            <Link to="/">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2">
+            {embedded ? (
+              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2" onClick={onBack}>
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Back</span>
               </Button>
-            </Link>
+            ) : (
+              <Link to="/">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Back</span>
+                </Button>
+              </Link>
+            )}
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center shadow-sm">
                 <Images className="w-4 h-4 text-primary-foreground" />
@@ -1370,7 +1377,11 @@ export default function ImageLibrary() {
             </p>
             <div className="flex gap-3 justify-center">
               {filter !== 'all' && <Button variant="outline" onClick={() => handleFilter('all')}>Show all</Button>}
-              <Link to="/"><Button>Generate images</Button></Link>
+              {embedded ? (
+                <Button onClick={onBack}>Generate images</Button>
+              ) : (
+                <Link to="/"><Button>Generate images</Button></Link>
+              )}
             </div>
           </div>
         )}
