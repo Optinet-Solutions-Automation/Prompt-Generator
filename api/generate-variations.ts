@@ -127,9 +127,12 @@ function buildPrompt(mode: string, guidance: string): string {
         'Choose a background lighting style that complements the user direction, which may be bright, neutral, or atmospheric.',
       ].join(' ');
 
-  const backgroundChange = [
-    'Dramatically reimagine ONLY the background environment, scene location, and overall color palette.',
-    'Make it feel distinctly different from the original while keeping the subject locked.',
+  const sceneVariation = [
+    'Create a variation of this image that feels like a fresh take on the SAME scene.',
+    'Keep the same general environment, setting, and location type.',
+    'Apply noticeable but moderate changes: shift the color palette, alter the time of day or lighting mood, reposition or vary background details (crowd density, object placement, weather, atmospheric effects).',
+    'The result should be clearly distinguishable from the original but still recognizably the same scene — NOT a completely different location or environment.',
+    'Do NOT replace the background with a different setting.',
   ].join(' ');
 
   const parts = [subjectLock, antiDarkRule, backgroundChange];
