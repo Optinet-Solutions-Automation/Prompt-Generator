@@ -202,7 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/${geminiModel}:generateContent`;
 
     const numVariations = Math.min(Number(count) || 2, 2);
-    const temperature = mode === 'subtle' ? 0.4 : 1.0;
+    const temperature = mode === 'subtle' ? 0.4 : 1.4;
 
     const makeRequest = () =>
       fetch(vertexUrl, {
