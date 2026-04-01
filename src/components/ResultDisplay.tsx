@@ -895,6 +895,9 @@ export function ResultDisplay({
                   <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4">
                     {images.map((img, index) => {
                       const imageId = `${img.provider}-${img.originalIndex}-${img.displayUrl}`;
+                      // Apply any URL updates from in-modal edits
+                      const update = imageUpdates.get(imageId);
+                      const thumbUrl = update?.displayUrl ?? img.displayUrl;
                       // Register the brand stored at generation time
                       if (img.generatedBrand && !imageBrandRef.current.has(imageId)) {
                         imageBrandRef.current.set(imageId, img.generatedBrand);
@@ -951,8 +954,16 @@ export function ResultDisplay({
                               </span>
                             </div>
                           )}
+                          {/* Edited badge — shown when this image has been edited in the modal */}
+                          {update && (
+                            <div className="absolute bottom-1 right-1 z-10">
+                              <span className="bg-amber-500/90 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                Edited
+                              </span>
+                            </div>
+                          )}
                           <img
-                            src={img.displayUrl}
+                            src={thumbUrl}
                             alt={`${label} - ${img.provider}`}
                             className="w-full h-full object-cover rounded-lg border border-border shadow-sm"
                           />
