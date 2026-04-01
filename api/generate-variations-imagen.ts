@@ -154,7 +154,7 @@ function buildImagenPrompt(mode: string, guidance: string, brand: string): strin
 
   if (mode === 'subtle') {
     // For subtle, describe a near-identical scene with only minor changes
-    const base = 'Same scene as the original. Very slight variation in ambient lighting warmth and color temperature only. Keep composition and environment essentially identical.';
+    const base = `${brandNote}Same scene as the original. Very slight variation in ambient lighting warmth and color temperature only. Keep composition and environment essentially identical.`;
     return guidance ? `${base} ${guidance}.` : base;
   }
 
