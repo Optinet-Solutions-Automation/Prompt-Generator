@@ -435,42 +435,24 @@ function Lightbox({
         );
       }
 
-      // Save selected variations as new library entries (inline to avoid hoisting issue)
+      // Save selected variations as new library entries (localStorage)
       for (const idx of selectedVarsToSave) {
         const url = unsavedVariations[idx];
         if (!url) continue;
         const origIdx = generatedVariations.indexOf(url);
         const vidx = origIdx < 0 ? idx : origIdx;
         saves.push(
-          fetch(`${SUPABASE_URL}/rest/v1/generated_images`, {
-            method: 'POST',
-            headers: { ...SB_HEADERS, Prefer: 'return=representation' },
-            body: JSON.stringify({
+          Promise.resolve().then(() => {
+            const newImg = storeImage({
               public_url:   url,
               provider:     'variation',
               aspect_ratio: image.aspect_ratio || '',
               resolution:   image.resolution   || '1K',
               filename:     `variation-${variationType}-${vidx + 1}-${Date.now()}.png`,
-              storage_path: '',
-            }),
-          })
-          .then(async res => {
-            if (!res.ok) return;
-            const data = await res.json();
-            const row  = Array.isArray(data) ? data[0] : data;
-            onNewImageAdded({
-              id:           row.id            || `var-${Date.now()}`,
-              created_at:   row.created_at    || new Date().toISOString(),
-              filename:     row.filename      || `variation-${vidx + 1}.png`,
-              provider:     'variation',
-              aspect_ratio: row.aspect_ratio  || image.aspect_ratio || '',
-              resolution:   row.resolution    || image.resolution   || '1K',
-              storage_path: row.storage_path  || '',
-              public_url:   url,
-            });
+            }) as GeneratedImage;
+            onNewImageAdded(newImg);
             setSavedVariationIdxs(prev => new Set([...prev, vidx]));
-          })
-          .catch(() => { /* non-fatal */ })
+          }).catch(() => { /* non-fatal */ })
         );
       }
 
