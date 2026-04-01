@@ -616,8 +616,8 @@ export function ImageModal({
                       <span className={`absolute bottom-1 left-1 text-[9px] rounded px-1 py-0.5 leading-none ${
                         img.isVariation
                           ? img.variationEngine === 'imagen'
-                            ? 'bg-orange-500/85 text-white'   // Imagen = orange
-                            : 'bg-primary/80 text-white'       // OpenAI = primary (blue/purple)
+                            ? 'bg-orange-500/85 text-white'   // Gemini = orange
+                            : 'bg-primary/80 text-white'       // ChatGPT = primary (blue/purple)
                           : 'bg-black/60 text-white'
                       }`}>
                         {img.isVariation
