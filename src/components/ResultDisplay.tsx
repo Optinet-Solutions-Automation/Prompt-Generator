@@ -359,7 +359,7 @@ export function ResultDisplay({
 
       if (displayUrl && editUrl) {
         const generatedBrand = metadata?.brand || "No Brand";
-        onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel(), generatedBrand });
+        onAddGeneratedImage?.(provider, { displayUrl, editUrl, referenceLabel: getReferenceLabel(), generatedBrand, resolution });
       } else {
         throw new Error("No image URL returned from response");
       }
