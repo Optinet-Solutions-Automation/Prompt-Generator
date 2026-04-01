@@ -129,14 +129,6 @@ function aspectRatioString(dims: { width: number; height: number } | null): stri
   return '1:1';
 }
 
-// Build the background description prompt for Imagen bgswap.
-//
-// Key difference from OpenAI:
-//   - OpenAI receives the full image + instructions and edits inline.
-//   - Imagen bgswap receives the image as a pixel mask and the PROMPT describes
-//     the NEW BACKGROUND ONLY. The foreground subject comes from the image automatically.
-//   - So the prompt must be a scene/environment description, NOT editing instructions.
-//
 // Build the background-only prompt for Imagen BGSWAP.
 //
 // CRITICAL: Imagen BGSWAP replaces ONLY the masked area (background).
