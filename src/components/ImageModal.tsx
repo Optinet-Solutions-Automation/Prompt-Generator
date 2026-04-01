@@ -199,7 +199,7 @@ export function ImageModal({
         if (isGallery) updatedUrlsRef.current.set(current.imageId, { displayUrl: newDisplay, editUrl: newEdit });
         setLastEditedUrl(newDisplay);
         setEditInstructions('');
-        onImageUpdated?.(newDisplay, newEdit);
+        onImageUpdated?.(newDisplay, newEdit, current.imageId);
         setActiveIdx(i => i);
 
         // Auto-save edited image to localStorage so it persists if user navigates away.
