@@ -488,9 +488,9 @@ export function ImageModal({
                       type="button"
                       onClick={() => setSelectedEngine('compare')}
                       disabled={isGeneratingVariations}
-                      title="Run both ChatGPT and Gemini in parallel and compare results"
+                      title="Run both ChatGPT and Gemini in parallel and generate from both"
                       className={`px-2.5 py-1 rounded font-medium transition-all ${selectedEngine === 'compare' ? 'bg-orange-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                    >Compare</button>
+                    >Both</button>
                   </div>
                   {selectedEngine === 'compare' && (
                     <span className="text-[10px] text-muted-foreground italic">
