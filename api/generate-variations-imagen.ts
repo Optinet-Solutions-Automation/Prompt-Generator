@@ -225,10 +225,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const numVariations = Math.min(Number(count) || 2, 2);
 
-    // Mode-specific parameters — both use BGSWAP to keep scene contextually related
+    // Both modes use BGSWAP — it's context-aware and keeps the background related.
+    // Dilation 0.0 = only background changes, subject stays pixel-perfect.
     const editMode   = 'EDIT_MODE_BGSWAP';
-    const baseSteps  = mode === 'subtle' ? 75 : 50;   // 50 = moderate creative freedom while staying grounded
-    const dilation   = mode === 'subtle' ? 0.0 : 0.15; // 0.15 = slight bleed into subject edges
+    const baseSteps  = mode === 'subtle' ? 75 : 50;
+    const dilation   = 0.0;
 
     // Use different seeds per request so we get actual variation between the two results
     const makeRequest = (seed: number) =>
