@@ -171,13 +171,13 @@ function buildImagenPrompt(mode: string, guidance: string, brand: string): strin
     return guidance ? `${base} ${guidance}.` : base;
   }
 
-  // Strong mode — mask-based editing with HIGH dilation so changes bleed
-  // into the subject area too, creating a true variation (not just background swap).
+  // Strong mode — BGSWAP with moderate dilation keeps the scene contextually
+  // related while allowing creative variation in the background.
   const sceneNote = [
-    'A fresh, improved variation of this scene — like a professional alternate version that could be even better than the original.',
-    'Reimagine the background with creative changes: different arrangement of elements, varied atmospheric effects, enhanced dramatic details, shifted composition.',
-    'The background MUST stay thematically related to the original context (e.g. sports scene stays sports-related, casino scene stays casino-related).',
-    'Same concept, fresh execution.',
+    'A fresh variation of the SAME scene — keep the EXACT same setting, environment type, and context as the original.',
+    'If the original is a sports scene, the variation MUST remain a sports scene with the same sport. If it is a casino, it MUST stay a casino.',
+    'Apply creative changes WITHIN that same setting: shift lighting, color grading, atmospheric effects, time of day, background element arrangement.',
+    'Do NOT replace the setting with a different location or unrelated environment. Same place, fresh take.',
   ].join(' ');
 
   if (guidance) {
