@@ -46,6 +46,8 @@ interface ResultDisplayProps {
     image: { displayUrl: string; editUrl: string; referenceLabel: string; generatedBrand: string },
   ) => void;
   onRemoveGeneratedImage?: (provider: "chatgpt" | "gemini", index: number) => void;
+  persistedVariations?: GalleryImage[];
+  onVariationsChange?: (variations: GalleryImage[]) => void;
 }
 
 export function ResultDisplay({
