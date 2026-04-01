@@ -158,9 +158,9 @@ function buildImagenPrompt(mode: string, guidance: string, brand: string): strin
     return guidance ? `${base} ${guidance}.` : base;
   }
 
-  // Strong mode — used with style reference (not mask-based editing)
-  // The prompt must describe the ENTIRE scene since we're generating a new image
-  // inspired by the original's style, not editing a masked region.
+  // Strong mode — mask-based editing with HIGH dilation so changes bleed
+  // into the subject area too, creating a true variation (not just background swap).
+  // The prompt describes the desired scene changes for the masked region.
   const lightingNote = userWantsBright
     ? 'Brightly lit environment, high-key lighting, vivid colors, no dark shadows. '
     : 'Avoid dark or moody backgrounds unless the direction specifically calls for it. ';
@@ -168,12 +168,10 @@ function buildImagenPrompt(mode: string, guidance: string, brand: string): strin
   const qualityNote = 'Photorealistic, high quality, cinematic lighting, no text, no logos, no watermarks.';
 
   const sceneNote = [
-    'Generate a variation of the reference image.',
-    'Keep the same type of scene, environment, and subject — but apply moderate creative variations:',
-    'slightly different subject pose or angle, shifted color palette, varied lighting mood,',
-    'and different atmospheric details in the background.',
-    'The background MUST remain thematically related to the original scene context (e.g. if the original is a sports scene, keep a sports-related background).',
-    'The result should be recognizably the same scene and brand but with fresh details — a true variation, not a copy.',
+    'A fresh, improved variation of this scene.',
+    'Reimagine the background with creative changes: different arrangement of elements, varied atmospheric effects, enhanced dramatic details, shifted color tones.',
+    'The background MUST stay thematically related to the original context (e.g. sports scene stays sports-related).',
+    'Make it feel like a professional alternate version — same concept, fresh execution.',
   ].join(' ');
 
   if (guidance) {
