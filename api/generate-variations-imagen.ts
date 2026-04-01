@@ -222,7 +222,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // subject pixel-perfect, and regenerates only the background from the prompt.
     // No mask image needed — Imagen handles the segmentation automatically.
     // ------------------------------------------------------------------
-    const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/imagegeneration@006:predict`;
+    // imagen-3.0-capability-001 is the current Imagen 3 editing model.
+    // imagegeneration@006 was retired Sep 24 2025.
+    const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/imagen-3.0-capability-001:predict`;
 
     const numVariations = Math.min(Number(count) || 2, 2);
 
