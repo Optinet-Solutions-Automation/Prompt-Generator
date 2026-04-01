@@ -137,7 +137,7 @@ function buildPrompt(mode: string, guidance: string): string {
 
   const parts = [subjectLock, antiDarkRule, sceneVariation];
   if (guidance) {
-    parts.push(`Direction for the new background/environment: ${guidance}`);
+    parts.push(`Direction for the variation: ${guidance}`);
   }
 
   return parts.join('\n\n');
