@@ -232,8 +232,9 @@ export function ImageModal({
             return [];
           }
           if (!result.value.ok) {
-            const e = await result.value.json().catch(() => ({})) as { error?: string };
-            errors.push(`${label}: ${e.error || result.value.status}`);
+            const e = await result.value.json().catch(() => ({})) as { error?: string; apiErrors?: string[] };
+            const detail = e.apiErrors?.length ? ` — ${e.apiErrors[0]}` : '';
+            errors.push(`${label}: ${e.error || result.value.status}${detail}`);
             return [];
           }
           const data = await result.value.json() as { variations?: Array<{ imageUrl?: string }> };
