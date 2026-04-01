@@ -659,12 +659,12 @@ export function ImageModal({
                   {localVariations.some(v => v.variationEngine) && (
                     <div className="flex gap-2 flex-wrap pt-0.5">
                       <span className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                        <span className="bg-primary/80 text-white rounded px-1 py-0.5 text-[8px] leading-none">OAI</span>
-                        OpenAI gpt-image-1
+                        <span className="bg-primary/80 text-white rounded px-1 py-0.5 text-[8px] leading-none">GPT</span>
+                        ChatGPT
                       </span>
                       <span className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                        <span className="bg-orange-500/85 text-white rounded px-1 py-0.5 text-[8px] leading-none">IMG</span>
-                        Vertex AI Imagen
+                        <span className="bg-orange-500/85 text-white rounded px-1 py-0.5 text-[8px] leading-none">GEM</span>
+                        Gemini
                       </span>
                     </div>
                   )}
