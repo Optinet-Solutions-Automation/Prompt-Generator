@@ -96,6 +96,14 @@ export function ImageModal({
   // Index in galleryImages where the current batch of variations starts
   const [varGalleryStartIdx, setVarGalleryStartIdx] = useState(-1);
 
+  // Unsaved changes dialog state
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [selectedVarsToSave, setSelectedVarsToSave] = useState<Set<number>>(new Set());
+  const [saveEditedChecked, setSaveEditedChecked] = useState(true);
+  const [isSavingUnsaved, setIsSavingUnsaved] = useState(false);
+  // Track which variations have already been saved to library during this session
+  const [savedVariationIds, setSavedVariationIds] = useState<Set<string>>(new Set());
+
   // Ref so the open-effect can read the latest persistedVariations without adding it to deps
   const persistedVariationsRef = useRef(persistedVariations);
   persistedVariationsRef.current = persistedVariations;
