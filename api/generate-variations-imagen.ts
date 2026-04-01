@@ -248,7 +248,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             sampleCount: 1,
             aspectRatio,
             editConfig: {
-              editMode: 'bgswap',
+              editMode: 'EDIT_MODE_BGSWAP',
             },
             seed,
             // Safety settings — allow the kind of stylised content these brand images use
