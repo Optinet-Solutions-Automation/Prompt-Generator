@@ -621,7 +621,7 @@ export function ImageModal({
                           : 'bg-black/60 text-white'
                       }`}>
                         {img.isVariation
-                          ? img.variationEngine === 'imagen' ? `IMG` : `OAI`
+                          ? img.variationEngine === 'imagen' ? `GEM` : `GPT`
                           : img.provider === 'chatgpt' ? 'GPT' : 'GEM'}
                       </span>
                       {/* Variation mode badge (top-right): SUB / STR */}
