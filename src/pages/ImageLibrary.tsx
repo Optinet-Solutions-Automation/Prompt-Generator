@@ -94,38 +94,18 @@ function deleteImage(id: string): void {
   deleteStoredImage(id);
 }
 
-async function replaceImage(id: string, editedUrl: string, original: GeneratedImage): Promise<GeneratedImage> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/generated_images?id=eq.${id}`, {
-    method: 'PATCH',
-    headers: { ...SB_HEADERS, Prefer: 'return=representation' },
-    body: JSON.stringify({
-      public_url: editedUrl,
-      provider: 'edit',
-      filename: `edited-${Date.now()}.png`,
-    }),
-  });
-  if (!res.ok) throw new Error(`Replace failed (${res.status})`);
-  const data = await res.json();
-  const row = Array.isArray(data) ? data[0] : data;
-  return { ...original, ...row };
+function replaceImage(id: string, editedUrl: string, original: GeneratedImage): GeneratedImage {
+  return replaceStoredImage(id, editedUrl, original) as GeneratedImage;
 }
 
-async function insertNewImage(editedUrl: string, original: GeneratedImage): Promise<GeneratedImage> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/generated_images`, {
-    method: 'POST',
-    headers: { ...SB_HEADERS, Prefer: 'return=representation' },
-    body: JSON.stringify({
-      public_url:   editedUrl,
-      provider:     'edit',
-      aspect_ratio: original.aspect_ratio || 'edited',
-      resolution:   original.resolution   || '',
-      filename:     `edited-${Date.now()}.png`,
-      storage_path: '',
-    }),
-  });
-  if (!res.ok) throw new Error(`Save failed (${res.status})`);
-  const data = await res.json();
-  return Array.isArray(data) ? data[0] : data;
+function insertNewImage(editedUrl: string, original: GeneratedImage): GeneratedImage {
+  return storeImage({
+    public_url:   editedUrl,
+    provider:     'edit',
+    aspect_ratio: original.aspect_ratio || 'edited',
+    resolution:   original.resolution   || '',
+    filename:     `edited-${Date.now()}.png`,
+  }) as GeneratedImage;
 }
 
 // Blob download — works for cross-origin Supabase URLs
