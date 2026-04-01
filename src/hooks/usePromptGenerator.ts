@@ -257,7 +257,6 @@ export function usePromptGenerator() {
       provider,
       aspectRatio: promptMetadata?.aspectRatio || '16:9',
       resolution:  image.resolution || '1K',
-      brand:       image.generatedBrand,
       filename:    `${provider}-${Date.now()}.png`,
     });
   }, [promptMetadata]);
