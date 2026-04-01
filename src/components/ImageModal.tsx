@@ -419,9 +419,10 @@ export function ImageModal({
               <p className="text-xs text-emerald-600 font-medium">Edit applied! Save it to favorites or keep editing.</p>
             )}
 
-            {/* Variations panel — single compact row */}
+            {/* Variations panel */}
             {showVariationsPanel && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 space-y-1.5">
+                {/* Row 1: Subtle/Strong · guidance input · Generate button */}
                 <div className="flex items-center gap-2">
                   {/* Subtle / Strong toggle */}
                   <div className="flex items-center gap-0.5 bg-background rounded-md p-0.5 border border-border text-xs shrink-0">
@@ -441,7 +442,7 @@ export function ImageModal({
                   {/* Inline guidance input */}
                   <input
                     type="text"
-                    placeholder="Optional guidance… e.g. 'Make it night time'"
+                    placeholder="Optional guidance… e.g. 'Sunny stadium'"
                     value={variationInstructions}
                     onChange={e => setVariationInstructions(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !isGeneratingVariations) handleGenerateVariations(); }}
@@ -457,10 +458,40 @@ export function ImageModal({
                   >
                     {isGeneratingVariations
                       ? <><Loader2 className="w-3 h-3 animate-spin" /><span className="tabular-nums">{variationElapsed}s</span></>
-                      : <><Shuffle className="w-3 h-3" />{localVariations.length > 0 ? 'Regenerate' : 'Generate'}</>}
+                      : <><Shuffle className="w-3 h-3" />{compareEngines ? 'Compare' : (localVariations.length > 0 ? 'Regenerate' : 'Generate')}</>}
                   </button>
                 </div>
-                {variationError && <p className="text-destructive text-[11px] mt-1.5">{variationError}</p>}
+
+                {/* Row 2: Compare toggle — lets user run both OpenAI and Imagen side by side */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCompareEngines(v => !v)}
+                    disabled={isGeneratingVariations}
+                    title="Run both OpenAI gpt-image-1 and Vertex AI Imagen in parallel and compare results"
+                    className={`flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full border transition-all font-medium ${
+                      compareEngines
+                        ? 'bg-orange-500/10 border-orange-400/50 text-orange-600'
+                        : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border'
+                    }`}
+                  >
+                    {/* Simple two-circles icon to suggest comparison */}
+                    <span className="text-[10px]">⚡</span>
+                    Compare: OpenAI vs Imagen
+                    {compareEngines && <span className="text-[9px] font-bold ml-0.5">ON</span>}
+                  </button>
+                  {compareEngines && (
+                    <span className="text-[10px] text-muted-foreground italic">
+                      Generates 4 images total (2 per engine) — takes longer
+                    </span>
+                  )}
+                </div>
+
+                {variationError && (
+                  <p className={`text-[11px] mt-0.5 ${variationError.startsWith('Note:') ? 'text-amber-600' : 'text-destructive'}`}>
+                    {variationError}
+                  </p>
+                )}
               </div>
             )}
 
