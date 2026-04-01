@@ -230,84 +230,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const project     = getProjectNumber();
 
     // ------------------------------------------------------------------
-    // 3. Call Vertex AI imagen-3.0-capability-001
+    // 3. Call Vertex AI imagen-3.0-capability-001 with mask-based editing
     //
-    // Two different approaches per mode:
-    //   SUBTLE: Mask-based editing (BGSWAP) — only background changes,
-    //           subject stays pixel-perfect. Uses REFERENCE_TYPE_RAW + MASK.
-    //   STRONG: Style-referenced generation — generates a NEW image inspired
-    //           by the original's style. Both subject and background can vary.
-    //           Uses REFERENCE_TYPE_STYLE (no mask needed).
+    // Both modes use REFERENCE_TYPE_RAW + REFERENCE_TYPE_MASK with
+    // MASK_MODE_BACKGROUND (auto-detects foreground subject).
+    //
+    //   SUBTLE: BGSWAP with 0.0 dilation — only background changes,
+    //           subject stays pixel-perfect.
+    //   STRONG: INPAINT_INSERTION with HIGH dilation (0.3) — the mask
+    //           bleeds significantly into the subject area, so BOTH
+    //           background and parts of the subject get reimagined.
+    //           Lower baseSteps = more creative freedom.
     // ------------------------------------------------------------------
     const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/imagen-3.0-capability-001:predict`;
 
     const numVariations = Math.min(Number(count) || 2, 2);
 
-    // Use different seeds per request so we get actual variation between the two results
-    const makeRequest = (seed: number) => {
-      // Build request body differently per mode
-      const requestBody = mode === 'subtle'
-        ? {
-            // SUBTLE: mask-based background editing — subject preserved pixel-perfect
-            instances: [{
-              prompt,
-              referenceImages: [
-                {
-                  referenceType: 'REFERENCE_TYPE_RAW',
-                  referenceId: 1,
-                  referenceImage: { bytesBase64Encoded: b64Image },
-                },
-                {
-                  referenceType: 'REFERENCE_TYPE_MASK',
-                  referenceId: 2,
-                  maskImageConfig: {
-                    maskMode: 'MASK_MODE_BACKGROUND',
-                    dilation: 0.0,
-                  },
-                },
-              ],
-            }],
-            parameters: {
-              editMode: 'EDIT_MODE_BGSWAP',
-              editConfig: { baseSteps: 75 },
-              sampleCount: 1,
-              seed,
-              safetyFilterLevel: 'block_some',
-              personGeneration: 'allow_adult',
-            },
-          }
-        : {
-            // STRONG: style-referenced generation — whole image varies (subject + background)
-            // Uses the original image as a STYLE reference so brand colors/aesthetic are preserved
-            // but allows the AI to regenerate the entire scene with creative variations.
-            instances: [{
-              prompt,
-              referenceImages: [
-                {
-                  referenceType: 'REFERENCE_TYPE_STYLE',
-                  referenceId: 1,
-                  referenceImage: { bytesBase64Encoded: b64Image },
-                },
-              ],
-            }],
-            parameters: {
-              aspectRatio,
-              sampleCount: 1,
-              seed,
-              safetyFilterLevel: 'block_some',
-              personGeneration: 'allow_adult',
-            },
-          };
+    // Mode-specific parameters
+    const editMode   = mode === 'subtle' ? 'EDIT_MODE_BGSWAP' : 'EDIT_MODE_INPAINT_INSERTION';
+    const baseSteps  = mode === 'subtle' ? 75 : 35;  // Lower = more creative divergence
+    const dilation   = mode === 'subtle' ? 0.0 : 0.3; // 0.3 = mask bleeds 30% into subject edges
 
-      return fetch(vertexUrl, {
+    // Use different seeds per request so we get actual variation between the two results
+    const makeRequest = (seed: number) =>
+      fetch(vertexUrl, {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          instances: [{
+            prompt,
+            referenceImages: [
+              {
+                referenceType: 'REFERENCE_TYPE_RAW',
+                referenceId: 1,
+                referenceImage: { bytesBase64Encoded: b64Image },
+              },
+              {
+                referenceType: 'REFERENCE_TYPE_MASK',
+                referenceId: 2,
+                maskImageConfig: {
+                  maskMode: 'MASK_MODE_BACKGROUND',
+                  dilation,
+                },
+              },
+            ],
+          }],
+          parameters: {
+            editMode,
+            editConfig: { baseSteps },
+            sampleCount: 1,
+            seed,
+            safetyFilterLevel: 'block_some',
+            personGeneration: 'allow_adult',
+          },
+        }),
       });
-    };
 
     const seeds   = Array.from({ length: numVariations }, () => Math.floor(Math.random() * 2 ** 31));
     const results = await Promise.allSettled(seeds.map(makeRequest));
