@@ -353,7 +353,7 @@ export const BRAND_KIT_DEFAULTS: Record<string, string> = {
   FortunePlay: 'gold and black',
   SpinJo:      'purple and white',
   Roosterbet:  'red and black',
-  LuckyVibe:   'sunset orange and white',
+  LuckyVibe:   'white and blue',
   SpinsUp:     'neon purple and black',
   PlayMojo:    'white and red',
   Lucky7even:  'purple and gold',
