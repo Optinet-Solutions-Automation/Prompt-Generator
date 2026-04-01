@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { HtmlConversionModal } from './HtmlConversionModal';
 import { FavoriteHeart } from './FavoriteHeart';
 
-import { storeImage } from '@/lib/imageStore';
+import { storeImage, deleteStoredImage } from '@/lib/imageStore';
 
 export interface GalleryImage {
   displayUrl: string;
