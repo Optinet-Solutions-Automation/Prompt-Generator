@@ -767,6 +767,158 @@ export function ImageModal({
       </div>{/* end outer centering wrapper */}
 
       <HtmlConversionModal isOpen={showHtmlModal} onClose={() => setShowHtmlModal(false)} imageUrl={current.editUrl} />
+
+      {/* Unsaved Changes Dialog */}
+      {showUnsavedDialog && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !isSavingUnsaved && setShowUnsavedDialog(false)} />
+          <div className="relative z-10 w-full max-w-md bg-card border border-border/60 rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-start justify-between px-6 pt-6 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-base">Unsaved Changes</h2>
+                  <p className="text-muted-foreground text-sm mt-0.5">Choose what to save to Image Library</p>
+                </div>
+              </div>
+              <button onClick={() => !isSavingUnsaved && setShowUnsavedDialog(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="px-6 pb-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Edited image section */}
+              {hasUnsavedEdit && lastEditedUrl && (
+                <div className="space-y-2">
+                  <label className="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={saveEditedChecked}
+                      onChange={e => setSaveEditedChecked(e.target.checked)}
+                      className="w-4 h-4 rounded border-border accent-primary"
+                    />
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <img src={lastEditedUrl} alt="Edited" className="w-14 h-14 rounded-lg object-cover border border-border/40 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium flex items-center gap-1.5">
+                          <Wand2 className="w-3.5 h-3.5 text-amber-500" />Edited Image
+                        </p>
+                        <p className="text-xs text-muted-foreground">Save your edit to the Image Library</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* Variations section */}
+              {unsavedVariations.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium flex items-center gap-1.5">
+                      <Shuffle className="w-3.5 h-3.5 text-primary" />
+                      Variations ({unsavedVariations.length})
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedVarsToSave.size === unsavedVariations.length) {
+                          setSelectedVarsToSave(new Set());
+                        } else {
+                          setSelectedVarsToSave(new Set(unsavedVariations.map((_, i) => i)));
+                        }
+                      }}
+                      className="text-xs text-primary hover:text-primary/80 font-medium"
+                    >
+                      {selectedVarsToSave.size === unsavedVariations.length ? 'Deselect all' : 'Select all'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {unsavedVariations.map((v, i) => (
+                      <label
+                        key={v.imageId}
+                        className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
+                          selectedVarsToSave.has(i)
+                            ? 'border-primary shadow-md shadow-primary/20'
+                            : 'border-border/40 opacity-60 hover:opacity-80'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedVarsToSave.has(i)}
+                          onChange={e => {
+                            const next = new Set(selectedVarsToSave);
+                            if (e.target.checked) next.add(i); else next.delete(i);
+                            setSelectedVarsToSave(next);
+                          }}
+                          className="sr-only"
+                        />
+                        <div className="aspect-square">
+                          <img src={v.displayUrl} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" />
+                        </div>
+                        {/* Checkmark overlay */}
+                        {selectedVarsToSave.has(i) && (
+                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                            <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                          </div>
+                        )}
+                        {/* Badge */}
+                        <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1">
+                          <span className={`text-[9px] rounded px-1 py-0.5 leading-none font-semibold ${
+                            v.variationMode === 'subtle' ? 'bg-sky-500/80 text-white' : 'bg-violet-500/80 text-white'
+                          }`}>
+                            {v.variationMode === 'subtle' ? 'SUB' : 'STR'}
+                          </span>
+                          <span className={`text-[9px] rounded px-1 py-0.5 leading-none ${
+                            v.variationEngine === 'imagen' ? 'bg-orange-500/85 text-white' : 'bg-primary/80 text-white'
+                          }`}>
+                            {v.variationEngine === 'imagen' ? 'GEM' : 'GPT'}
+                          </span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="px-6 pb-6 pt-2 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={doClose}
+                disabled={isSavingUnsaved}
+              >
+                Discard & Exit
+              </Button>
+              <Button
+                className="flex-1 gap-1.5"
+                onClick={handleSaveAndClose}
+                disabled={isSavingUnsaved || (!saveEditedChecked && selectedVarsToSave.size === 0 && !hasUnsavedEdit)}
+              >
+                {isSavingUnsaved ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving…</>
+                ) : (
+                  <><Save className="w-3.5 h-3.5" />Save & Exit</>
+                )}
+              </Button>
+            </div>
+
+            {/* Saving overlay */}
+            {isSavingUnsaved && (
+              <div className="absolute inset-0 flex items-center justify-center bg-card/85 backdrop-blur-sm rounded-2xl">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm font-medium">Saving to Image Library…</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
