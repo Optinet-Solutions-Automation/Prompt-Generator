@@ -457,7 +457,7 @@ function Lightbox({
     try {
       const saves: Promise<void>[] = [];
 
-      // Save edited image
+      // Save edited image as new library entry
       if (editedImgUrl && saveEditedChecked) {
         saves.push(
           insertNewImage(editedImgUrl, image)
@@ -466,13 +466,43 @@ function Lightbox({
         );
       }
 
-      // Save selected variations
+      // Save selected variations as new library entries (inline to avoid hoisting issue)
       for (const idx of selectedVarsToSave) {
         const url = unsavedVariations[idx];
         if (!url) continue;
-        // Find the original variation index
         const origIdx = generatedVariations.indexOf(url);
-        saves.push(handleSaveVariationToLibrary(url, origIdx < 0 ? idx : origIdx));
+        const vidx = origIdx < 0 ? idx : origIdx;
+        saves.push(
+          fetch(`${SUPABASE_URL}/rest/v1/generated_images`, {
+            method: 'POST',
+            headers: { ...SB_HEADERS, Prefer: 'return=representation' },
+            body: JSON.stringify({
+              public_url:   url,
+              provider:     'variation',
+              aspect_ratio: image.aspect_ratio || '',
+              resolution:   image.resolution   || '1K',
+              filename:     `variation-${variationType}-${vidx + 1}-${Date.now()}.png`,
+              storage_path: '',
+            }),
+          })
+          .then(async res => {
+            if (!res.ok) return;
+            const data = await res.json();
+            const row  = Array.isArray(data) ? data[0] : data;
+            onNewImageAdded({
+              id:           row.id            || `var-${Date.now()}`,
+              created_at:   row.created_at    || new Date().toISOString(),
+              filename:     row.filename      || `variation-${vidx + 1}.png`,
+              provider:     'variation',
+              aspect_ratio: row.aspect_ratio  || image.aspect_ratio || '',
+              resolution:   row.resolution    || image.resolution   || '1K',
+              storage_path: row.storage_path  || '',
+              public_url:   url,
+            });
+            setSavedVariationIdxs(prev => new Set([...prev, vidx]));
+          })
+          .catch(() => { /* non-fatal */ })
+        );
       }
 
       await Promise.all(saves);
