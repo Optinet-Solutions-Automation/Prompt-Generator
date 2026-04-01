@@ -217,7 +217,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ------------------------------------------------------------------
     // 3. Build the variation prompt based on mode and guidance
     // ------------------------------------------------------------------
-    const prompt = buildPrompt(mode, guidance);
+    const prompt = buildPrompt(mode, guidance, brand);
 
     // ------------------------------------------------------------------
     // 4. Fire variation requests in parallel via OpenAI image edit
