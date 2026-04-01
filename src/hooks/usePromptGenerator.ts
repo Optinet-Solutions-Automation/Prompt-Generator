@@ -6,17 +6,9 @@ import {
   GeneratePromptResponse,
   PromptMetadata,
 } from '@/types/prompt';
+import { storeImage } from '@/lib/imageStore';
 
-// Supabase config — used to auto-save every generated image to the library
-const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL      || '';
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const SB_HEADERS = {
-  apikey: SUPABASE_ANON,
-  Authorization: `Bearer ${SUPABASE_ANON}`,
-  'Content-Type': 'application/json',
-};
-
-/** Save a single image record to the generated_images table (fire-and-forget). */
+/** Save a single image to localStorage (fire-and-forget). */
 function saveImageToLibrary(params: {
   publicUrl: string;
   provider: string;
@@ -24,19 +16,18 @@ function saveImageToLibrary(params: {
   resolution: string;
   filename: string;
 }) {
-  if (!SUPABASE_URL || !params.publicUrl) return;
-  fetch(`${SUPABASE_URL}/rest/v1/generated_images`, {
-    method: 'POST',
-    headers: { ...SB_HEADERS, Prefer: 'return=minimal' },
-    body: JSON.stringify({
+  if (!params.publicUrl) return;
+  try {
+    storeImage({
       public_url:   params.publicUrl,
       provider:     params.provider,
       aspect_ratio: params.aspectRatio,
       resolution:   params.resolution || '1K',
       filename:     params.filename,
-      storage_path: '',
-    }),
-  }).catch(err => console.error('[saveImageToLibrary] failed:', err));
+    });
+  } catch (err) {
+    console.error('[saveImageToLibrary] failed:', err);
+  }
 }
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
