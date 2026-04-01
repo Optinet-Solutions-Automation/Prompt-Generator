@@ -1,11 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// ── Generate Image Variations via Vertex AI Imagen (imagegeneration@006 bgswap) ──
+// ── Generate Image Variations via Gemini Native Image Generation ─────────────
 //
-// bgswap = background swap: Imagen automatically detects the foreground subject
-// and replaces ONLY the background based on the prompt.
-// This is ideal for brand images — the character/subject is preserved pixel-perfect,
-// only the environment around them changes.
+// Previously used Imagen mask-based editing (BGSWAP), which could ONLY change
+// the background — the subject was preserved pixel-perfect by the mask.
+// This was NOT a true variation since the subject never changed.
+//
+// Now uses Gemini's native image generation (generateContent with image output).
+// Gemini sees the FULL image and generates a completely new variation —
+// both subject and background can change, just like ChatGPT's approach.
 //
 // Auth flow (same WIF pattern used by edit-image.ts and generate-image.ts):
 //   Vercel OIDC token → Google STS federated token → SA access token → Vertex AI
@@ -51,7 +54,6 @@ async function getServiceAccountAccessToken(req: VercelRequest): Promise<string>
   const { access_token: federatedToken } = await stsRes.json();
 
   // Step 2: Federated token → short-lived SA access token
-  // (generateAccessToken gives a proper SA-level token that Vertex AI accepts)
   const saRes = await fetch(
     `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccount}:generateAccessToken`,
     {
@@ -75,79 +77,64 @@ async function getServiceAccountAccessToken(req: VercelRequest): Promise<string>
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 // Extract GCP project number from GCP_WORKLOAD_PROVIDER env var.
-// Format: "projects/{number}/locations/global/workloadIdentityPools/..."
 function getProjectNumber(): string {
   const wp = process.env.GCP_WORKLOAD_PROVIDER || '';
   const match = wp.match(/^projects\/(\d+)\//);
   if (match) return match[1];
-  // Fallback env vars
   const explicit = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
   if (explicit) return explicit;
-  // Last resort: hard-coded from the Cloud Run URL we already have
   return '69452143295';
 }
 
-// Read width/height from raw PNG or JPEG header bytes — same logic as generate-variations.ts
-function detectDimensions(buffer: ArrayBuffer): { width: number; height: number } | null {
-  const bytes = new Uint8Array(buffer);
-  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
-    return {
-      width:  (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19],
-      height: (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23],
-    };
-  }
-  if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
-    let i = 2;
-    while (i < bytes.length - 8) {
-      if (bytes[i] === 0xFF) {
-        const marker = bytes[i + 1];
-        if (marker >= 0xC0 && marker <= 0xC3) {
-          return {
-            height: (bytes[i + 5] << 8) | bytes[i + 6],
-            width:  (bytes[i + 7] << 8) | bytes[i + 8],
-          };
-        }
-        if (i + 3 < bytes.length) {
-          i += 2 + ((bytes[i + 2] << 8) | bytes[i + 3]);
-        } else break;
-      } else {
-        i++;
-      }
-    }
-  }
-  return null;
-}
+// Build the variation prompt for Gemini native image generation.
+// Unlike Imagen BGSWAP (which only edited the background), Gemini sees the
+// full image and generates a new one — so the prompt describes the FULL variation.
+// Same style as ChatGPT's buildPrompt() so both engines produce comparable results.
+function buildGeminiPrompt(mode: string, guidance: string, brand: string): string {
+  const brandIdentity = brand
+    ? `BRAND IDENTITY RULE (NON-NEGOTIABLE): This image belongs to the "${brand}" brand. You MUST preserve the brand's EXACT signature colors, color palette, visual style, and overall aesthetic. The dominant colors in the output must match the dominant colors of the original. Do NOT introduce new colors, tones, or styles that conflict with the "${brand}" brand identity.`
+    : 'Preserve the EXACT color palette, dominant colors, and visual style of the original image.';
 
-// Map source aspect ratio → Vertex AI accepted string
-function aspectRatioString(dims: { width: number; height: number } | null): string {
-  if (!dims) return '1:1';
-  const r = dims.width / dims.height;
-  if (r > 1.6)  return '16:9';
-  if (r > 1.2)  return '4:3';
-  if (r < 0.65) return '9:16';
-  if (r < 0.85) return '3:4';
-  return '1:1';
-}
-
-// Build the background-only prompt for Imagen BGSWAP.
-//
-// CRITICAL: Imagen BGSWAP replaces ONLY the masked area (background).
-// The foreground subject is preserved pixel-perfect by the mask — NOT by the prompt.
-// So the prompt must describe ONLY the new background environment.
-// Keep it SHORT and direct — long prompts confuse the model into generating
-// entirely new scenes instead of editing the background.
-// Do NOT mention brand names, subjects, or "variations" — just describe the background.
-function buildImagenPrompt(mode: string, guidance: string, _brand: string): string {
   if (mode === 'subtle') {
-    // Subtle: nearly identical background with minor atmosphere tweaks
-    const base = 'Same background as the original image. Very slight shift in lighting warmth and color temperature. Keep everything else identical.';
-    return guidance ? `${base} ${guidance}.` : base;
+    const base = [
+      'Create a subtle variation of this image.',
+      brandIdentity,
+      'Preserve the EXACT composition, subject, character, pose, outfit, and overall structure.',
+      'Change ONLY minor lighting warmth, color temperature, soft atmospheric mood details, and slight environmental ambience.',
+      'Stay extremely close to the original — do not reimagine the background or alter the subject.',
+      'Output quality must be EQUAL or BETTER than the original. Photorealistic, high detail.',
+      'Avoid defaulting to dark/moody lighting just because the subject has glowing or fire elements.',
+    ].join(' ');
+    return guidance ? `${base} Additional refinement: ${guidance}` : base;
   }
 
-  // Strong: same TYPE of background but with creative changes
-  // Keep it short — Imagen works best with concise scene descriptions
-  const base = 'Same type of background environment as the original but with creative changes. Different lighting mood, varied atmospheric effects, shifted color grading. Keep the same general setting and location type. Photorealistic, high quality, cinematic lighting.';
-  return guidance ? `${base} ${guidance}.` : base;
+  // Strong mode — true variation, same concept fresh execution
+  const brightKeywords = [
+    'day', 'bright', 'sun', 'solar', 'noon', 'snow', 'stadium', 'beach',
+    'outdoor', 'sky', 'high-key', 'studio', 'white', 'light', 'morning',
+    'afternoon', 'cloudy', 'overcast',
+  ];
+  const userWantsBright = guidance.length > 0 &&
+    brightKeywords.some(kw => guidance.toLowerCase().includes(kw));
+
+  const antiDarkRule = userWantsBright
+    ? 'LIGHTING: The scene MUST be brightly lit — high-key, vivid, well-illuminated. No dark backgrounds, no night scenes.'
+    : 'LIGHTING: Avoid defaulting to dark/moody backgrounds just because the subject has glowing or fire elements. Match lighting to the original.';
+
+  const variation = [
+    'Create a FRESH, improved variation of this image — like an alternate version that could be even better than the original.',
+    brandIdentity,
+    'What to KEEP: The same brand, same type of subject, same general theme and concept. The viewer should recognize it as the same brand and campaign.',
+    'What to CHANGE CREATIVELY: Reimagine the composition — try a different angle, adjust the subject pose or position, vary the arrangement of elements, enhance or rearrange background details, experiment with different dramatic effects (particles, energy, atmosphere).',
+    'The variation should feel like a professional designer created an alternate version — same concept, fresh execution.',
+    'Output quality must be EQUAL or BETTER than the original. Photorealistic, high detail, no text, no logos, no watermarks.',
+    antiDarkRule,
+  ].join('\n');
+
+  if (guidance) {
+    return `${variation}\n\nCreative direction: ${guidance}`;
+  }
+  return variation;
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -165,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
 
     // ------------------------------------------------------------------
-    // 1. Fetch + encode source image as base64 (Vertex AI needs raw bytes)
+    // 1. Fetch + encode source image as base64
     // ------------------------------------------------------------------
     let imgArrayBuffer: ArrayBuffer;
     let mimeType = 'image/png';
@@ -186,12 +173,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       imgArrayBuffer = await imgRes.arrayBuffer();
     }
 
-    const dims        = detectDimensions(imgArrayBuffer);
-    const aspectRatio = aspectRatioString(dims);
-    const prompt      = buildImagenPrompt(mode, guidance, brand);
-    const b64Image    = Buffer.from(imgArrayBuffer).toString('base64');
+    const prompt   = buildGeminiPrompt(mode, guidance, brand);
+    const b64Image = Buffer.from(imgArrayBuffer).toString('base64');
 
-    console.log(`[generate-variations-imagen] dims=${JSON.stringify(dims)}, ratio=${aspectRatio}, mode=${mode}, prompt="${prompt.substring(0, 80)}..."`);
+    console.log(`[generate-variations-gemini] mode=${mode}, prompt="${prompt.substring(0, 80)}..."`);
 
     // ------------------------------------------------------------------
     // 2. Authenticate
@@ -200,28 +185,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const project     = getProjectNumber();
 
     // ------------------------------------------------------------------
-    // 3. Call Vertex AI imagen-3.0-capability-001 with mask-based editing
+    // 3. Call Gemini native image generation via Vertex AI
     //
-    // Both modes use REFERENCE_TYPE_RAW + REFERENCE_TYPE_MASK with
-    // MASK_MODE_BACKGROUND (auto-detects foreground subject).
+    // Uses generateContent with responseModalities: ["IMAGE", "TEXT"]
+    // Gemini sees the full source image and generates a true variation
+    // where BOTH subject and background can change.
     //
-    //   SUBTLE: Short prompt — "same background, slight lighting shift"
-    //   STRONG: Short prompt — "same setting type, creative changes"
-    //   Both use dilation 0.0 so the subject stays pixel-perfect.
-    //   The difference is only in the prompt (how much change to request).
+    // Temperature controls variation amount:
+    //   subtle = 0.4 (close to original)
+    //   strong = 1.0 (more creative freedom)
     // ------------------------------------------------------------------
-    const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/imagen-3.0-capability-001:predict`;
+    const geminiModel = 'gemini-2.0-flash-exp';
+    const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/${geminiModel}:generateContent`;
 
     const numVariations = Math.min(Number(count) || 2, 2);
+    const temperature = mode === 'subtle' ? 0.4 : 1.0;
 
-    // Both modes use BGSWAP — it's context-aware and keeps the background related.
-    // Dilation 0.0 = only background changes, subject stays pixel-perfect.
-    const editMode   = 'EDIT_MODE_BGSWAP';
-    const baseSteps  = mode === 'subtle' ? 75 : 50;
-    const dilation   = 0.0;
-
-    // Use different seeds per request so we get actual variation between the two results
-    const makeRequest = (seed: number) =>
+    const makeRequest = () =>
       fetch(vertexUrl, {
         method: 'POST',
         headers: {
@@ -229,37 +209,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          instances: [{
-            prompt,
-            referenceImages: [
+          contents: [{
+            role: 'user',
+            parts: [
               {
-                referenceType: 'REFERENCE_TYPE_RAW',
-                referenceId: 1,
-                referenceImage: { bytesBase64Encoded: b64Image },
+                inlineData: {
+                  mimeType,
+                  data: b64Image,
+                },
               },
               {
-                referenceType: 'REFERENCE_TYPE_MASK',
-                referenceId: 2,
-                maskImageConfig: {
-                  maskMode: 'MASK_MODE_BACKGROUND',
-                  dilation,
-                },
+                text: prompt,
               },
             ],
           }],
-          parameters: {
-            editMode,
-            editConfig: { baseSteps },
-            sampleCount: 1,
-            seed,
-            safetyFilterLevel: 'block_some',
-            personGeneration: 'allow_adult',
+          generationConfig: {
+            responseModalities: ['IMAGE', 'TEXT'],
+            temperature,
+            maxOutputTokens: 8192,
           },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+          ],
         }),
       });
 
-    const seeds   = Array.from({ length: numVariations }, () => Math.floor(Math.random() * 2 ** 31));
-    const results = await Promise.allSettled(seeds.map(makeRequest));
+    // Fire parallel requests for variation diversity
+    const results = await Promise.allSettled(
+      Array.from({ length: numVariations }, makeRequest)
+    );
 
     const variations: { imageUrl: string }[] = [];
     const apiErrors: string[] = [];
@@ -267,7 +248,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const result of results) {
       if (result.status === 'rejected') {
         const msg = String(result.reason);
-        console.error('[imagen] request rejected:', msg);
+        console.error('[gemini] request rejected:', msg);
         apiErrors.push(msg);
         continue;
       }
@@ -275,29 +256,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!resp.ok) {
         const errText = await resp.text();
         const msg = `Vertex AI HTTP ${resp.status}: ${errText}`;
-        console.error('[imagen]', msg);
+        console.error('[gemini]', msg);
         apiErrors.push(msg);
         continue;
       }
+
+      // Gemini response: { candidates: [{ content: { parts: [{ inlineData: { mimeType, data } }, ...] } }] }
       const data = await resp.json() as {
-        predictions?: Array<{ bytesBase64Encoded?: string; mimeType?: string }>;
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{
+              inlineData?: { mimeType?: string; data?: string };
+              text?: string;
+            }>;
+          };
+        }>;
       };
-      const pred = data.predictions?.[0];
-      if (pred?.bytesBase64Encoded) {
-        const outMime = pred.mimeType || 'image/png';
-        variations.push({ imageUrl: `data:${outMime};base64,${pred.bytesBase64Encoded}` });
-      } else {
-        const msg = `No bytesBase64Encoded in prediction: ${JSON.stringify(data).substring(0, 300)}`;
-        console.error('[imagen]', msg);
+
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      let foundImage = false;
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          const outMime = part.inlineData.mimeType || 'image/png';
+          variations.push({ imageUrl: `data:${outMime};base64,${part.inlineData.data}` });
+          foundImage = true;
+          break; // Take first image from each response
+        }
+      }
+      if (!foundImage) {
+        const msg = `No image in Gemini response: ${JSON.stringify(data).substring(0, 300)}`;
+        console.error('[gemini]', msg);
         apiErrors.push(msg);
       }
     }
 
     if (variations.length === 0) {
       return res.status(500).json({
-        error:     'Imagen failed to generate any variations.',
+        error:     'Gemini failed to generate any variations.',
         apiErrors,
-        hint:      'bgswap requires a clear foreground subject. Ensure the source image has a distinct subject.',
+        hint:      'Gemini native image generation may have safety-filtered the request. Try a different image or guidance.',
       });
     }
 
@@ -305,9 +302,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ variations, engine: 'imagen' });
 
   } catch (error) {
-    console.error('[imagen] error:', error);
+    console.error('[gemini] error:', error);
     return res.status(500).json({
-      error:   'Imagen variation failed',
+      error:   'Gemini variation failed',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
