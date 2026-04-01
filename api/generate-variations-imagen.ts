@@ -137,53 +137,25 @@ function aspectRatioString(dims: { width: number; height: number } | null): stri
 //     the NEW BACKGROUND ONLY. The foreground subject comes from the image automatically.
 //   - So the prompt must be a scene/environment description, NOT editing instructions.
 //
-// We still apply the same anti-dark-bias logic for strong mode.
-function buildImagenPrompt(mode: string, guidance: string, brand: string): string {
-  // Brand identity — same strength as the ChatGPT prompt so both engines enforce equally.
-  // Imagen receives a scene description (not editing instructions), so brand is embedded directly.
-  const brandNote = brand
-    ? `BRAND RULE (NON-NEGOTIABLE): This belongs to the "${brand}" brand. Preserve the brand's EXACT signature colors, color palette, and visual aesthetic. The dominant colors MUST match the original — do NOT shift to different color tones or introduce conflicting hues. `
-    : 'Preserve the EXACT color palette and dominant colors of the original. ';
-
-  const brightKeywords = [
-    'day', 'bright', 'sun', 'solar', 'noon', 'snow', 'stadium', 'beach',
-    'outdoor', 'sky', 'high-key', 'studio', 'white', 'light', 'morning',
-    'afternoon', 'cloudy', 'overcast',
-  ];
-  const userWantsBright = guidance.length > 0 &&
-    brightKeywords.some(kw => guidance.toLowerCase().includes(kw));
-
-  const antiDarkNote = userWantsBright
-    ? 'Brightly lit environment, high-key lighting, vivid colors, no dark shadows. '
-    : 'Avoid dark or moody backgrounds unless the direction specifically calls for it. Do not default to dark just because of glowing or fire elements. ';
-
-  const qualityNote = 'Output quality must be EQUAL or BETTER than the original. Photorealistic, high quality, cinematic lighting, no text, no logos, no watermarks.';
-
+// Build the background-only prompt for Imagen BGSWAP.
+//
+// CRITICAL: Imagen BGSWAP replaces ONLY the masked area (background).
+// The foreground subject is preserved pixel-perfect by the mask — NOT by the prompt.
+// So the prompt must describe ONLY the new background environment.
+// Keep it SHORT and direct — long prompts confuse the model into generating
+// entirely new scenes instead of editing the background.
+// Do NOT mention brand names, subjects, or "variations" — just describe the background.
+function buildImagenPrompt(mode: string, guidance: string, _brand: string): string {
   if (mode === 'subtle') {
-    // Subtle: minor refinements — almost identical but slightly polished.
-    const base = [
-      brandNote,
-      'Same scene as the original. Very slight variation in ambient lighting warmth, color temperature, and soft atmospheric details only.',
-      'Keep composition and environment essentially identical.',
-      antiDarkNote,
-      qualityNote,
-    ].join(' ');
+    // Subtle: nearly identical background with minor atmosphere tweaks
+    const base = 'Same background as the original image. Very slight shift in lighting warmth and color temperature. Keep everything else identical.';
     return guidance ? `${base} ${guidance}.` : base;
   }
 
-  // Strong mode — BGSWAP with moderate dilation keeps the scene contextually
-  // related while allowing creative variation in the background.
-  const sceneNote = [
-    'A fresh variation of the SAME scene — keep the EXACT same setting, environment type, and context as the original.',
-    'If the original is a sports scene, the variation MUST remain a sports scene with the same sport. If it is a casino, it MUST stay a casino.',
-    'Apply creative changes WITHIN that same setting: shift lighting, color grading, atmospheric effects, time of day, background element arrangement.',
-    'Do NOT replace the setting with a different location or unrelated environment. Same place, fresh take.',
-  ].join(' ');
-
-  if (guidance) {
-    return `${brandNote}${antiDarkNote}${sceneNote} Creative direction: ${guidance}. ${qualityNote}`;
-  }
-  return `${brandNote}${antiDarkNote}${sceneNote} ${qualityNote}`;
+  // Strong: same TYPE of background but with creative changes
+  // Keep it short — Imagen works best with concise scene descriptions
+  const base = 'Same type of background environment as the original but with creative changes. Different lighting mood, varied atmospheric effects, shifted color grading. Keep the same general setting and location type. Photorealistic, high quality, cinematic lighting.';
+  return guidance ? `${base} ${guidance}.` : base;
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
