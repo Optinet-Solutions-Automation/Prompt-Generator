@@ -91,8 +91,9 @@ function getProjectNumber(): string {
 // full image and generates a new one — so the prompt describes the FULL variation.
 // Same style as ChatGPT's buildPrompt() so both engines produce comparable results.
 function buildGeminiPrompt(mode: string, guidance: string, brand: string): string {
+  // Brand palette applies to background/lighting/atmosphere ONLY — not athlete clothing.
   const brandIdentity = brand
-    ? `BRAND IDENTITY RULE (NON-NEGOTIABLE): This image belongs to the "${brand}" brand. You MUST preserve the brand's EXACT signature colors, color palette, visual style, and overall aesthetic. The dominant colors in the output must match the dominant colors of the original. Do NOT introduce new colors, tones, or styles that conflict with the "${brand}" brand identity.`
+    ? `BRAND IDENTITY RULE (NON-NEGOTIABLE): This image belongs to the "${brand}" brand. You MUST preserve the brand's EXACT signature colors, color palette, visual style, and overall aesthetic. The dominant BACKGROUND and LIGHTING colors must match the dominant colors of the original. Do NOT introduce new colors, tones, or styles that conflict with the "${brand}" brand identity. EXCEPTION: preserve the athlete's clothing colors exactly as shown in the original image — do NOT recolor jersey, shorts, or any clothing to match the brand palette. Brand palette applies to background, atmosphere, and lighting ONLY.`
     : 'Preserve the EXACT color palette, dominant colors, and visual style of the original image.';
 
   if (mode === 'subtle') {
