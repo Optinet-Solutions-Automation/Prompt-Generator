@@ -252,7 +252,17 @@ export function usePromptGenerator() {
       ...prev,
       [provider]: [...prev[provider], { ...image, provider }]
     }));
-  }, []);
+
+    // Auto-save to image library immediately so it persists when navigating away
+    saveImageToLibrary({
+      publicUrl:   image.displayUrl,
+      provider,
+      aspectRatio: promptMetadata?.aspectRatio || '16:9',
+      resolution:  formData.resolution || '1K',
+      brand:       image.generatedBrand,
+      filename:    `${provider}-${Date.now()}.png`,
+    });
+  }, [promptMetadata, formData.resolution]);
 
   const handleRemoveGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', index: number) => {
     setGeneratedImages(prev => ({
