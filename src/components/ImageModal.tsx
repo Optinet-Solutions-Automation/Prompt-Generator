@@ -30,7 +30,7 @@ interface ImageModalProps {
   imageId?: string;
   liked?: boolean;
   onToggleFavorite?: (imageId: string, liked: boolean) => void;
-  onImageUpdated?: (newDisplayUrl: string, newEditUrl: string) => void;
+  onImageUpdated?: (newDisplayUrl: string, newEditUrl: string, imageId?: string) => void;
   // Gallery mode
   allImages?: GalleryImage[];
   initialIndex?: number;
