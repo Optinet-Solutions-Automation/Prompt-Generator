@@ -444,8 +444,8 @@ export function buildNarrativePrompt(data: SportsBannerData, brand: string): str
     // Scene opener
     `${countLabel}${genderLabel}${sportStr}${playerWord}${contextStr} — ${expandedAction}.`,
 
-    // Kit
-    `Wearing ${kitColors} kit.`,
+    // Kit — STRONGLY enforced so brand color palette cannot override athlete clothing
+    `REQUIRED ATHLETE UNIFORM (non-negotiable): athlete MUST wear ${kitColors} kit — white jersey/top and blue shorts. This overrides any brand color rule. Brand palette applies ONLY to background, lighting, and atmosphere. Athlete clothing colors are FIXED.`,
 
     // Environment
     `Setting: ${settingDesc}.`,
