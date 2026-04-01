@@ -344,22 +344,21 @@ export function ImageModal({
       setVarGalleryStartIdx(newBatchStart);
       setActiveIdx(newBatchStart);
 
-      // Auto-save all new variations to localStorage immediately so they persist when navigating away
-      const newSavedIds = new Set<string>();
+      // Auto-save all new variations to localStorage so they persist if user navigates away.
+      // We track the stored IDs but do NOT mark them as "savedVariationIds" — the
+      // "Unsaved Changes" dialog will still show them so the user can choose what to keep.
+      // Deselected items will be deleted from localStorage when the dialog closes.
       for (const variation of newVarImages) {
         try {
-          storeImage({
+          const stored = storeImage({
             public_url:   variation.displayUrl,
             provider:     'variation',
             aspect_ratio: 'varied',
             resolution:   resolution || '1K',
             filename:     `variation-${variation.variationMode}-${variation.variationIndex}-${Date.now()}.png`,
           });
-          newSavedIds.add(variation.imageId);
+          varStoredIdsRef.current.set(variation.imageId, stored.id);
         } catch (err) { console.error('Auto-save variation failed:', err); }
-      }
-      if (newSavedIds.size > 0) {
-        setSavedVariationIds(prev => new Set([...prev, ...newSavedIds]));
       }
 
     } catch (err) {
