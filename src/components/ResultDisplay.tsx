@@ -1028,16 +1028,16 @@ export function ResultDisplay({
 
       {/* Image Gallery Modal */}
       {modalImage && (() => {
-        const chatgptImgs = generatedImages.chatgpt.map((img, idx) => ({
-          displayUrl: img.displayUrl, editUrl: img.editUrl,
-          provider: 'chatgpt' as const,
-          imageId: `chatgpt-${idx}-${img.displayUrl}`,
-        }));
-        const geminiImgs = generatedImages.gemini.map((img, idx) => ({
-          displayUrl: img.displayUrl, editUrl: img.editUrl,
-          provider: 'gemini' as const,
-          imageId: `gemini-${idx}-${img.displayUrl}`,
-        }));
+        const chatgptImgs = generatedImages.chatgpt.map((img, idx) => {
+          const imageId = `chatgpt-${idx}-${img.displayUrl}`;
+          const update = imageUpdates.get(imageId);
+          return { displayUrl: update?.displayUrl ?? img.displayUrl, editUrl: update?.editUrl ?? img.editUrl, provider: 'chatgpt' as const, imageId };
+        });
+        const geminiImgs = generatedImages.gemini.map((img, idx) => {
+          const imageId = `gemini-${idx}-${img.displayUrl}`;
+          const update = imageUpdates.get(imageId);
+          return { displayUrl: update?.displayUrl ?? img.displayUrl, editUrl: update?.editUrl ?? img.editUrl, provider: 'gemini' as const, imageId };
+        });
         const galleryImages: GalleryImage[] = [...chatgptImgs, ...geminiImgs];
         return (
           <ImageModal
