@@ -74,6 +74,29 @@ export function getAllStoredImages(): StoredImage[] {
   return loadAll();
 }
 
+/**
+ * Batch-import images from an external source (e.g. Supabase sync).
+ * Does a single localStorage read + single write — far faster than
+ * calling storeImage() 500 times individually.
+ *
+ * newImages must already be deduplicated against localStorage by the caller.
+ * They are prepended (newest first) and the list is trimmed to MAX_IMAGES.
+ */
+export function batchStoreImages(newImages: Omit<StoredImage, 'id' | 'created_at' | 'storage_path'>[]): number {
+  if (newImages.length === 0) return 0;
+  const now = Date.now();
+  const toAdd: StoredImage[] = newImages.map((img, i) => ({
+    id:           `img-sb-${now}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+    created_at:   new Date(now - (newImages.length - i) * 1000).toISOString(), // preserve ordering
+    storage_path: '',
+    ...img,
+  }));
+  // Prepend new images then trim to max
+  const merged = [...toAdd, ...loadAll()].slice(0, MAX_IMAGES);
+  saveAll(merged);
+  return toAdd.length;
+}
+
 /** Permanently remove an image by id. */
 export function deleteStoredImage(id: string): void {
   saveAll(loadAll().filter(i => i.id !== id));
