@@ -1646,7 +1646,7 @@ export default function ImageLibrary({ embedded, onBack }: { embedded?: boolean;
                 image={image}
                 onClick={() => setLightbox(image)}
                 onDeleted={handleDeleted}
-                priority={i < 10}
+                priority={i < 20}
               />
             ))}
           </div>
