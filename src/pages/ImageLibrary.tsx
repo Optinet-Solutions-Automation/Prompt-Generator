@@ -1507,11 +1507,11 @@ export default function ImageLibrary({ embedded, onBack }: { embedded?: boolean;
 
   useEffect(() => { load(0, filter, brandFilter, true); }, [filter, brandFilter, load]);
 
-  // One-time migration: pull old images from Supabase into localStorage on first visit
+  // Background sync: pull any Supabase images missing from localStorage on each open
   useEffect(() => {
-    migrateFromSupabase().then(count => {
+    syncFromSupabase().then(count => {
       if (count > 0) {
-        // New images were migrated — reload the grid so they appear
+        // New images were synced — reload the grid so they appear
         load(0, filter, brandFilter, true);
       }
     });
