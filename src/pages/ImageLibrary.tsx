@@ -1511,6 +1511,17 @@ export default function ImageLibrary({ embedded, onBack }: { embedded?: boolean;
 
   useEffect(() => { load(0, filter, brandFilter, true); }, [filter, brandFilter, load]);
 
+  // One-time migration: pull old images from Supabase into localStorage on first visit
+  useEffect(() => {
+    migrateFromSupabase().then(count => {
+      if (count > 0) {
+        // New images were migrated — reload the grid so they appear
+        load(0, filter, brandFilter, true);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleFilter = (f: string) => {
     if (f === filter) return;
     setFilter(f);
