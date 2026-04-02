@@ -55,10 +55,23 @@ const Index = () => {
 
   const [showLikedPanel, setShowLikedPanel] = useState(false);
 
-  // Variation images generated inside the modal — lifted here so they survive tab switches
-  const [persistedVariations, setPersistedVariations] = useState<GalleryImage[]>([]);
+  // Variation images generated inside the modal — stored in localStorage so they
+  // survive ANY tab switch, including switching to the Image Library and back.
+  const VARIATIONS_KEY = 'pg_current_variations';
+  const [persistedVariations, setPersistedVariations] = useState<GalleryImage[]>(() => {
+    try {
+      const raw = localStorage.getItem(VARIATIONS_KEY);
+      return raw ? (JSON.parse(raw) as GalleryImage[]) : [];
+    } catch { return []; }
+  });
 
-  // Clear variations whenever new images are generated (fresh session)
+  // Keep localStorage in sync whenever variations change
+  useEffect(() => {
+    try { localStorage.setItem(VARIATIONS_KEY, JSON.stringify(persistedVariations)); }
+    catch { /* ignore if localStorage is full */ }
+  }, [persistedVariations]);
+
+  // Clear variations whenever a fresh batch of images is generated
   useEffect(() => { setPersistedVariations([]); }, [generatedImages]);
 
   // Get current brand from metadata (result view) or formData (form view)
