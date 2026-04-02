@@ -179,11 +179,10 @@ export function ResultDisplay({
   const [refSaveError, setRefSaveError] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  // Clear persisted variations + edits whenever a fresh set of images is generated
+  // Clear image-edit overrides whenever a fresh set of images is generated.
+  // NOTE: persistedVariations is owned by Index.tsx — do NOT clear it here.
   useEffect(() => {
-    setPersistedVariations([]);
     setImageUpdates(new Map());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generatedImages]);
 
   const handleSaveAsRef = async () => {
