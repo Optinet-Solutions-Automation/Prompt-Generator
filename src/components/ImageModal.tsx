@@ -545,7 +545,7 @@ export function ImageModal({
                     <button
                       type="button"
                       onClick={() => setVariationType('subtle')}
-                      title="Subtle — adjust lighting & colors only, keep composition identical"
+                      title="Subtle — brand colors locked; varies camera angle & pose only"
                       className={`px-2.5 py-1 rounded font-medium transition-all ${variationType === 'subtle' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >Subtle</button>
                     <button
