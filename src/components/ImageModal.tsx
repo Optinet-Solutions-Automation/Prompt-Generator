@@ -603,9 +603,13 @@ export function ImageModal({
                       className={`px-2.5 py-1 rounded font-medium transition-all ${selectedEngine === 'compare' ? 'bg-orange-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >Both</button>
                   </div>
-                  {selectedEngine === 'compare' && (
+                  {selectedEngine === 'compare' ? (
                     <span className="text-[10px] text-muted-foreground italic">
                       Generates 4 images total (2 per engine) — takes longer
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground italic">
+                      Generates 4 variations — each with a different level of change
                     </span>
                   )}
                 </div>
