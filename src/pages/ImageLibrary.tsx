@@ -935,8 +935,10 @@ function Lightbox({
                         className={`flex-1 py-1.5 rounded-md font-medium transition-all ${selectedEngine === 'compare' ? 'bg-orange-500 text-white shadow-sm' : 'text-white/40 hover:text-white/70'}`}
                       >Both</button>
                     </div>
-                    {selectedEngine === 'compare' && (
+                    {selectedEngine === 'compare' ? (
                       <p className="text-white/30 text-[10px] italic">Generates 4 images total (2 per engine) — takes longer</p>
+                    ) : (
+                      <p className="text-white/30 text-[10px] italic">Generates 4 variations — each with a different level of change</p>
                     )}
 
                     {/* Optional instruction */}
