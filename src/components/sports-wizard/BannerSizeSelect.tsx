@@ -186,6 +186,40 @@ export function BannerSizeSelect({ bannerSizeId, occasion, mirrorArabic, onChang
         )}
       </div>
 
+      {/* ── Arabic version ── */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold text-foreground">Arabic version</Label>
+        <p className="text-xs text-muted-foreground">
+          Generate a mirrored copy of the banner for Arabic (RTL) layouts — subjects are flipped horizontally.
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onMirrorArabicChange(false)}
+            className={[
+              'px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-150',
+              !mirrorArabic
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-primary/5',
+            ].join(' ')}
+          >
+            No
+          </button>
+          <button
+            type="button"
+            onClick={() => onMirrorArabicChange(true)}
+            className={[
+              'px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-150',
+              mirrorArabic
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-primary/5',
+            ].join(' ')}
+          >
+            Yes
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
