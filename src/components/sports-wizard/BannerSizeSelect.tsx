@@ -207,10 +207,31 @@ export function BannerSizeSelect({ bannerSizeId, occasion, mirrorArabic, subject
 
       {/* ── Arabic version ── */}
       <div className="space-y-2">
-        <Label className="text-sm font-semibold text-foreground">Arabic version</Label>
+        <Label className="text-sm font-semibold text-foreground">Arabic version (RTL)</Label>
         <p className="text-xs text-muted-foreground">
-          Generate a mirrored copy of the banner for Arabic (RTL) layouts — subjects are flipped horizontally.
+          Adds a "Download (Arabic)" button after generation — downloads a horizontally flipped copy for right-to-left layouts.
         </p>
+
+        {/* Position preview — shows what the flip will do */}
+        {isCentered ? (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600">
+            <span className="mt-0.5">⚠️</span>
+            <span>
+              Your subject is <strong>centered</strong> — flipping a centered image produces an identical result.
+              Go back to Step 3 and place the subject on the left or right to get a meaningful Arabic version.
+            </span>
+          </div>
+        ) : (
+          mirrorArabic && (
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700">
+              <span>✓</span>
+              <span>
+                Subject will move from <strong>{subjectPosition}</strong> → <strong>{flippedPosition}</strong> in the Arabic copy.
+              </span>
+            </div>
+          )
+        )}
+
         <div className="flex gap-2">
           <button
             type="button"
@@ -227,11 +248,14 @@ export function BannerSizeSelect({ bannerSizeId, occasion, mirrorArabic, subject
           <button
             type="button"
             onClick={() => onMirrorArabicChange(true)}
+            disabled={isCentered}
             className={[
               'px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-150',
-              mirrorArabic
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-primary/5',
+              isCentered
+                ? 'opacity-40 cursor-not-allowed border-border bg-card text-muted-foreground'
+                : mirrorArabic
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-primary/5',
             ].join(' ')}
           >
             Yes
