@@ -11,31 +11,11 @@ import { SportsBannerData } from '@/types/prompt';
 type Props = {
   bannerSizeId: string;
   occasion: string;
-  mirrorArabic: boolean;
-  subjectPosition: string;
   onChange: (
     field: keyof Pick<SportsBannerData, 'bannerSizeId' | 'bannerSizeLabel' | 'bannerDimensions' | 'aspectRatio' | 'occasion' | 'occasionMood'>,
     value: string
   ) => void;
-  onMirrorArabicChange: (value: boolean) => void;
 };
-
-/**
- * Given a subject position label, returns what the mirrored position will be.
- * Center positions are flagged — flipping produces an identical image.
- */
-function getMirrorInfo(position: string): { flippedPosition: string; isCentered: boolean } {
-  const p = position.toLowerCase();
-  if (p.includes('left') && !p.includes('right')) {
-    const flipped = position.replace(/left/gi, 'Right').replace(/Left/g, 'Right');
-    return { flippedPosition: flipped, isCentered: false };
-  }
-  if (p.includes('right') && !p.includes('left')) {
-    const flipped = position.replace(/right/gi, 'Left').replace(/Right/g, 'Left');
-    return { flippedPosition: flipped, isCentered: false };
-  }
-  return { flippedPosition: position, isCentered: true };
-}
 
 function AspectPreview({ ratio, selected }: { ratio: number; selected: boolean }) {
   const clampedRatio = Math.min(ratio, 4);
@@ -49,8 +29,7 @@ function AspectPreview({ ratio, selected }: { ratio: number; selected: boolean }
   );
 }
 
-export function BannerSizeSelect({ bannerSizeId, occasion, mirrorArabic, subjectPosition, onChange, onMirrorArabicChange }: Props) {
-  const { flippedPosition, isCentered } = getMirrorInfo(subjectPosition || 'Centered');
+export function BannerSizeSelect({ bannerSizeId, occasion, onChange }: Props) {
   const [customOccasion, setCustomOccasion] = useState('');
   const [showCustomOccasion, setShowCustomOccasion] = useState(false);
   const [customWidth, setCustomWidth] = useState('');
@@ -203,64 +182,6 @@ export function BannerSizeSelect({ bannerSizeId, occasion, mirrorArabic, subject
             className="text-sm max-w-sm"
           />
         )}
-      </div>
-
-      {/* ── Arabic version ── */}
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-foreground">Arabic version (RTL)</Label>
-        <p className="text-xs text-muted-foreground">
-          Adds a "Download (Arabic)" button after generation — downloads a horizontally flipped copy for right-to-left layouts.
-        </p>
-
-        {/* Position preview — shows what the flip will do */}
-        {isCentered ? (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600">
-            <span className="mt-0.5">⚠️</span>
-            <span>
-              Your subject is <strong>centered</strong> — flipping a centered image produces an identical result.
-              Go back to Step 3 and place the subject on the left or right to get a meaningful Arabic version.
-            </span>
-          </div>
-        ) : (
-          mirrorArabic && (
-            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700">
-              <span>✓</span>
-              <span>
-                Subject will move from <strong>{subjectPosition}</strong> → <strong>{flippedPosition}</strong> in the Arabic copy.
-              </span>
-            </div>
-          )
-        )}
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onMirrorArabicChange(false)}
-            className={[
-              'px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-150',
-              !mirrorArabic
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-primary/5',
-            ].join(' ')}
-          >
-            No
-          </button>
-          <button
-            type="button"
-            onClick={() => onMirrorArabicChange(true)}
-            disabled={isCentered}
-            className={[
-              'px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-150',
-              isCentered
-                ? 'opacity-40 cursor-not-allowed border-border bg-card text-muted-foreground'
-                : mirrorArabic
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-primary/5',
-            ].join(' ')}
-          >
-            Yes
-          </button>
-        </div>
       </div>
 
     </div>
