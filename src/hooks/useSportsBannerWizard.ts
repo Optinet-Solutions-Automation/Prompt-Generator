@@ -55,6 +55,7 @@ const INITIAL_WIZARD_DATA: SportsBannerData = {
   aspectRatio: '16:9',
   occasion: '',
   occasionMood: '',
+  mirrorArabic: false,
 };
 
 // ─────────────────────────────────────────────
