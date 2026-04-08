@@ -285,6 +285,7 @@ export function SportsBannerWizard({ onSubmit }: Props) {
             bannerSizeId={wizardData.bannerSizeId}
             occasion={wizardData.occasion}
             mirrorArabic={wizardData.mirrorArabic}
+            subjectPosition={wizardData.subjectPosition}
             onChange={(field, value) =>
               updateField(field as keyof SportsBannerData, value as never)
             }
