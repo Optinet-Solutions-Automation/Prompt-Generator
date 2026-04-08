@@ -73,6 +73,7 @@ export function ResultDisplay({
   onRemoveGeneratedImage,
   persistedVariations: persistedVariationsProp = [],
   onVariationsChange,
+  mirrorArabic = false,
 }: ResultDisplayProps) {
   // Load all prompts from Airtable via n8n (same as the form page)
   const { getReferencesForBrand, getRecordId, refetch } = usePromptList();
