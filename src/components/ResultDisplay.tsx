@@ -1051,7 +1051,6 @@ export function ResultDisplay({
             brand={metadata?.brand}
             persistedVariations={persistedVariations}
             onVariationsChange={setPersistedVariations}
-            mirrorArabic={mirrorArabic}
           />
         );
       })()}
