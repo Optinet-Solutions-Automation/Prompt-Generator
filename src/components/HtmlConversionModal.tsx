@@ -48,11 +48,12 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   const buildHtml = (): string => {
     const style = getBrandStyle(brand);
 
-    // 'right' → image left, text right  → flex-row
-    // 'left'  → text left, image right → flex-row-reverse
+    // 'right' → image left, text right → flex-row (image first in DOM)
+    // 'left'  → text left, image right → flex-row-reverse (image first in DOM, reversed visually)
     const flexDirection = textPosition === 'right' ? 'row' : 'row-reverse';
 
     const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${style.googleFont}&display=swap`;
+    const ctaLabel = formData.ctaText.trim() || 'Play Now';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -67,7 +68,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #111;
+      background: #0d0d0d;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -81,18 +82,19 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
       width: 100%;
       max-width: 900px;
       overflow: hidden;
-      border-radius: 14px;
-      box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+      border-radius: 10px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.7);
     }
 
-    /* On mobile, always stack vertically */
+    /* Mobile: always stack image on top, text below */
     @media (max-width: 600px) {
       .banner { flex-direction: column; }
+      .banner__image { min-height: 220px; flex: 0 0 auto; }
     }
 
-    /* ── Image panel ── */
+    /* ── Image panel (45%) ── */
     .banner__image {
-      flex: 1;
+      flex: 0 0 45%;
       min-height: 320px;
       overflow: hidden;
     }
@@ -104,96 +106,136 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
       display: block;
     }
 
-    /* ── Text panel ── */
+    /* ── Text panel (55%) ── */
     .banner__text {
-      flex: 1;
+      flex: 0 0 55%;
       background: ${style.panelBg};
       display: flex;
       flex-direction: column;
       justify-content: center;
-      align-items: flex-start;
-      padding: 44px 40px;
-      gap: 18px;
+      padding: 40px 44px;
+      gap: 10px;
     }
 
-    .banner__headline {
+    /* Brand name — small label at top */
+    .banner__brand {
       font-family: ${style.fontFamily};
-      font-size: clamp(32px, 4vw, 52px);
-      font-weight: 900;
-      color: ${style.headlineColor};
-      line-height: 1.05;
-      letter-spacing: -0.01em;
-      text-transform: uppercase;
-    }
-
-    .banner__subtext {
-      font-family: ${style.fontFamily};
-      font-size: 13px;
-      font-weight: 600;
-      color: ${style.bodyColor};
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      opacity: 0.8;
-    }
-
-    .banner__bonus {
-      font-family: ${style.fontFamily};
-      font-size: clamp(22px, 2.5vw, 32px);
+      font-size: 10px;
       font-weight: 700;
       color: ${style.accentColor};
-      letter-spacing: -0.01em;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
     }
 
-    /* ── CTA Button ── */
+    /* Offer row: huge number + "FREE SPINS" side by side on the same baseline */
+    .banner__offer {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      line-height: 1;
+    }
+
+    .banner__number {
+      font-family: ${style.fontFamily};
+      font-size: clamp(64px, 9vw, 96px);
+      font-weight: 900;
+      color: ${style.headlineColor};
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .banner__type {
+      font-family: ${style.fontFamily};
+      font-size: clamp(18px, 2.5vw, 28px);
+      font-weight: 800;
+      color: ${style.headlineColor};
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+    }
+
+    /* "NO DEPOSIT BONUS" qualifier */
+    .banner__descriptor {
+      font-family: ${style.fontFamily};
+      font-size: 11px;
+      font-weight: 600;
+      color: ${style.bodyColor};
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      opacity: 0.65;
+      margin-top: -2px;
+    }
+
+    /* "+ X% BONUS" accent line */
+    .banner__bonus {
+      font-family: ${style.fontFamily};
+      font-size: clamp(16px, 2vw, 22px);
+      font-weight: 700;
+      color: ${style.accentColor};
+      letter-spacing: 0.02em;
+    }
+
+    /* ── CTA Button ── full-width, flat rounded rect (not pill) */
     .banner__cta {
-      display: inline-block;
+      display: block;
       background: ${style.buttonBg};
       color: ${style.buttonText};
       font-family: ${style.fontFamily};
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 800;
       text-decoration: none;
-      padding: 15px 38px;
-      border-radius: 50px;
+      text-align: center;
+      padding: 15px 24px;
+      border-radius: 7px;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      box-shadow: 0 4px 24px ${style.buttonShadow};
-      transition: opacity 0.15s ease, transform 0.15s ease;
+      letter-spacing: 0.14em;
+      margin-top: 8px;
+      max-width: 260px;
       cursor: pointer;
-      margin-top: 6px;
+      transition: opacity 0.15s ease;
     }
 
     .banner__cta:hover {
       opacity: 0.88;
-      transform: translateY(-1px);
     }
 
+    /* Bonus code — tiny faded text below button */
     .banner__code {
       font-family: ${style.fontFamily};
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
       color: ${style.bodyColor};
-      letter-spacing: 0.12em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      opacity: 0.5;
+      opacity: 0.4;
+      margin-top: 2px;
     }
   </style>
 </head>
 <body>
   <div class="banner">
 
-    <!-- Image panel -->
+    <!-- Image panel (bleeds to edge, no padding) -->
     <div class="banner__image">
       <img src="${imageUrl}" alt="${brand || 'Casino'} promotional banner" />
     </div>
 
-    <!-- Text / CTA panel -->
+    <!-- Text / offer panel -->
     <div class="banner__text">
-      <h2 class="banner__headline">${formData.welcomeBonus ? `${formData.welcomeBonus} Free Spins` : 'Free Spins'}</h2>
-      <p class="banner__subtext">No Deposit Needed</p>
-      ${formData.bonusPercentage ? `<p class="banner__bonus">+${formData.bonusPercentage}% Bonus</p>` : ''}
-      <a href="${formData.ctaUrl || '#'}" class="banner__cta">Join Now</a>
-      ${formData.bonusCode ? `<p class="banner__code">Bonus Code: ${formData.bonusCode}</p>` : ''}
+      ${brand ? `<p class="banner__brand">${brand}</p>` : ''}
+
+      <!-- Dominant offer: huge number + "FREE SPINS" on same baseline -->
+      <div class="banner__offer">
+        <span class="banner__number">${formData.welcomeBonus}</span>
+        <span class="banner__type">Free<br>Spins</span>
+      </div>
+
+      <p class="banner__descriptor">No Deposit Bonus</p>
+      ${formData.bonusPercentage ? `<p class="banner__bonus">+ ${formData.bonusPercentage}% Bonus</p>` : ''}
+
+      <a href="${formData.ctaUrl || '#'}" class="banner__cta">${ctaLabel}</a>
+      ${formData.bonusCode ? `<p class="banner__code">Code: ${formData.bonusCode}</p>` : ''}
     </div>
 
   </div>
