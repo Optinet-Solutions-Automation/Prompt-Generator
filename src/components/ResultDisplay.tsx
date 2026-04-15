@@ -36,6 +36,8 @@ interface ResultDisplayProps {
   onSave: () => void;
   onDontSave: () => void;
   onEditForm: () => void;
+  onEditWizard?: () => void;
+  lastGenerationSource?: 'form' | 'wizard';
   onGenerateAgain: () => void;
   onClearForm: () => void;
   onOpenFavorites: () => void;
