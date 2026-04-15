@@ -242,7 +242,7 @@ const Index = () => {
                       isLoadingReferenceData={isLoadingReferenceData}
                       onFieldChange={handleFieldChange}
                       onReferenceChange={handleReferenceChange}
-                      onSubmit={handleSubmit}
+                      onSubmit={() => { setLastGenerationSource('form'); handleSubmit(); }}
                       onClear={handleClearFormWithReference}
                       onOpenFavorites={() => setShowLikedPanel(true)}
                     />
