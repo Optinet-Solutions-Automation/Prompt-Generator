@@ -65,6 +65,8 @@ export function ResultDisplay({
   onSave,
   onDontSave,
   onEditForm,
+  onEditWizard,
+  lastGenerationSource = 'form',
   onGenerateAgain,
   onClearForm,
   onOpenFavorites,
