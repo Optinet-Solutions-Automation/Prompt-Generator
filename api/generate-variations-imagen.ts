@@ -232,7 +232,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { imageUrl, mode = 'subtle', guidance = '', count = 4, brand = '' } = req.body;
+    const { imageUrl, mode = 'subtle', guidance = '', count = 4, brand = '', resolution = '' } = req.body;
     if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
 
     // ------------------------------------------------------------------
