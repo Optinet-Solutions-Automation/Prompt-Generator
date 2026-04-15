@@ -399,7 +399,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
               </div>
               <p className="text-foreground font-medium mb-1">HTML Banner Ready</p>
               <p className="text-sm text-muted-foreground">
-                Text on {textPosition} · {brand || 'Generic'} brand styles applied
+                Image {textPosition === 'right' ? 'left' : 'right'} · {brand || 'Generic'} brand styles applied
               </p>
             </div>
 
