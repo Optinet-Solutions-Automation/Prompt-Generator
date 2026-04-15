@@ -273,7 +273,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   };
 
   const handleClose = () => {
-    setFormData({ welcomeBonus: '', bonusPercentage: '', bonusCode: '', ctaUrl: '#' });
+    setFormData({ welcomeBonus: '', bonusPercentage: '', bonusCode: '', ctaUrl: '#', ctaText: 'Play Now' });
     setGeneratedHtml(null);
     setTextPosition('right');
     setError(null);
