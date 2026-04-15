@@ -131,6 +131,28 @@ function sizeForDimensions(dims: { width: number; height: number } | null): stri
 }
 
 // ------------------------------------------------------------------
+// Resolution-aware overrides: when the user explicitly picks a
+// resolution in the UI, use that instead of auto-detected values.
+// ------------------------------------------------------------------
+function qualityForResolution(resolution: string): 'low' | 'medium' | 'high' {
+  if (resolution === '4K' || resolution === '3K') return 'high';
+  if (resolution === '2K') return 'medium';
+  return 'low';
+}
+
+function sizeForResolution(resolution: string, dims: { width: number; height: number } | null): string {
+  // 2K+ always gets the largest available output size, respecting aspect ratio
+  if (resolution === '4K' || resolution === '3K' || resolution === '2K') {
+    if (!dims) return '1536x1024';
+    return dims.width > dims.height ? '1536x1024'
+         : dims.height > dims.width ? '1024x1536'
+         : '1024x1024';
+  }
+  // 1K or unset: fall back to auto-detection
+  return sizeForDimensions(dims);
+}
+
+// ------------------------------------------------------------------
 // Build the spectrum of 4 tier prompts.
 //
 // KEY CHANGE from v2:
