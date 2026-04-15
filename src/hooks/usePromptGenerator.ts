@@ -243,13 +243,25 @@ export function usePromptGenerator() {
     }));
 
     // Auto-save to image library immediately so it persists when navigating away
+    const filename = `${provider}-${Date.now()}.png`;
+    const aspectRatio = promptMetadata?.aspectRatio || '16:9';
+    const resolution  = image.resolution || '1K';
     saveImageToLibrary({
       publicUrl:   image.displayUrl,
       provider,
-      aspectRatio: promptMetadata?.aspectRatio || '16:9',
-      resolution:  image.resolution || '1K',
-      filename:    `${provider}-${Date.now()}.png`,
+      aspectRatio,
+      resolution,
+      filename,
     });
+
+    // Fire-and-forget: also persist to Supabase so images survive localStorage clears
+    if (image.displayUrl) {
+      fetch('/api/action?action=save-generated-image', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_url: image.displayUrl, provider, aspect_ratio: aspectRatio, resolution, filename }),
+      }).catch(err => console.warn('[saveToSupabase] non-fatal:', err));
+    }
   }, [promptMetadata]);
 
   const handleRemoveGeneratedImage = useCallback((provider: 'chatgpt' | 'gemini', index: number) => {
