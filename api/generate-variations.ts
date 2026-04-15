@@ -265,13 +265,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ext = extMap[baseMime] || 'png';
 
     // ------------------------------------------------------------------
-    // 2. Detect source resolution
+    // 2. Detect source resolution — prefer user-selected resolution over auto-detect
     // ------------------------------------------------------------------
     const sourceDims = detectImageDimensions(imgArrayBuffer);
-    const outputQuality = qualityForDimensions(sourceDims);
-    const outputSize    = sizeForDimensions(sourceDims);
+    const outputQuality = resolution ? qualityForResolution(resolution) : qualityForDimensions(sourceDims);
+    const outputSize    = resolution ? sizeForResolution(resolution, sourceDims) : sizeForDimensions(sourceDims);
 
-    console.log(`[generate-variations] source dims: ${JSON.stringify(sourceDims)} → quality=${outputQuality}, size=${outputSize}, mode=${mode}, brand=${brand}`);
+    console.log(`[generate-variations] source dims: ${JSON.stringify(sourceDims)}, resolution=${resolution} → quality=${outputQuality}, size=${outputSize}, mode=${mode}, brand=${brand}`);
 
     // ------------------------------------------------------------------
     // 3. Build spectrum prompts
