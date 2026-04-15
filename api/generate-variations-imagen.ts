@@ -265,7 +265,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const numVariations = Math.min(Number(count) || 4, 4);
     const spectrum = buildGeminiPromptSpectrum(mode, guidance, brand).slice(0, numVariations);
 
-    console.log(`[generate-variations-gemini] mode=${mode}, brand=${brand}, generating ${numVariations} tiered variations`);
+    console.log(`[generate-variations-gemini] mode=${mode}, brand=${brand}, resolution=${resolution}, generating ${numVariations} tiered variations`);
 
     // ------------------------------------------------------------------
     // 3. Authenticate with GCP
