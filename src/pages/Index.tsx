@@ -129,6 +129,12 @@ const Index = () => {
     clearReferencePromptData();
   };
 
+  // Go back to the wizard with all settings intact so the user can tweak and regenerate
+  const handleEditWizard = useCallback(() => {
+    handleEditForm();
+    handleTabChange('wizard');
+  }, [handleEditForm]);
+
   const showForm = appState === "FORM";
   const showProcessing = appState === "PROCESSING";
   const showResult = ["RESULT", "SAVING", "SAVED"].includes(appState);
