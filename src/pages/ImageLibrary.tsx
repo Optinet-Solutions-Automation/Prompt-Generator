@@ -588,7 +588,7 @@ function Lightbox({
       mode: variationType,
       guidance: variationInstructions.trim(),
       count: variationCount,
-      resolution: '1K',
+      resolution: '2K',
     });
 
     try {
