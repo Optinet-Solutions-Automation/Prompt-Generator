@@ -64,10 +64,28 @@ function qualityForDimensions(dims: { width: number; height: number } | null): '
 
 // ── OpenAI Direct Edit ───────────────────────────────────────────────────────
 
+// Resolution-aware quality: when the user explicitly picks a resolution, use that.
+function qualityForResolution(resolution: string): 'low' | 'medium' | 'high' {
+  if (resolution === '4K' || resolution === '3K') return 'high';
+  if (resolution === '2K') return 'medium';
+  return 'low';
+}
+
+function sizeForResolution(resolution: string, dims: { width: number; height: number } | null): string {
+  if (resolution === '4K' || resolution === '3K' || resolution === '2K') {
+    if (!dims) return '1536x1024';
+    return dims.width > dims.height ? '1536x1024'
+         : dims.height > dims.width ? '1024x1536'
+         : '1024x1024';
+  }
+  return sizeForDimensions(dims);
+}
+
 async function editViaOpenAI(
   imgArrayBuffer: ArrayBuffer,
   mimeType: string,
   editInstructions: string,
+  resolution: string = '',
 ): Promise<{ imageUrl: string }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
@@ -80,10 +98,10 @@ async function editViaOpenAI(
   const ext = extMap[baseMime] || 'png';
 
   const dims = detectImageDimensions(imgArrayBuffer);
-  const outputSize = sizeForDimensions(dims);
-  const outputQuality = qualityForDimensions(dims);
+  const outputSize    = resolution ? sizeForResolution(resolution, dims) : sizeForDimensions(dims);
+  const outputQuality = resolution ? qualityForResolution(resolution) : qualityForDimensions(dims);
 
-  console.log(`[edit-image] source dims: ${JSON.stringify(dims)} → quality=${outputQuality}, size=${outputSize}`);
+  console.log(`[edit-image] source dims: ${JSON.stringify(dims)}, resolution=${resolution} → quality=${outputQuality}, size=${outputSize}`);
 
   const form = new FormData();
   form.append('model', 'gpt-image-1');
