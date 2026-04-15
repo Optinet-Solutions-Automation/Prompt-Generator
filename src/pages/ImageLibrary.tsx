@@ -554,7 +554,7 @@ function Lightbox({
       const res = await fetch('/api/edit-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: srcUrl, editInstructions: editInstructions.trim(), resolution: '1K' }),
+        body: JSON.stringify({ imageUrl: srcUrl, editInstructions: editInstructions.trim(), resolution: '2K' }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || e.message || 'Edit failed'); }
       const data = await res.json();
