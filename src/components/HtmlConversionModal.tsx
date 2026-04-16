@@ -409,6 +409,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   const handleClose = () => {
     setFormData({ mainValue: '', subValue: '', crossSell: '', bonusCode: '', ctaUrl: '#', ctaText: 'Play Now' });
     setOfferType('freespins');
+    setBannerSize('wide');
     setGeneratedHtml(null);
     setTextPosition('right');
     setError(null);
