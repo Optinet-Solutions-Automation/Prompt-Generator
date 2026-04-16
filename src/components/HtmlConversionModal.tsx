@@ -417,6 +417,17 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   };
 
   const cfg = OFFER_CONFIG[offerType];
+  const currentSize = BANNER_SIZES[bannerSize];
+
+  // Preview iframe dimensions — computed once, used in both sidebar + success screen
+  const previewIframeW = 900;
+  const previewIframeH = Math.round(previewIframeW * currentSize.h / currentSize.w);
+  // Sidebar preview (fits 224px wide column)
+  const sideScale = 224 / previewIframeW;
+  const sideContainerH = Math.round(previewIframeH * sideScale);
+  // Success screen preview (fits ~500px dialog inner width)
+  const successScale = 500 / previewIframeW;
+  const successContainerH = Math.min(Math.round(previewIframeH * successScale), 400);
 
   // Offer type cards config — icon + example shown in the selector
   const OFFER_CARDS: Record<OfferType, { icon: string; example: string }> = {
