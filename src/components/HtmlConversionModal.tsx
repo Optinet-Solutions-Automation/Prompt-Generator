@@ -20,9 +20,7 @@ interface HtmlConversionModalProps {
   brand?: string;
 }
 
-/* ────────────────────────────────────────────────────────────────────────
-   hexToRgba — safe hex→rgba for gradient overlays
-──────────────────────────────────────────────────────────────────────── */
+/* ── Helper ────────────────────────────────────────────────────────────── */
 function hexToRgba(hex: string, alpha: number): string {
   const c = hex.replace('#', '');
   const r = parseInt(c.slice(0, 2), 16);
@@ -33,18 +31,19 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 /* ────────────────────────────────────────────────────────────────────────
-   Native preview — renders a live banner preview using plain React/CSS.
-   No iframe needed, so the image always loads normally.
-   Uses the brand's actual fontFamily, colors, and gradient.
+   Native preview — uses CSS background-image instead of <img> tag.
+   background-image loads reliably for Google Drive, OpenAI, and blob URLs
+   regardless of CORS headers or referrer policies.
 ──────────────────────────────────────────────────────────────────────── */
 function BannerPreview({
-  imageUrl, brand, formData, offerType, textPosition,
+  imageUrl, brand, formData, offerType, textPosition, aspectRatio,
 }: {
   imageUrl: string;
   brand?: string;
   formData: BannerFormData;
   offerType: OfferType;
   textPosition: TextPosition;
+  aspectRatio: string; // e.g. "16 / 9"
 }) {
   const style = getBrandStyle(brand);
   const cfg = OFFER_CONFIG[offerType];
@@ -54,17 +53,11 @@ function BannerPreview({
     : cfg.descriptor;
   const ctaLabel = formData.ctaText.trim() || 'Play Now';
   const isRight = textPosition === 'right';
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
 
-  // Reset load state when URL changes
-  useEffect(() => { setImgLoaded(false); setImgError(false); }, [imageUrl]);
-
-  // Load the brand's Google Font via a <link> in the head (only once per font)
+  // Load the brand's Google Font
   useEffect(() => {
     const fontUrl = `https://fonts.googleapis.com/css2?family=${style.googleFont}&display=swap`;
-    const existingLink = document.querySelector(`link[href="${fontUrl}"]`);
-    if (!existingLink) {
+    if (!document.querySelector(`link[href="${fontUrl}"]`)) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = fontUrl;
@@ -72,72 +65,47 @@ function BannerPreview({
     }
   }, [style.googleFont]);
 
-  // Build gradient using proper rgba so it works with any panelBg format
   const gradDir = isRight ? 'to right' : 'to left';
-  const gradient = `linear-gradient(${gradDir}, transparent 5%, ${hexToRgba(style.panelBg, 0.6)} 35%, ${hexToRgba(style.panelBg, 0.92)} 60%, ${hexToRgba(style.panelBg, 0.97)} 80%)`;
+  const gradient = `linear-gradient(${gradDir}, transparent 5%, ${hexToRgba(style.panelBg, 0.6)} 35%, ${hexToRgba(style.panelBg, 0.93)} 60%, ${hexToRgba(style.panelBg, 0.97)} 80%)`;
 
   return (
-    <div className="relative w-full rounded-lg overflow-hidden" style={{ fontFamily: style.fontFamily }}>
-      {/* Background image — sets the aspect ratio naturally */}
-      {/* Use crossOrigin anonymous to help with CORS, add referrerPolicy for cloud storage URLs */}
-      <img
-        src={imageUrl} alt="" className="w-full h-auto block" draggable={false}
-        referrerPolicy="no-referrer"
-        onLoad={() => setImgLoaded(true)}
-        onError={() => setImgError(true)}
-      />
-
-      {/* Loading / error fallback */}
-      {!imgLoaded && !imgError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
-      )}
-      {imgError && (
-        <div className="w-full aspect-video bg-muted flex items-center justify-center rounded-lg">
-          <p className="text-xs text-muted-foreground">Image could not be loaded for preview</p>
-        </div>
-      )}
-
+    <div
+      className="relative w-full rounded-lg overflow-hidden"
+      style={{
+        fontFamily: style.fontFamily,
+        aspectRatio,
+        backgroundImage: `url(${imageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       {/* Gradient overlay */}
       <div className="absolute inset-0" style={{ background: gradient }} />
 
       {/* Text layer */}
       <div className={`absolute inset-0 flex items-center ${isRight ? 'justify-end' : 'justify-start'}`}>
         <div className="flex flex-col w-[46%]" style={{ padding: '6% 6%', gap: '3px' }}>
-
-          {/* Brand name */}
           {brand && (
             <span style={{ fontSize: 'clamp(5px, 1.2vw, 9px)', fontWeight: 700, color: style.accentColor, letterSpacing: '0.25em', textTransform: 'uppercase' as const }}>
               {brand}
             </span>
           )}
-
-          {/* Big headline number */}
           <span style={{ fontSize: 'clamp(24px, 6vw, 48px)', fontWeight: 900, color: style.headlineColor, lineHeight: 0.9, letterSpacing: '-0.03em', display: 'block' }}>
-            {headline || '—'}
+            {headline || '\u2014'}
           </span>
-
-          {/* Offer type label */}
           <span style={{ fontSize: 'clamp(8px, 2vw, 15px)', fontWeight: 800, color: style.headlineColor, textTransform: 'uppercase' as const, letterSpacing: '0.06em', lineHeight: 1, marginTop: 2 }}>
             {cfg.typeLabel}
           </span>
-
-          {/* Descriptor */}
           {descriptor && (
             <span style={{ fontSize: 'clamp(4px, 1vw, 8px)', fontWeight: 600, color: style.bodyColor, letterSpacing: '0.2em', textTransform: 'uppercase' as const, opacity: 0.8, marginTop: 1 }}>
               {descriptor}
             </span>
           )}
-
-          {/* Cross-sell accent */}
           {formData.crossSell && (
             <span style={{ fontSize: 'clamp(6px, 1.2vw, 10px)', fontWeight: 700, color: style.accentColor, marginTop: 1 }}>
               {formData.crossSell}
             </span>
           )}
-
-          {/* CTA button */}
           <span className="block text-center" style={{
             background: style.buttonBg, color: style.buttonText,
             fontSize: 'clamp(5px, 1.1vw, 9px)', fontWeight: 800,
@@ -145,12 +113,9 @@ function BannerPreview({
             borderRadius: '4px', marginTop: 'clamp(3px, 0.8vw, 8px)',
             textTransform: 'uppercase' as const, letterSpacing: '0.12em',
             boxShadow: `0 2px 10px ${style.buttonShadow}`,
-            fontFamily: style.fontFamily,
           }}>
             {ctaLabel}
           </span>
-
-          {/* Bonus code */}
           {formData.bonusCode && (
             <span style={{ fontSize: 'clamp(3px, 0.7vw, 7px)', color: style.bodyColor, opacity: 0.45, textAlign: 'center' as const, letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginTop: 1 }}>
               Code: {formData.bonusCode}
@@ -163,7 +128,7 @@ function BannerPreview({
 }
 
 /* ────────────────────────────────────────────────────────────────────────
-   toBase64DataUri — embeds image as data URI for the downloadable HTML
+   toBase64DataUri
 ──────────────────────────────────────────────────────────────────────── */
 async function toBase64DataUri(url: string): Promise<string> {
   try {
@@ -203,6 +168,8 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
     img.src = imageUrl;
   }, [imageUrl]);
 
+  const aspectRatio = `${imgDims.w} / ${imgDims.h}`;
+
   const handleInputChange = (field: keyof BannerFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -241,14 +208,12 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   };
 
   const handlePreview = () => {
-    // Use the generated HTML (base64 image) if available, otherwise build with raw URL
     const html = generatedHtml || buildBannerHtml({
       imageSrc: imageUrl, brand, formData, offerType, textPosition,
       imgWidth: imgDims.w, imgHeight: imgDims.h,
     });
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    // Open in new tab — use an anchor click instead of window.open to avoid popup blockers
     const a = document.createElement('a');
     a.href = url;
     a.target = '_blank';
@@ -256,7 +221,6 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    // Don't revoke immediately — the new tab needs time to load
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
@@ -283,7 +247,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2.5 border-b border-border shrink-0">
           <FileCode className="w-4 h-4 text-primary shrink-0" />
           <div className="min-w-0">
@@ -293,14 +257,15 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
         </div>
 
         {!generatedHtml ? (
-          /* ── FORM STATE ── */
+          /* ── FORM ── */
           <div className="overflow-y-auto flex-1 min-h-0">
             <div className="p-4 space-y-3.5">
 
-              {/* Live native preview */}
+              {/* Live preview — uses CSS background-image, always loads */}
               <BannerPreview
                 imageUrl={imageUrl} brand={brand} formData={formData}
                 offerType={offerType} textPosition={textPosition}
+                aspectRatio={aspectRatio}
               />
 
               {/* Text position */}
@@ -410,13 +375,13 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
             </div>
           </div>
         ) : (
-          /* ── SUCCESS STATE ── */
+          /* ── SUCCESS ── */
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="p-4 space-y-3">
-              {/* Native preview */}
               <BannerPreview
                 imageUrl={imageUrl} brand={brand} formData={formData}
                 offerType={offerType} textPosition={textPosition}
+                aspectRatio={aspectRatio}
               />
               <div className="text-center">
                 <p className="text-foreground font-semibold text-sm">HTML Banner Ready</p>
