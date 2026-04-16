@@ -296,11 +296,11 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
             {/* Success screen */}
             <div className="px-5 py-4">
               <div className="w-full overflow-hidden rounded-lg bg-black mb-3"
-                style={{ maxHeight: '280px' }}>
+                style={{ height: `${containerH}px` }}>
                 <iframe src={previewBlobUrl} title="Final banner preview"
                   style={{
                     width: `${previewW}px`, height: `${previewH}px`,
-                    transform: `scale(${460 / previewW})`,
+                    transform: `scale(${scaleFactor})`,
                     transformOrigin: 'top left',
                     border: 'none', pointerEvents: 'none',
                   }} />
