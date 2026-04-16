@@ -133,12 +133,18 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   const buildHtml = (imageSrc: string): string => {
     const style = getBrandStyle(brand);
     const cfg = OFFER_CONFIG[offerType];
+    const size = BANNER_SIZES[bannerSize];
     const ctaLabel = formData.ctaText.trim() || 'Play Now';
 
     // Use the brand's own dark colour in the gradient so it feels on-brand
     const dark95 = hexToRgba(style.panelBg, 0.95);
     const dark70 = hexToRgba(style.panelBg, 0.70);
     const dark40 = hexToRgba(style.panelBg, 0.40);
+
+    // Tall formats (story/rectangle) use vertical gradient + stacked layout
+    const isTall = size.h / size.w > 1;
+    // Thin leaderboard needs compact layout
+    const isLeaderboard = size.h / size.w < 0.2;
 
     // Text on right → gradient flows left-to-right (image visible on left, dark on right)
     // Text on left  → gradient flows right-to-left
