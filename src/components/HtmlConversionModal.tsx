@@ -632,25 +632,33 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   Live Preview
                 </p>
-                {/* iframe is 900px wide; scale it to fit 224px (256px - 32px padding)
-                    scale = 224/900 ≈ 0.249 · banner height = 394 × 0.249 ≈ 98px */}
-                <div
-                  className="w-full overflow-hidden rounded-lg bg-black"
-                  style={{ height: '98px' }}
-                >
-                  <iframe
-                    srcDoc={previewHtml}
-                    sandbox="allow-same-origin"
-                    title="Banner preview"
-                    style={{
-                      width: '900px',
-                      height: '394px',
-                      transform: 'scale(0.249)',
-                      transformOrigin: 'top left',
-                      border: 'none',
-                      pointerEvents: 'none',
-                    }}
-                  />
+                {(() => {
+                  const sz = BANNER_SIZES[bannerSize];
+                  const iframeW = 900;
+                  const iframeH = Math.round(iframeW * sz.h / sz.w);
+                  const scale = 224 / iframeW;
+                  const containerH = Math.round(iframeH * scale);
+                  return (
+                    <div
+                      className="w-full overflow-hidden rounded-lg bg-black"
+                      style={{ height: `${containerH}px` }}
+                    >
+                      <iframe
+                        srcDoc={previewHtml}
+                        sandbox="allow-same-origin"
+                        title="Banner preview"
+                        style={{
+                          width: `${iframeW}px`,
+                          height: `${iframeH}px`,
+                          transform: `scale(${scale})`,
+                          transformOrigin: 'top left',
+                          border: 'none',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    </div>
+                  );
+                })()}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2 text-center">
                   Updates as you type
