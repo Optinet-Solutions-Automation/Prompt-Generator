@@ -54,6 +54,11 @@ function BannerPreview({
     : cfg.descriptor;
   const ctaLabel = formData.ctaText.trim() || 'Play Now';
   const isRight = textPosition === 'right';
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Reset load state when URL changes
+  useEffect(() => { setImgLoaded(false); setImgError(false); }, [imageUrl]);
 
   // Load the brand's Google Font via a <link> in the head (only once per font)
   useEffect(() => {
@@ -74,7 +79,25 @@ function BannerPreview({
   return (
     <div className="relative w-full rounded-lg overflow-hidden" style={{ fontFamily: style.fontFamily }}>
       {/* Background image — sets the aspect ratio naturally */}
-      <img src={imageUrl} alt="" className="w-full h-auto block" draggable={false} />
+      {/* Use crossOrigin anonymous to help with CORS, add referrerPolicy for cloud storage URLs */}
+      <img
+        src={imageUrl} alt="" className="w-full h-auto block" draggable={false}
+        crossOrigin="anonymous" referrerPolicy="no-referrer"
+        onLoad={() => setImgLoaded(true)}
+        onError={() => setImgError(true)}
+      />
+
+      {/* Loading / error fallback */}
+      {!imgLoaded && !imgError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      {imgError && (
+        <div className="w-full aspect-video bg-muted flex items-center justify-center rounded-lg">
+          <p className="text-xs text-muted-foreground">Image could not be loaded for preview</p>
+        </div>
+      )}
 
       {/* Gradient overlay */}
       <div className="absolute inset-0" style={{ background: gradient }} />
