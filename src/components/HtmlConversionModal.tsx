@@ -82,7 +82,7 @@ function BannerPreview({
       {/* Use crossOrigin anonymous to help with CORS, add referrerPolicy for cloud storage URLs */}
       <img
         src={imageUrl} alt="" className="w-full h-auto block" draggable={false}
-        crossOrigin="anonymous" referrerPolicy="no-referrer"
+        referrerPolicy="no-referrer"
         onLoad={() => setImgLoaded(true)}
         onError={() => setImgError(true)}
       />
