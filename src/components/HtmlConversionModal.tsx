@@ -674,11 +674,11 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
                 <Eye className="w-4 h-4" />
                 Full Preview
               </Button>
-              <Button onClick={handleDownload} className="gradient-primary gap-2">
+              <Button onClick={handleDownload} className="gradient-primary gap-2 ml-auto">
                 <Download className="w-4 h-4" />
                 Download
               </Button>
-            </DialogFooter>
+            </div>
           </>
         )}
       </DialogContent>
