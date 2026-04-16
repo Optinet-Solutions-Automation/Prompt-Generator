@@ -13,6 +13,9 @@ function getString(obj: UnknownRecord, ...keys: string[]): string | null {
 }
 
 export function extractDriveFileIdFromUrl(url: string): string | null {
+  // Base64 data URLs contain '/' characters that would match the Drive regex — skip them.
+  if (url.startsWith('data:')) return null;
+
   try {
     const u = new URL(url);
 
