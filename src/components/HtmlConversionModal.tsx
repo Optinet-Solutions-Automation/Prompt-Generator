@@ -476,7 +476,31 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
                 </div>
               </div>
 
-              {/* ── 2. Offer type ── */}
+              {/* ── 2. Banner size ── */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Banner Size
+                </p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(Object.keys(BANNER_SIZES) as BannerSize[]).map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => setBannerSize(sz)}
+                      className={`px-2 py-2 rounded-lg border text-center transition-all ${
+                        bannerSize === sz
+                          ? 'border-primary bg-primary/10 text-foreground'
+                          : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      }`}
+                    >
+                      <p className="text-xs font-semibold leading-tight">{BANNER_SIZES[sz].label}</p>
+                      <p className="text-[10px] opacity-50">{BANNER_SIZES[sz].desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── 3. Offer type ── */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Offer Type
