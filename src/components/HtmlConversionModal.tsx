@@ -173,11 +173,11 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
             {/* Live preview at the top — full width, shows the actual banner */}
             <div className="px-5 pt-4 pb-3">
               <div className="w-full overflow-hidden rounded-lg bg-black"
-                style={{ height: `${Math.min(Math.round((previewH / previewW) * 100), 60)}vw`, maxHeight: '240px' }}>
+                style={{ height: `${containerH}px` }}>
                 <iframe src={previewBlobUrl} title="Banner preview"
                   style={{
                     width: `${previewW}px`, height: `${previewH}px`,
-                    transform: `scale(${460 / previewW})`,
+                    transform: `scale(${scaleFactor})`,
                     transformOrigin: 'top left',
                     border: 'none', pointerEvents: 'none',
                   }} />
