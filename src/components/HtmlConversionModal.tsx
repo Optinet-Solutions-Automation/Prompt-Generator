@@ -68,6 +68,18 @@ const OFFER_CONFIG: Record<OfferType, {
   },
 };
 
+// Banner size presets — covers common ad/email/social formats
+type BannerSize = 'wide' | 'standard' | 'leaderboard' | 'square' | 'rectangle' | 'story';
+
+const BANNER_SIZES: Record<BannerSize, { label: string; w: number; h: number; desc: string }> = {
+  wide:        { label: 'Wide Banner',  w: 16, h: 7,  desc: '728×315' },
+  standard:    { label: 'Standard',     w: 16, h: 9,  desc: '16:9' },
+  leaderboard: { label: 'Leaderboard',  w: 728, h: 90, desc: '728×90' },
+  square:      { label: 'Square',       w: 1,  h: 1,  desc: '1:1' },
+  rectangle:   { label: 'Rectangle',    w: 6,  h: 5,  desc: '300×250' },
+  story:       { label: 'Story',        w: 9,  h: 16, desc: '9:16' },
+};
+
 // Converts a 6-char hex colour to rgba() so we can use brand colours in the gradient.
 function hexToRgba(hex: string, alpha: number): string {
   const clean = hex.replace('#', '');
