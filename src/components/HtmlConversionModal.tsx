@@ -404,14 +404,14 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="p-4 space-y-3">
               <BannerPreview
-                imageUrl={imageUrl} brand={brand} formData={formData}
+                imageUrl={imageUrl} brand={effectiveBrand} formData={formData}
                 offerType={offerType} textPosition={textPosition}
                 aspectRatio={aspectRatio}
               />
               <div className="text-center">
                 <p className="text-foreground font-semibold text-sm">HTML Banner Ready</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {cfg.typeLabel} · {dimLabel} · Text {textPosition} · {brand || 'Generic'}
+                  {cfg.typeLabel} · {dimLabel} · Text {textPosition} · {effectiveBrand || 'Generic'}
                 </p>
               </div>
             </div>
