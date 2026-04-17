@@ -216,9 +216,22 @@ export function ImageModal({
     try {
       // Use displayUrl (direct image link) — editUrl is a Drive view page that returns HTML, not image bytes
       const srcUrl = current.displayUrl || current.editUrl;
+      // Determine which engine originally generated this image so the backend
+      // routes the edit back to the same engine — Gemini images must go to
+      // Gemini, ChatGPT images must go to ChatGPT. Never mix engines.
+      const editEngine: 'gemini' | 'chatgpt' =
+        current.variationEngine === 'imagen' || current.provider === 'gemini'
+          ? 'gemini'
+          : 'chatgpt';
+
       const res = await fetch('/api/edit-image', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: srcUrl, editInstructions: editInstructions.trim(), resolution }),
+        body: JSON.stringify({
+          imageUrl: srcUrl,
+          editInstructions: editInstructions.trim(),
+          resolution,
+          provider: editEngine,
+        }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
       const data = await res.json();
