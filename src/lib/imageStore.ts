@@ -82,6 +82,8 @@ export function storeImage(params: {
   };
   const updated = [newImg, ...loadAll()].slice(0, MAX_IMAGES);
   saveAll(updated);
+  // Also persist to Supabase so the image survives domain/URL changes
+  persistToSupabase(newImg);
   return newImg;
 }
 
