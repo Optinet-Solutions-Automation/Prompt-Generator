@@ -162,7 +162,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png';
         const buf      = Buffer.from(b64, 'base64');
         const fileId   = await uploadToDrive({ imageBuffer: buf, mimeType, filename, folderId, provider, aspectRatio: ratio, resolution: res_, accessToken });
-        if (fileId) { results.uploaded++; } else { results.failed++; }
+        if (fileId) { await makeFilePublic(fileId, accessToken); results.uploaded++; } else { results.failed++; }
       } catch { results.failed++; }
       continue;
     }
@@ -174,7 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const mimeType = imgRes.headers.get('content-type')?.split(';')[0] || 'image/png';
       const buf      = Buffer.from(await imgRes.arrayBuffer());
       const fileId   = await uploadToDrive({ imageBuffer: buf, mimeType, filename, folderId, provider, aspectRatio: ratio, resolution: res_, accessToken });
-      if (fileId) { results.uploaded++; } else { results.failed++; }
+      if (fileId) { await makeFilePublic(fileId, accessToken); results.uploaded++; } else { results.failed++; }
     } catch { results.skipped++; }
   }
 
