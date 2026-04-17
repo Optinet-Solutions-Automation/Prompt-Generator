@@ -1,5 +1,50 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getGoogleAccessToken, uploadImageToDrive } from './_google-auth';
+
+// ── Google Drive helpers (inlined — Vercel API routes must be self-contained) ──
+
+async function getGoogleAccessToken(): Promise<string> {
+  const refreshToken = process.env.CLOUD_RUN_REFRESH_TOKEN;
+  const clientId     = process.env.CLOUD_RUN_CLIENT_ID;
+  const clientSecret = process.env.CLOUD_RUN_CLIENT_SECRET;
+  if (!refreshToken || !clientId || !clientSecret) {
+    throw new Error('Missing CLOUD_RUN_REFRESH_TOKEN / CLIENT_ID / CLIENT_SECRET');
+  }
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token', refresh_token: refreshToken,
+      client_id: clientId, client_secret: clientSecret,
+    }),
+  });
+  if (!res.ok) throw new Error(`Token refresh failed: ${await res.text()}`);
+  const data = await res.json() as { access_token?: string };
+  if (data.access_token) return data.access_token;
+  throw new Error('No access_token returned');
+}
+
+async function uploadImageToDrive(params: {
+  imageBuffer: Buffer; mimeType: string; filename: string;
+  folderId: string; provider: string; aspectRatio: string;
+  resolution: string; accessToken: string;
+}): Promise<string> {
+  const { imageBuffer, mimeType, filename, folderId, provider, aspectRatio, resolution, accessToken } = params;
+  const metadata = { name: filename, parents: [folderId], appProperties: { provider, aspectRatio, resolution } };
+  const boundary = 'drive_upload_boundary_xyz';
+  const metaJson = JSON.stringify(metadata);
+  const partHeaders =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metaJson}\r\n` +
+    `--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`;
+  const closing = `\r\n--${boundary}--`;
+  const body = Buffer.concat([Buffer.from(partHeaders, 'utf-8'), imageBuffer, Buffer.from(closing, 'utf-8')]);
+  const uploadRes = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': `multipart/related; boundary="${boundary}"` }, body }
+  );
+  if (!uploadRes.ok) throw new Error(`Drive upload failed: ${await uploadRes.text()}`);
+  const file = await uploadRes.json() as { id: string };
+  return file.id;
+}
 
 // ------------------------------------------------------------------
 // Brand-specific mandatory style rules.
