@@ -214,12 +214,17 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   useEffect(() => { setSelectedBrand(brand || ''); }, [brand]);
   const effectiveBrand = selectedBrand || undefined;
 
-  // Detect original image dimensions
-  const [imgDims, setImgDims] = useState<{ w: number; h: number }>({ w: 16, h: 9 });
+  // Detect original image dimensions — default to sensible banner size, not 16x9 pixels
+  const [imgDims, setImgDims] = useState<{ w: number; h: number }>({ w: 1200, h: 628 });
   useEffect(() => {
     if (!imageUrl) return;
-    const img = new Image();
-    img.onload = () => setImgDims({ w: img.naturalWidth, h: img.naturalHeight });
+    const img = new window.Image();
+    img.onload = () => {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      // Only update if we got real dimensions (not 0x0)
+      if (w > 0 && h > 0) setImgDims({ w, h });
+    };
     img.src = imageUrl;
   }, [imageUrl]);
 
