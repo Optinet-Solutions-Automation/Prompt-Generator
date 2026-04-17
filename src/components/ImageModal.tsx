@@ -825,7 +825,7 @@ export function ImageModal({
         </div>{/* end inner stretch wrapper */}
       </div>{/* end outer centering wrapper */}
 
-      <HtmlConversionModal isOpen={showHtmlModal} onClose={() => setShowHtmlModal(false)} imageUrl={current.editUrl} brand={brand} />
+      <HtmlConversionModal isOpen={showHtmlModal} onClose={() => setShowHtmlModal(false)} imageUrl={current.displayUrl || current.editUrl} brand={brand} />
 
       {/* Unsaved Changes Dialog */}
       {showUnsavedDialog && (
