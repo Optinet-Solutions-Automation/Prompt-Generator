@@ -187,6 +187,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'No image returned from OpenAI' });
       }
 
+      // ── Save ChatGPT image to Google Drive ─────────────────────────────
+      // This makes it persistent and visible in the Image Library across
+      // any domain/deployment — not just in the current browser's localStorage.
+      const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+      if (folderId) {
+        try {
+          const accessToken = await getGoogleAccessToken();
+
+          // Fetch or decode the image bytes
+          let imageBuffer: Buffer;
+          let imageMime = 'image/png';
+
+          if (imageUrl.startsWith('data:')) {
+            const [header, b64] = imageUrl.split(',');
+            imageMime    = header.match(/data:([^;]+)/)?.[1] || 'image/png';
+            imageBuffer  = Buffer.from(b64, 'base64');
+          } else {
+            const imgRes = await fetch(imageUrl);
+            imageMime    = imgRes.headers.get('content-type')?.split(';')[0] || 'image/png';
+            imageBuffer  = Buffer.from(await imgRes.arrayBuffer());
+          }
+
+          const ext      = imageMime.split('/')[1] || 'png';
+          const filename = `chatgpt-${Date.now()}.${ext}`;
+
+          const fileId = await uploadImageToDrive({
+            imageBuffer,
+            mimeType:    imageMime,
+            filename,
+            folderId,
+            provider:    'chatgpt',
+            aspectRatio: aspectRatio || '16:9',
+            resolution:  resolution  || '1K',
+            accessToken,
+          });
+
+          // Return Drive URL so frontend stores Drive link (not temp OpenAI URL)
+          const driveUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+          return res.status(200).json({
+            fileId,
+            public_url: driveUrl,
+            imageUrl:   driveUrl,
+            url:        driveUrl,
+          });
+
+        } catch (driveErr) {
+          // Drive upload failed — fall back to returning the OpenAI URL
+          console.error('[generate-image] Drive upload failed, returning OpenAI URL:', driveErr);
+        }
+      }
+
+      // Fallback: no Drive folder configured or upload failed
       return res.status(200).json({ imageUrl, url: imageUrl });
     }
 
