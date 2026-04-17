@@ -272,11 +272,9 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
   };
 
   const handlePreview = () => {
-    const html = generatedHtml || buildBannerHtml({
-      imageSrc: imageUrl, brand: effectiveBrand, formData, offerType, textPosition,
-      imgWidth: imgDims.w, imgHeight: imgDims.h,
-    });
-    const blob = new Blob([html], { type: 'text/html' });
+    // Only preview the already-generated HTML (which has the embedded base64 image)
+    if (!generatedHtml) return;
+    const blob = new Blob([generatedHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
