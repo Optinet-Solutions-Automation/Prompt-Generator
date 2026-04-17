@@ -27,10 +27,10 @@ This is a **Multi Brand Prompt Generator** web app. Users select a brand, pick a
 ## How the App Works (Current Flow)
 
 ```
-1. User selects a BRAND (SpinJo, Roosterbet, FortunePlay, LuckyVibe, SpinsUp)
+1. User selects a BRAND (SpinJo, Roosterbet, FortunePlay, LuckyVibe, SpinsUp, etc.)
      ↓
 2. User selects a REFERENCE prompt from dropdown
-     ⚠️ THIS DROPDOWN IS HARDCODED IN THE CODE — needs to be dynamic
+   (loaded dynamically from Airtable)
      ↓
 3. App fetches that reference prompt's dissected data FROM AIRTABLE:
    (Format Layout, Primary Object, Subject, Lighting, Mood, Background, etc.)
@@ -43,14 +43,15 @@ This is a **Multi Brand Prompt Generator** web app. Users select a brand, pick a
    - Description (text input)
      ↓
 5. User clicks "Regenerate Prompt"
-   → Calls n8n webhook
-   → n8n combines Airtable reference data + user settings
-   → n8n calls OpenAI/GPT to generate a customized prompt
+   → Calls Vercel API route directly
+   → OpenAI/GPT generates a customized prompt
    → Returns generated prompt to frontend
      ↓
 6. Generated prompt shown with action buttons (copy, refresh, save, list, heart)
      ↓
 7. User clicks "ChatGPT", "Gemini", or "Generate Both" to create images
+   → Images saved to Google Drive via GCP Cloud Run
+   → Drive URLs cached in browser localStorage
 ```
 
 ---
