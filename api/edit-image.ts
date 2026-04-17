@@ -335,11 +335,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { imageUrl, editInstructions, resolution = '1K' } = req.body;
+    const { imageUrl, editInstructions, resolution = '1K', provider = 'chatgpt' } = req.body;
 
     if (!imageUrl || !editInstructions) {
       return res.status(400).json({ error: 'Image URL and edit instructions are required' });
     }
+
+    // Route Gemini images back to Gemini — NEVER fall through to OpenAI.
+    // This prevents the visual downgrade that occurs when a Gemini-generated
+    // image is edited by a different model with a different style signature.
+    const useGemini = provider === 'gemini';
 
     // ── Resolve Google Drive view URLs to direct image links ──────────
     let resolvedUrl = imageUrl;
