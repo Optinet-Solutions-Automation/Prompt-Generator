@@ -149,26 +149,41 @@ async function toBase64DataUri(url: string): Promise<string | null> {
   const canvasResult = await canvasDraw(url, false);
   if (canvasResult) return canvasResult;
 
-  // Strategy 2: fetch → blob → data URI
-  try {
-    const res = await fetch(url, { mode: 'cors' });
-    if (res.ok) {
-      const blob = await res.blob();
-      const dataUri = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      if (dataUri) return dataUri;
-    }
-  } catch { /* continue */ }
+  // Strategy 2: fetch directly → blob → data URI (works when server sends CORS headers)
+  const directFetch = await fetchToDataUri(url);
+  if (directFetch) return directFetch;
 
   // Strategy 3: canvas with crossOrigin="anonymous"
   const corsResult = await canvasDraw(url, true);
   if (corsResult) return corsResult;
 
+  // Strategy 4: server-side proxy — bypasses CORS entirely
+  // Works for Google Drive & OpenAI URLs that block client-side CORS
+  const proxyFetch = await fetchToDataUri(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+  if (proxyFetch) return proxyFetch;
+
   return null;
+}
+
+/** fetch a URL → blob → data URI */
+async function fetchToDataUri(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (blob.size < 100) return null; // too small to be a real image
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result && result.length > 100 ? result : null);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
 }
 
 function canvasDraw(url: string, useCors: boolean): Promise<string | null> {
