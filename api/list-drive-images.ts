@@ -3,12 +3,9 @@
  *
  * Lists all generated images from the Google Drive folder.
  * Called by the Image Library on load to populate the gallery.
- *
- * Returns files ordered newest first, with metadata stored as
- * appProperties (provider, aspectRatio, resolution).
+ * Self-contained — no local imports (Vercel API routes must be self-contained).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getGoogleAccessToken } from './_google-auth';
 
 interface DriveFile {
   id:            string;
@@ -20,6 +17,36 @@ interface DriveFile {
     aspectRatio?: string;
     resolution?:  string;
   };
+}
+
+async function getGoogleAccessToken(): Promise<string> {
+  const refreshToken  = process.env.CLOUD_RUN_REFRESH_TOKEN;
+  const clientId      = process.env.CLOUD_RUN_CLIENT_ID;
+  const clientSecret  = process.env.CLOUD_RUN_CLIENT_SECRET;
+
+  if (!refreshToken || !clientId || !clientSecret) {
+    throw new Error('Missing env vars: CLOUD_RUN_REFRESH_TOKEN, CLOUD_RUN_CLIENT_ID, CLOUD_RUN_CLIENT_SECRET');
+  }
+
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: refreshToken,
+      client_id:     clientId,
+      client_secret: clientSecret,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to refresh Google token: ${error}`);
+  }
+
+  const data = await response.json() as { access_token?: string };
+  if (data.access_token) return data.access_token;
+  throw new Error('No access_token returned from Google token endpoint');
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -36,7 +63,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const accessToken = await getGoogleAccessToken();
 
-    // Query Drive for all image files in the folder, newest first
     const query  = `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`;
     const fields  = 'files(id,name,createdTime,mimeType,appProperties)';
     const url     = `https://www.googleapis.com/drive/v3/files` +
@@ -62,7 +88,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       provider:     f.appProperties?.provider    || 'chatgpt',
       aspect_ratio: f.appProperties?.aspectRatio || '16:9',
       resolution:   f.appProperties?.resolution  || '1K',
-      // lh3.googleusercontent.com serves Drive files as direct images
       public_url:   `https://lh3.googleusercontent.com/d/${f.id}`,
     }));
 
