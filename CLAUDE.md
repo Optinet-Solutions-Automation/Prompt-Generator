@@ -192,9 +192,10 @@ Examples:
 - Developer is a beginner — always explain, always keep it simple
 
 ## Image Generation Tech Stack
-- **ChatGPT/Gemini** image generation: called via n8n webhooks
+- **ChatGPT/Gemini** image generation: called directly (not via n8n)
 - **Generate Variations**: `api/generate-variations.ts` — uses **OpenAI gpt-image-1 image edit API** directly with `OPENAI_API_KEY`. Does NOT use GCP/Cloud Run. Do not revert to GCP auth.
 - **Edit Image**: `api/edit-image.ts` — uses GCP Cloud Run (requires `GCP_WORKLOAD_PROVIDER`, `GCP_SERVICE_ACCOUNT`, Vercel OIDC)
+- **Image storage**: Google Drive (via GCP Cloud Run), Drive URLs cached in localStorage
 - Local dev URL: `http://localhost:5173` (Vite)
 
 ---
