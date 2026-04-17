@@ -65,6 +65,143 @@ function qualityForDimensions(dims: { width: number; height: number } | null): '
   return 'low';                          // thumbnails → low
 }
 
+// ── Gemini Edit (Vertex AI) ──────────────────────────────────────────────────
+
+async function getGCPAccessToken(req: VercelRequest): Promise<string> {
+  const workloadProvider = process.env.GCP_WORKLOAD_PROVIDER;
+  const serviceAccount   = process.env.GCP_SERVICE_ACCOUNT;
+
+  if (!workloadProvider || !serviceAccount) {
+    throw new Error('Missing GCP_WORKLOAD_PROVIDER or GCP_SERVICE_ACCOUNT env vars');
+  }
+
+  const oidcToken =
+    (req.headers['x-vercel-oidc-token'] as string | undefined) ||
+    process.env.VERCEL_OIDC_TOKEN;
+
+  if (!oidcToken) {
+    throw new Error('No Vercel OIDC token found. OIDC must be enabled in Vercel project settings.');
+  }
+
+  const stsRes = await fetch('https://sts.googleapis.com/v1/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:           'urn:ietf:params:oauth:grant-type:token-exchange',
+      audience:             `//iam.googleapis.com/${workloadProvider}`,
+      scope:                'https://www.googleapis.com/auth/cloud-platform',
+      requested_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+      subject_token_type:   'urn:ietf:params:oauth:token-type:jwt',
+      subject_token:        oidcToken,
+    }),
+  });
+  if (!stsRes.ok) throw new Error(`STS exchange failed (${stsRes.status}): ${await stsRes.text()}`);
+  const { access_token: federatedToken } = await stsRes.json();
+
+  const saRes = await fetch(
+    `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccount}:generateAccessToken`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${federatedToken}` },
+      body: JSON.stringify({ scope: ['https://www.googleapis.com/auth/cloud-platform'] }),
+    }
+  );
+  if (!saRes.ok) throw new Error(`SA token failed (${saRes.status}): ${await saRes.text()}`);
+  const { accessToken } = await saRes.json();
+  return accessToken;
+}
+
+function getGCPProjectNumber(): string {
+  const wp = process.env.GCP_WORKLOAD_PROVIDER || '';
+  const match = wp.match(/^projects\/(\d+)\//);
+  if (match) return match[1];
+  return process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || '69452143295';
+}
+
+// Build a strict preservation prompt for Gemini edits.
+// The constraint is front-loaded and emphatic so Gemini doesn't creatively
+// reinterpret the image — it must make exactly one change and nothing else.
+function buildGeminiEditPrompt(editInstructions: string): string {
+  return [
+    '⚠️ STRICT PRESERVATION EDIT — ABSOLUTE RULES, NEVER VIOLATE:',
+    '1. Preserve ALL colors EXACTLY — every hue, saturation, and tone from the original must be maintained without change.',
+    '2. Preserve the subject\'s appearance, clothing, and pose unless the edit instruction explicitly changes them.',
+    '3. Preserve all lighting, shadows, atmospheric effects, and background style EXACTLY.',
+    '4. Preserve the overall composition, layout, mood, quality, and visual style of the original image.',
+    '5. Do NOT introduce any new visual elements, color shifts, style changes, or creative interpretations.',
+    '',
+    `THE ONLY CHANGE TO MAKE: ${editInstructions}`,
+    '',
+    'Apply ONLY the change described above. Every pixel that is not directly affected by that change must remain identical to the source image. No creative liberties. No improvements. No reinterpretations.',
+  ].join('\n');
+}
+
+async function editViaGemini(
+  imgArrayBuffer: ArrayBuffer,
+  mimeType: string,
+  editInstructions: string,
+  req: VercelRequest,
+): Promise<{ imageUrl: string }> {
+  const accessToken = await getGCPAccessToken(req);
+  const project     = getGCPProjectNumber();
+
+  const b64Image = Buffer.from(imgArrayBuffer).toString('base64');
+  const prompt   = buildGeminiEditPrompt(editInstructions);
+
+  const vertexUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${project}/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent`;
+
+  console.log('[edit-image] Using Gemini edit (strict preservation)');
+
+  const resp = await fetch(vertexUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      contents: [{
+        role: 'user',
+        parts: [
+          { inlineData: { mimeType, data: b64Image } },
+          { text: prompt },
+        ],
+      }],
+      generationConfig: {
+        responseModalities: ['IMAGE', 'TEXT'],
+        // Low temperature enforces strict preservation — minimises creative drift
+        temperature: 0.1,
+        maxOutputTokens: 16384,
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_ONLY_HIGH' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_ONLY_HIGH' },
+      ],
+    }),
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Vertex AI edit failed (${resp.status}): ${await resp.text()}`);
+  }
+
+  const data = await resp.json() as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> };
+    }>;
+  };
+
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      const outMime = part.inlineData.mimeType || 'image/png';
+      return { imageUrl: `data:${outMime};base64,${part.inlineData.data}` };
+    }
+  }
+
+  throw new Error(`No image in Gemini edit response: ${JSON.stringify(data).substring(0, 300)}`);
+}
+
 // ── OpenAI Direct Edit ───────────────────────────────────────────────────────
 
 // Resolution-aware quality: when the user explicitly picks a resolution, use that.
