@@ -64,7 +64,11 @@ function fetchImages(page: number, filter: string): { data: GeneratedImage[]; ha
 async function syncFromDrive(): Promise<number> {
   try {
     const res = await fetch('/api/list-drive-images');
-    if (!res.ok) return 0;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[syncFromDrive] API error:', res.status, errText);
+      return 0;
+    }
 
     const data = await res.json() as {
       files: Array<{
