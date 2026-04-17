@@ -361,7 +361,7 @@ function SaveEditedModal({
 // ── Lightbox ───────────────────────────────────────────────────────────────────
 
 function Lightbox({
-  image, all, onClose, onPrev, onNext, onDeleted, onImageUpdated, onNewImageAdded,
+  image, all, onClose, onPrev, onNext, onDeleted, onImageUpdated, onNewImageAdded, activeBrand,
 }: {
   image: GeneratedImage;
   all: GeneratedImage[];
@@ -371,6 +371,8 @@ function Lightbox({
   onDeleted: (id: string) => void;
   onImageUpdated: (id: string, updated: GeneratedImage) => void;
   onNewImageAdded: (img: GeneratedImage) => void;
+  /** Fallback brand when image.brand_name is not set (e.g. Drive images) */
+  activeBrand?: string;
 }) {
   const idx     = all.findIndex(i => i.id === image.id);
   const hasPrev = idx > 0;
