@@ -203,10 +203,11 @@ Examples:
 ## Summary
 
 **App:** Multi Brand Prompt Generator
-**Only table:** "Web Image Analysis" in Airtable
-**Problem:** Reference dropdown is hardcoded, can't manage prompts from the app
-**Solution:** Dynamic dropdown + Add/Edit/Delete via n8n webhooks
-**Rule:** Don't break anything that already works
+**Repo:** github.com/Optinet-Solutions-AI/Prompt-Generator
+**Prompt table:** "Web Image Analysis" in Airtable
+**Image storage:** Google Drive (via GCP Cloud Run), cached in localStorage
+**Favorites:** Supabase `liked_images` table
+**Rule:** Don't break anything that already works. n8n is gone — do not use it.
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
