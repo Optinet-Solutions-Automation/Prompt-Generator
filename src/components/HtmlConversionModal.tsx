@@ -243,6 +243,10 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
     setIsGenerating(true);
     try {
       const imageSrc = await toBase64DataUri(imageUrl);
+      if (!imageSrc) {
+        setError('Could not embed the image — try downloading the image first, then use a local file.');
+        return;
+      }
       setGeneratedHtml(buildBannerHtml({
         imageSrc, brand: effectiveBrand, formData, offerType, textPosition,
         imgWidth: imgDims.w, imgHeight: imgDims.h,
