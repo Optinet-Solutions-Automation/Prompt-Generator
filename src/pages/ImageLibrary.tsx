@@ -1753,6 +1753,7 @@ export default function ImageLibrary({ embedded, onBack }: { embedded?: boolean;
           onDeleted={handleDeleted}
           onImageUpdated={handleImageUpdated}
           onNewImageAdded={handleNewImageAdded}
+          activeBrand={brandFilter !== 'all' ? brandFilter : undefined}
         />
       )}
     </div>
