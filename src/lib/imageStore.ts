@@ -41,6 +41,31 @@ function saveAll(images: StoredImage[]): void {
   }
 }
 
+/** Fire-and-forget: persist one image record to Supabase so it survives domain changes. */
+async function persistToSupabase(img: StoredImage): Promise<void> {
+  if (!SUPABASE_URL || !SUPABASE_ANON) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/generated_images`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        apikey:          SUPABASE_ANON,
+        Authorization:   `Bearer ${SUPABASE_ANON}`,
+        Prefer:          'resolution=ignore-duplicates', // skip if public_url already exists
+      },
+      body: JSON.stringify({
+        public_url:   img.public_url,
+        provider:     img.provider,
+        aspect_ratio: img.aspect_ratio,
+        resolution:   img.resolution,
+        filename:     img.filename,
+      }),
+    });
+  } catch {
+    // Silent fail — localStorage is the primary store, Supabase is backup
+  }
+}
+
 /** Add a new image to the front of the list. Returns the new record. */
 export function storeImage(params: {
   public_url:   string;
