@@ -271,12 +271,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
       imgArrayBuffer = bytes.buffer;
     } else {
-      const imgRes = await fetch(imageUrl as string);
-      if (!imgRes.ok) {
-        return res.status(400).json({ error: `Failed to fetch source image (${imgRes.status})` });
+      // Drive URLs require authenticated fetch — extract file ID and use Drive API
+      const driveMatch = typeof imageUrl === 'string' &&
+        imageUrl.match(/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+      if (driveMatch) {
+        const { buffer, mimeType } = await fetchFromDrive(driveMatch[1]);
+        imgArrayBuffer = buffer;
+        contentType    = mimeType;
+      } else {
+        const imgRes = await fetch(imageUrl as string);
+        if (!imgRes.ok) {
+          return res.status(400).json({ error: `Failed to fetch source image (${imgRes.status})` });
+        }
+        contentType    = imgRes.headers.get('content-type') || 'image/png';
+        imgArrayBuffer = await imgRes.arrayBuffer();
       }
-      contentType = imgRes.headers.get('content-type') || 'image/png';
-      imgArrayBuffer = await imgRes.arrayBuffer();
     }
 
     const extMap: Record<string, string> = {
