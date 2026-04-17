@@ -1515,11 +1515,13 @@ export default function ImageLibrary({ embedded, onBack }: { embedded?: boolean;
 
   useEffect(() => { load(0, filter, brandFilter, true); }, [filter, brandFilter, load]);
 
-  // Background sync: pull any Supabase images missing from localStorage on each open
+  // Sync from Google Drive on each open — Drive is the source of truth.
+  // Any images in Drive that aren't in localStorage get added automatically.
+  // This makes the library work correctly across any domain or deployment.
   useEffect(() => {
-    syncFromSupabase().then(count => {
+    syncFromDrive().then(count => {
       if (count > 0) {
-        // New images were synced — reload the grid so they appear
+        // New images were synced from Drive — reload the grid so they appear
         load(0, filter, brandFilter, true);
       }
     });
