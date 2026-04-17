@@ -235,6 +235,7 @@ export function HtmlConversionModal({ isOpen, onClose, imageUrl, brand }: HtmlCo
     setOfferType('freespins');
     setGeneratedHtml(null);
     setTextPosition('right');
+    setSelectedBrand(brand || '');
     setError(null);
     onClose();
   };
