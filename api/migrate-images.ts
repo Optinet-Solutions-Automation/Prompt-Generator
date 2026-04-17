@@ -67,6 +67,15 @@ async function updateDriveFileMetadata(
   return res.ok;
 }
 
+/** Make a Drive file readable by anyone with the link. */
+async function makeFilePublic(fileId: string, accessToken: string): Promise<void> {
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+  });
+}
+
 /** Upload image bytes to Drive folder with metadata */
 async function uploadToDrive(params: {
   imageBuffer: Buffer; mimeType: string; filename: string;
