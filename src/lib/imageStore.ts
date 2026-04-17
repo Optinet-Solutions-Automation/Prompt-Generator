@@ -13,31 +13,6 @@ const MAX_IMAGES   = 500; // Prevent localStorage overflow (~500 × ~250 bytes �
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL  as string | undefined;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-/** Fire-and-forget: persist one image record to Supabase so it survives domain changes. */
-async function persistToSupabase(img: StoredImage): Promise<void> {
-  if (!SUPABASE_URL || !SUPABASE_ANON) return;
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/generated_images`, {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        apikey:          SUPABASE_ANON,
-        Authorization:   `Bearer ${SUPABASE_ANON}`,
-        Prefer:          'resolution=ignore-duplicates', // skip if public_url already exists
-      },
-      body: JSON.stringify({
-        public_url:   img.public_url,
-        provider:     img.provider,
-        aspect_ratio: img.aspect_ratio,
-        resolution:   img.resolution,
-        filename:     img.filename,
-      }),
-    });
-  } catch {
-    // Silent fail — localStorage is the primary store, Supabase is backup
-  }
-}
-
 export interface StoredImage {
   id:           string;
   created_at:   string;
