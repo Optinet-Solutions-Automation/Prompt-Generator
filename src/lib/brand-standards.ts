@@ -80,7 +80,7 @@ export const BRAND_STANDARDS: Record<string, BrandStyle> = {
     buttonShadow: 'rgba(21,101,192,0.6)',
   },
 
-  // ── Dark purple/neon — fantasy magical theme ──────────────────────────────
+  // ── Dark/neon — magical theme, white + magenta + blue ────────────────────
   SpinsUp: {
     fontFamily: "'Fredoka One', 'Comic Sans MS', cursive, sans-serif",
     googleFont: 'Fredoka+One',
@@ -88,9 +88,9 @@ export const BRAND_STANDARDS: Record<string, BrandStyle> = {
     headlineColor: '#FFFFFF',
     bodyColor: '#F3E5F5',
     accentColor: '#FF00FF',
-    buttonBg: '#9C27B0',
+    buttonBg: '#1565C0',
     buttonText: '#FFFFFF',
-    buttonShadow: 'rgba(156,39,176,0.65)',
+    buttonShadow: 'rgba(21,101,192,0.65)',
   },
 
   // ── Dark navy/teal — bunny mascot, clean modern ───────────────────────────
